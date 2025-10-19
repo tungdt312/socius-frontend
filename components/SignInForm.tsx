@@ -11,19 +11,17 @@ import {useRouter} from "next/navigation";
 import {z} from "zod";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
-
-const signInSchema = z.object({
-    username: z.string().min(5, "Tên đăng nhập phải có ít nhất 5 ký tự"),
-    password: z.string().min(5, "Mật khẩu phải có ít nhất 5 ký tự"),
-})
+import {toast} from "sonner";
+import {signInSchema} from "@/schema/authSchema";
+import {fetcher} from "@/lib/fetcher";
 
 const SignInForm = () => {
     const router = useRouter()
 
-    const [errors, setErrors] = useState("");
     const [showPassword, setShowPassword] = React.useState(false);
     const [isForgotPassword, setIsForgotPassword] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
+    const [user, setUser] = React.useState({});
 
     const form = useForm<z.infer<typeof signInSchema>>({
         resolver: zodResolver(signInSchema),
@@ -35,29 +33,33 @@ const SignInForm = () => {
 
     const onSubmit = async (values: z.infer<typeof signInSchema>) => {
         setIsLoading(true);
-        setErrors("")
         try {
+            //Gui thông tin
             console.log(JSON.stringify(values));
-            await new Promise((res) => setTimeout(res, 1000))
-        } catch (error) {
-            console.log(error);
-            setErrors("Không thể đăng nhập. Đã có lỗi xảy ra.")
+            const res = await fetcher("/api/auth/login", {
+                method: "POST",
+                body: JSON.stringify(values),
+            });
+            setUser(res.user ?? { logged: true });
+
+            toast.success("Đăng nhập thành công.")
+        } catch (error: any) {
+            toast.error(error.message);
         } finally {
             setIsLoading(false);
         }
-
     }
     return (
-        <div className="flex flex-col items-center justify-center space-y-8">
-            <h1 className={"text-muted-foreground heading1"}>Đăng nhập</h1>
+        <>
             <Card className={"w-full min-w-[350px]"}>
-                <CardContent >
-                    <form onSubmit={form.handleSubmit(onSubmit)} className={"space-y-4"} >
+                <CardContent>
+                    <form onSubmit={form.handleSubmit(onSubmit)} className={"space-y-4"}>
                         <FieldSet>
                             <FieldGroup>
                                 <Field orientation={"responsive"}>
                                     <FieldLabel htmlFor="username">Tên đăng nhập</FieldLabel>
-                                    <Input id="username" type="text" placeholder="Tên đăng nhập" {...form.register("username")} />
+                                    <Input id="username" type="text"
+                                           placeholder="Tên đăng nhập" {...form.register("username")} />
                                     {form.formState.errors.username && (
                                         <FieldError>
                                             {form.formState.errors.username.message}
@@ -67,8 +69,11 @@ const SignInForm = () => {
                                 <Field orientation={"responsive"}>
                                     <FieldLabel htmlFor="password">Mật khẩu</FieldLabel>
                                     <div className={"flex items-center w-full space-x-2"}>
-                                        <Input id="password" type={showPassword ? "text" : "password"} placeholder="Mật khẩu"  {...form.register("password")}/>
-                                        <Button type={"button"} className={"rounded-full size-8 transition-all"} variant={showPassword ? "default" : "outline"} onClick={() => setShowPassword(!showPassword)}>
+                                        <Input id="password" type={showPassword ? "text" : "password"}
+                                               placeholder="Mật khẩu"  {...form.register("password")}/>
+                                        <Button type={"button"} className={"rounded-full size-8 transition-all"}
+                                                variant={showPassword ? "default" : "outline"}
+                                                onClick={() => setShowPassword(!showPassword)}>
                                             {
                                                 showPassword
                                                     ? <EyeIcon size={24}/>
@@ -82,7 +87,8 @@ const SignInForm = () => {
                                         </FieldError>
                                     )}
                                     <FieldDescription>
-                                        <Button className={"p-0"} variant={"link"} onClick={() => setIsForgotPassword(true)}>
+                                        <Button className={"p-0"} variant={"link"} type={"button"}
+                                                onClick={() => setIsForgotPassword(true)}>
                                             Quên mật khẩu?
                                         </Button>
                                     </FieldDescription>
@@ -98,19 +104,18 @@ const SignInForm = () => {
                                 Đăng nhập
                             </Button>
                         </div>
-                        {errors && (<p className={"body2 text-destructive w-full text-center"}>{errors}</p>)}
                     </form>
                     <div className="w-full max-w-md flex items-center justify-center space-x-1 subtitle2">
                         <p>Chưa có tài khoản?</p>
-                        <Button className={"p-0"} variant={"link"} type={"button"} onClick={() => router.push("/sign-up")}>
+                        <Button className={"p-0"} variant={"link"} type={"button"}
+                                onClick={() => router.push("/sign-up")}>
                             Đăng ký ngay
                         </Button>
                     </div>
                 </CardContent>
             </Card>
-            {isForgotPassword && (<ForgetPasswordForm/>)}
-        </div>
-
+            {isForgotPassword && (<ForgetPasswordForm onClose={() => setIsForgotPassword(false)} />)}
+        </>
     )
 }
 export default SignInForm
