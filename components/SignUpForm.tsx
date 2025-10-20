@@ -15,6 +15,7 @@ import {Calendar} from "@/components/ui/calendar";
 import OTPModal from "@/components/OTPModal";
 import {toast} from "sonner";
 import {signUpSchema} from "@/schema/authSchema";
+import {fetcher} from "@/lib/fetcher";
 
 
 type signUpState = "personalInfo" | "accountInfo";
@@ -41,15 +42,23 @@ const SignUpForm = () => {
 
     const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
         setIsLoading(true);
+        const {confirmPassword, ...data} = values;
         try {
-            //Gui thong tin
-            //Mo OTP
+            console.log(JSON.stringify(data))
+            console.log(JSON.stringify({email: data.email}))
+            const res = await fetcher("/api/auth/register", {
+                method: "POST",
+                body: JSON.stringify(data),
+            })
+            toast.success("Đăng ký thành công.");
+            const sendEmail = await fetcher("/api/auth/sendOtp",{
+                method: "POST",
+                body: JSON.stringify({email: data.email}),
+            })
+            toast.success("Email xác thực đã được gửi.");
             setIsOpen(true);
-            console.log(JSON.stringify(values));
-            await new Promise((res) => setTimeout(res, 1000))
-        } catch (error) {
-            console.log(error);
-            toast.error("Không thể đăng ký. Đã có lỗi xảy ra.")
+        } catch (error: any) {
+            toast.error(error.message);
         } finally {
             setIsLoading(false);
         }
@@ -195,7 +204,10 @@ const SignUpForm = () => {
                     </div>
                 </CardContent>
             </Card>
-            {isOpen && (<OTPModal email={form.getValues("email")} onSuccess={() => {toast.success("Đăng ký thành công.");}} onClose={()=> {setIsOpen(false)}}/>)}
+            {isOpen && (<OTPModal type={"verifyEmail"} email={form.getValues("email")} password={form.getValues("password")} onSuccess={() => {
+                toast.success("Xác thực thành công.");
+                router.push("/sign-in");
+            }} onClose={()=> {setIsOpen(false)}}/>)}
         </>
 
     )

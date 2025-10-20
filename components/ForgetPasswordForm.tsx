@@ -18,6 +18,7 @@ import {useForm} from "react-hook-form";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {changePasswordSchema, emailInputSchema} from "@/schema/authSchema";
+import {fetcher} from "@/lib/fetcher";
 
 
 const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
@@ -32,27 +33,18 @@ const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
     const handleSubmit = async () => {
         setIsLoading(true);
         try{
-            //Gui mat khau moi di
-            toast.success("Đổi mật khẩu thành công.")
-            setIsOpen(false);
-            onClose();
-        }
-        catch{
-            toast.error("Đổi mật khẩu thất bại.")
-        }
-        finally {
-            setIsLoading(false);
-        }
-    }
-    const sendOTP = () => {
-        setIsLoading(true);
-        try {
-            //send OTP
-            console.log("Sending OTP");
+            const res = await fetcher("/api/auth/resetPassword", {
+                method: "POST",
+                body: JSON.stringify({
+                    email: form.getValues("email"),
+                    newPassword: form.getValues("password")
+                })
+            })
+            toast.success("Email xác thực đã được gửi.");
             setIsVerifying(true)
         }
-        catch (error) {
-            toast.error("Gửi OTP thất bại.");
+        catch(err: any){
+            toast.error(err.message);
         }
         finally {
             setIsLoading(false);
@@ -113,7 +105,7 @@ const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
                 </FieldSet>
                 <AlertDialogFooter>
                     <AlertDialogAction onClick={()=>{
-                        sendOTP()
+                        handleSubmit()
                     }} className={"w-full rounded-md"}
                                        disabled={isLoading}>
                        Gửi
@@ -124,10 +116,13 @@ const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
                 </AlertDialogFooter>
             </AlertDialogContent>
         </AlertDialog>
-            {isVerifying && <OTPModal email={form.getValues("email")} onSuccess={handleSubmit} onClose={()=> {
-                setIsVerifying(false)
-                onClose()
-            }}/>}
+            {isVerifying && <OTPModal type={"resetPassword"} email={form.getValues("email")}
+                                      onSuccess={() => {
+                                          toast.success("Đổi mật khẩu thành công.")
+                                          setIsOpen(false)
+                                      }}
+                                      onClose={()=> {setIsVerifying(false)
+                                          onClose()}}/>}
         </>
     )
 

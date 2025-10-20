@@ -13,7 +13,6 @@ export function setAuthCookies(
     response: NextResponse,
     accessToken: string,
     refreshToken?: string,
-    access_expires_in_seconds?: number
 ) {
     // access token cookie (short lived)
     response.cookies.set("accessToken", accessToken, {

@@ -14,6 +14,8 @@ import {zodResolver} from "@hookform/resolvers/zod";
 import {toast} from "sonner";
 import {signInSchema} from "@/schema/authSchema";
 import {fetcher} from "@/lib/fetcher";
+import {AccountStatus} from "@/constants/enum";
+import OTPModal from "@/components/OTPModal";
 
 const SignInForm = () => {
     const router = useRouter()
@@ -21,7 +23,8 @@ const SignInForm = () => {
     const [showPassword, setShowPassword] = React.useState(false);
     const [isForgotPassword, setIsForgotPassword] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
-    const [user, setUser] = React.useState({});
+    const [isOpen, setIsOpen] = React.useState(false);
+    let email: string = "";
 
     const form = useForm<z.infer<typeof signInSchema>>({
         resolver: zodResolver(signInSchema),
@@ -35,14 +38,37 @@ const SignInForm = () => {
         setIsLoading(true);
         try {
             //Gui thông tin
-            console.log(JSON.stringify(values));
             const res = await fetcher("/api/auth/login", {
                 method: "POST",
                 body: JSON.stringify(values),
             });
-            setUser(res.user ?? { logged: true });
+            console.log(res);
+            if (res.status !== AccountStatus.BLOCKED && res.status !== AccountStatus.PENDING) {
+                toast.success("Đăng nhập thành công.")
+                router.push("/");
+            }
+            else if (res.status == AccountStatus.BLOCKED){
+                toast.warning("Tài khoản đã bị hạn chế một số chức năng. Liên hệ hỗ trợ để biết thêm chi tiết.")
+                router.push("/");
+            }
+            else if (res.status == AccountStatus.PENDING){
+                toast.error("Tài khoản chưa xác thực email. Vui lòng xác thực", {
+                    action: {
+                        label: "Gửi mail",
+                        onClick: async()=> {
+                            const sendEmail = await fetcher("/api/auth/sendOtp",{
+                                method: "POST",
+                                body: JSON.stringify({email: res.email}),
+                            })
+                            toast.success("Email xác thực đã được gửi.");
+                            email = res.email;
+                            setIsOpen(true);
+                        }
+                    }
+                })
+            }
 
-            toast.success("Đăng nhập thành công.")
+
         } catch (error: any) {
             toast.error(error.message);
         } finally {
@@ -115,6 +141,10 @@ const SignInForm = () => {
                 </CardContent>
             </Card>
             {isForgotPassword && (<ForgetPasswordForm onClose={() => setIsForgotPassword(false)} />)}
+            {isOpen && (<OTPModal type={"verifyEmail"} email={email} onSuccess={() => {
+                toast.success("Xác thực thành công.");
+                router.push("/sign-in");
+            }} onClose={()=> {setIsOpen(false)}}/>)}
         </>
     )
 }
