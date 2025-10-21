@@ -12,23 +12,21 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Calendar} from "@/components/ui/calendar";
+import OTPModal from "@/components/OTPModal";
+import {toast} from "sonner";
+import {signUpSchema} from "@/schema/authSchema";
+import {fetcher} from "@/lib/fetcher";
+import {RegisterRequest, RegisterResponse, SendVerifyEmailRequest, SendVerifyEmailResponse} from "@/types/api";
 
-const signUpSchema = z.object({
-    username: z.string().min(5, "Tên đăng nhập phải có ít nhất 5 ký tự"),
-    password: z.string().min(5, "Mật khẩu phải có ít nhất 5 ký tự"),
-    fullName: z.string(),
-    email: z.email(),
-    dayOfBirth: z.date().min(new Date("1900-01-01")).max(Date.now()),
-})
 
 type signUpState = "personalInfo" | "accountInfo";
 
 const SignUpForm = () => {
     const router = useRouter()
 
-    const [errors, setErrors] = useState("");
     const [formState, setFormState] = useState<signUpState>("personalInfo")
     const [isLoading, setIsLoading] = React.useState(false);
+    const [isOpen, setIsOpen] = React.useState(false);
 
     const form = useForm<z.infer<typeof signUpSchema>>({
         resolver: zodResolver(signUpSchema),
@@ -36,27 +34,48 @@ const SignUpForm = () => {
         defaultValues: {
             username: "",
             password: "",
-            fullName: "",
+            confirmPassword: "",
+            fullname: "",
             email: "",
-            dayOfBirth: new Date
+            dateOfBirth: new Date()
         },
     })
+
     const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
         setIsLoading(true);
-        setErrors("")
         try {
-            console.log(JSON.stringify(values));
-            await new Promise((res) => setTimeout(res, 1000))
-        } catch (error) {
-            console.log(error);
-            setErrors("Không thể đăng ký. Đã có lỗi xảy ra.")
+            const req: RegisterRequest = {
+                fullname: values.fullname,
+                username: values.username,
+                password: values.password,
+                email: values.email,
+                dateOfBirth: values.dateOfBirth.toISOString(),
+            }
+            const res  = await fetcher<RegisterResponse>("/api/auth/register", {
+                method: "POST",
+                body: JSON.stringify(req),
+            })
+            console.log(res)
+            toast.success("Đăng ký thành công.");
+
+            const otpReq: SendVerifyEmailRequest = {email: values.email}
+            const sendEmail  = await fetcher<SendVerifyEmailResponse>("/api/auth/sendOtp",{
+                method: "POST",
+                body: JSON.stringify(otpReq),
+            })
+            console.log(sendEmail)
+            toast.success("Email xác thực đã được gửi.");
+
+            setIsOpen(true);
+        } catch (error: any) {
+            toast.error(error.message);
         } finally {
             setIsLoading(false);
         }
     }
+
     return (
-        <div className="flex flex-col items-center justify-center space-y-8">
-            <h1 className={"text-muted-foreground heading1"}>Đăng ký</h1>
+        <>
             <Card className={"w-full min-w-[350px]"}>
                 <CardContent>
                     <form onSubmit={form.handleSubmit(onSubmit)}>
@@ -67,12 +86,12 @@ const SignUpForm = () => {
                                     <FieldSeparator className={"mb-2"}/>
                                     <FieldGroup>
                                         <Field orientation={"responsive"}>
-                                            <FieldLabel htmlFor="fullName">Tên đầy đủ *</FieldLabel>
-                                            <Input id="fullName" type="text"
-                                                   placeholder="Tên đầy đủ" {...form.register("fullName")} />
-                                            {form.formState.errors.fullName && (
+                                            <FieldLabel htmlFor="fullname">Tên đầy đủ *</FieldLabel>
+                                            <Input id="fullname" type="text"
+                                                   placeholder="Tên đầy đủ" {...form.register("fullname")} />
+                                            {form.formState.errors.fullname && (
                                                 <FieldError>
-                                                    {form.formState.errors.fullName.message}
+                                                    {form.formState.errors.fullname.message}
                                                 </FieldError>
                                             )}
                                         </Field>
@@ -96,8 +115,8 @@ const SignUpForm = () => {
                                                         className="w-full justify-between font-normal"
                                                         type="button"
                                                     >
-                                                        {form.watch("dayOfBirth")
-                                                            ? form.watch("dayOfBirth")?.toLocaleDateString("vi-VN", {
+                                                        {form.watch("dateOfBirth")
+                                                            ? form.watch("dateOfBirth")?.toLocaleDateString("vi-VN", {
                                                                     day: "2-digit",
                                                                     month: "2-digit",
                                                                     year: "numeric"
@@ -110,14 +129,14 @@ const SignUpForm = () => {
                                                 <PopoverContent className="w-auto p-0" align="start">
                                                     <Calendar
                                                         mode="single"
-                                                        selected={form.watch("dayOfBirth")}
+                                                        selected={form.watch("dateOfBirth")}
                                                         captionLayout="dropdown"
-                                                        onSelect={(date) => form.setValue("dayOfBirth", date || new Date())}
+                                                        onSelect={(date) => form.setValue("dateOfBirth", date || new Date())}
                                                     />
                                                 </PopoverContent>
                                             </Popover>
 
-                                            {form.formState.errors.dayOfBirth && (
+                                            {form.formState.errors.dateOfBirth && (
                                                 <FieldError>
                                                     Ngày sinh không hợp lệ!
                                                 </FieldError>
@@ -127,7 +146,7 @@ const SignUpForm = () => {
                                     <div className={"flex items-center justify-center w-full"}>
                                         <Button type="button" className={"w-full"}
                                                 onClick={async () => {
-                                                    const isValid = await form.trigger(["fullName", "email", "dayOfBirth"]);
+                                                    const isValid = await form.trigger(["fullname", "email", "dateOfBirth"]);
                                                     if (isValid) setFormState("accountInfo");
                                                 }}>
                                             Tiếp theo
@@ -154,20 +173,21 @@ const SignUpForm = () => {
                                             <FieldLabel htmlFor="password">Mật khẩu *</FieldLabel>
                                             <Input id="password" type={"password"}
                                                    placeholder="Mật khẩu"  {...form.register("password")}/>
-                                            {form.formState.errors.password && (
+                                            {(form.formState.errors.password) && (
                                                 <FieldError>
                                                     {form.formState.errors.password.message}
                                                 </FieldError>
                                             )}
-                                        </Field><Field orientation={"responsive"}>
+                                        </Field>
+                                        <Field orientation={"responsive"}>
                                         <FieldLabel>Xác nhận mật khẩu *</FieldLabel>
                                         <Input type={"password"}
-                                               placeholder="Xác nhận mật khẩu"/>
-                                        {form.formState.errors.password && (
-                                            <FieldError>
-                                                {form.formState.errors.password.message}
-                                            </FieldError>
-                                        )}
+                                               placeholder="Xác nhận mật khẩu" {...form.register("confirmPassword")}/>
+                                            {(form.formState.errors.confirmPassword) && (
+                                                <FieldError>
+                                                    {form.formState.errors.confirmPassword.message}
+                                                </FieldError>
+                                            )}
                                     </Field>
                                     </FieldGroup>
                                     <div className={"flex items-center justify-center w-full space-x-2 px-6"}>
@@ -182,21 +202,23 @@ const SignUpForm = () => {
                                             Đăng ký
                                         </Button>
                                     </div>
-                                    {errors && (
-                                        <p className={"body2 text-destructive w-full text-center"}>{errors}</p>)}
                                 </div>
                             }
                         </FieldSet>
                     </form>
                     <div className="w-full max-w-md flex items-center justify-center space-x-1 subtitle2">
                         <p>Đã có tài khoản?</p>
-                        <Button className={"p-0"} variant={"link"} type={"button"} onClick={() => router.push("/sign-up")}>
+                        <Button className={"p-0"} variant={"link"} type={"button"} onClick={() => router.push("/sign-in")}>
                             Đăng nhập ngay
                         </Button>
                     </div>
                 </CardContent>
             </Card>
-        </div>
+            {isOpen && (<OTPModal type={"verifyEmail"} email={form.getValues("email")} password={form.getValues("password")} onSuccess={() => {
+                toast.success("Xác thực thành công.");
+                router.push("/sign-in");
+            }} onClose={()=> {setIsOpen(false)}}/>)}
+        </>
 
     )
 }
