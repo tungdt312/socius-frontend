@@ -1,22 +1,19 @@
 import {NextResponse} from "next/server";
+import {RegisterResponse, SendVerifyEmailResponse} from "@/types/api";
+import {callExternalApi} from "@/lib/fetcher";
 
 const EXTERNAL_BASE = process.env.API_BASE_URL!;
 const PATH = "/auth/sendVerifyEmail";
 
 export async function POST(req: Request) {
     const body = await req.json();
-    const res = await fetch(`${EXTERNAL_BASE}${PATH}`, {
+    const { data, status, ok } = await callExternalApi(PATH, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(body),
     });
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-        // forward error message
-        return NextResponse.json({ error: data?.message ?? "Gửi mail xác thực thất bại" }, { status: res.status });
-    }
-
-    return NextResponse.json({ok: true});
+    if (!ok) return NextResponse.json({error: "Gửi mail xác thực thất bại" }, { status });
+    return NextResponse.json({ ok: true });
 }

@@ -1,23 +1,19 @@
 import {NextResponse} from "next/server";
+import {callExternalApi} from "@/lib/fetcher";
+import {OtpVerificationRequest, SendVerifyEmailResponse} from "@/types/api";
 
 const EXTERNAL_BASE = process.env.API_BASE_URL!;
 const PATH = "/auth/verify-otp";
 
 export async function POST(req: Request) {
     const body = await req.json();
-    // body: { username, password } (frontend gửi)
-    const res = await fetch(`${EXTERNAL_BASE}${PATH}`, {
+    const { data, status, ok } = await callExternalApi(PATH, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+            "Content-Type": "application/json"
+        },
         body: JSON.stringify(body),
     });
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
-        // forward error message
-        return NextResponse.json({ error: data?.message ?? "Xác thực thất bại" }, { status: res.status });
-    }
-
-    return NextResponse.json({ok: true});
+    if (!ok) return NextResponse.json({ error: "Xác thực thất bại" }, { status });
+    return NextResponse.json({ ok: true });
 }

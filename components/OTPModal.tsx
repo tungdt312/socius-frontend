@@ -15,6 +15,7 @@ import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
 import {fetcher} from "@/lib/fetcher";
 import {OtpType} from "@/constants/enum";
+import {OtpVerificationRequest} from "@/types/api";
 
 type verifyType = "verifyEmail" | "resetPassword";
 
@@ -27,13 +28,14 @@ const OTPModal = ({email, password, onSuccess, onClose, type}: { email: string,p
         e.preventDefault()
         setIsLoading(true)
         try {
-            const otpType = type === "verifyEmail" ? OtpType.verifyEmail : OtpType.resetPassword
+            const req: OtpVerificationRequest = {
+                email: email,
+                code: code,
+                type: type === "verifyEmail" ? OtpType.verifyEmail : OtpType.resetPassword
+        }
             const res = await fetcher("/api/auth/verifyOtp",{
                 method: "POST",
-                body: JSON.stringify({
-                    email: email,
-                    code: code,
-                    type: otpType }),
+                body: JSON.stringify(req),
             })
             onSuccess()
             setIsOpen(false)

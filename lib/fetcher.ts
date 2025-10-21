@@ -1,7 +1,4 @@
-import {redirect} from "next/navigation";
-
-const EXTERNAL_BASE = process.env.API_BASE_URL!;
-export async function fetcher(url: string, options: RequestInit = {}) {
+export async function fetcher<T>(url: string, options: RequestInit = {}): Promise<T> {
     const res = await fetch(url, {
         ...options,
         credentials: "include", // để gửi cookie cùng request
@@ -10,10 +7,9 @@ export async function fetcher(url: string, options: RequestInit = {}) {
     if (res.status === 401) {
         const refresh = await fetch("/api/auth/refresh", { method: "POST", credentials: "include" });
         if (refresh.ok) {
-            // refresh xong gọi lại request ban đầu
-            return fetcher(url, options);
+            return fetcher<T>(url, options);
         } else {
-            redirect("/sign-in")
+            window.location.href="/sign-in"
             throw new Error("Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại.");
         }
     }
@@ -30,4 +26,17 @@ export async function fetcher(url: string, options: RequestInit = {}) {
     }
 
     return res.json()
+}
+
+const EXTERNAL_BASE = process.env.API_BASE_URL!;
+export async function callExternalApi<T>(
+    path: string,
+    init?: RequestInit,
+): Promise<{ data: T | null; status: number; ok: boolean }> {
+    const res = await fetch(`${EXTERNAL_BASE}${path}`, init);
+    let data: T | null = null;
+    try {
+        data = await res.json();
+    } catch {}
+    return { data, status: res.status, ok: res.ok };
 }

@@ -1,9 +1,9 @@
 // app/api/auth/refresh/route.ts
 import { NextRequest, NextResponse } from "next/server";
 import { setAuthCookies, clearAuthCookies } from "@/lib/cookie";
-
-const EXTERNAL_BASE = process.env.API_BASE_URL!;
-const REFRESH_PATH = "/auth/refresh";
+import {RegisterResponse, TokenResponse} from "@/types/api";
+import {callExternalApi} from "@/lib/fetcher";
+const PATH = "/auth/refresh";
 
 export async function POST(req: NextRequest) {
     // read refresh_token from cookie
@@ -12,23 +12,24 @@ export async function POST(req: NextRequest) {
         return NextResponse.json({ error: "No refresh token" }, { status: 401 });
     }
 
-    const res = await fetch(`${EXTERNAL_BASE}${REFRESH_PATH}`, {
+    const { data, status, ok } = await callExternalApi<TokenResponse>(PATH, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ refreshToken }),
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify({refreshToken: refreshToken}),
     });
-
-    const data = await res.json().catch(() => null);
-
-    if (!res.ok) {
+    if (!ok) {
         // clear tokens
-        const response = NextResponse.json({ error: "Refresh token không hợp lệ" }, { status: res.status });
+        const response = NextResponse.json({ error: "Refresh token không hợp lệ" }, { status });
         clearAuthCookies(response);
         return response;
     }
 
-    const response = NextResponse.json({ ok: true, accessToken: data.accessToken });
+    if(data){
+    const response = NextResponse.json({ ok: true});
     // maybe external returns new refresh token (rotation)
     setAuthCookies(response, data.accessToken, data.refreshToken ?? refreshToken);
-    return response;
+    }
+    return NextResponse.json({ ok: true });
 }

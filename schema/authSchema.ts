@@ -16,10 +16,10 @@ export const emailInputSchema = z.object({
     email: emailSchema,
 });
 export const signUpSchema = z.object({
+    fullname: z.string(),
     username: usernameSchema,
     password: passwordSchema,
     confirmPassword: z.string(),
-    fullName: z.string(),
     email: emailSchema,
     dateOfBirth: dateOfBirthSchema,
 }).refine((data) => data.password === data.confirmPassword, {

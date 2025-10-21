@@ -16,6 +16,7 @@ import OTPModal from "@/components/OTPModal";
 import {toast} from "sonner";
 import {signUpSchema} from "@/schema/authSchema";
 import {fetcher} from "@/lib/fetcher";
+import {RegisterRequest, RegisterResponse, SendVerifyEmailRequest, SendVerifyEmailResponse} from "@/types/api";
 
 
 type signUpState = "personalInfo" | "accountInfo";
@@ -34,28 +35,37 @@ const SignUpForm = () => {
             username: "",
             password: "",
             confirmPassword: "",
-            fullName: "",
+            fullname: "",
             email: "",
-            dateOfBirth: new Date
+            dateOfBirth: new Date()
         },
     })
 
     const onSubmit = async (values: z.infer<typeof signUpSchema>) => {
         setIsLoading(true);
-        const {confirmPassword, ...data} = values;
         try {
-            console.log(JSON.stringify(data))
-            console.log(JSON.stringify({email: data.email}))
-            const res = await fetcher("/api/auth/register", {
+            const req: RegisterRequest = {
+                fullname: values.fullname,
+                username: values.username,
+                password: values.password,
+                email: values.email,
+                dateOfBirth: values.dateOfBirth.toISOString(),
+            }
+            const res  = await fetcher<RegisterResponse>("/api/auth/register", {
                 method: "POST",
-                body: JSON.stringify(data),
+                body: JSON.stringify(req),
             })
+            console.log(res)
             toast.success("Đăng ký thành công.");
-            const sendEmail = await fetcher("/api/auth/sendOtp",{
+
+            const otpReq: SendVerifyEmailRequest = {email: values.email}
+            const sendEmail  = await fetcher<SendVerifyEmailResponse>("/api/auth/sendOtp",{
                 method: "POST",
-                body: JSON.stringify({email: data.email}),
+                body: JSON.stringify(otpReq),
             })
+            console.log(sendEmail)
             toast.success("Email xác thực đã được gửi.");
+
             setIsOpen(true);
         } catch (error: any) {
             toast.error(error.message);
@@ -76,12 +86,12 @@ const SignUpForm = () => {
                                     <FieldSeparator className={"mb-2"}/>
                                     <FieldGroup>
                                         <Field orientation={"responsive"}>
-                                            <FieldLabel htmlFor="fullName">Tên đầy đủ *</FieldLabel>
-                                            <Input id="fullName" type="text"
-                                                   placeholder="Tên đầy đủ" {...form.register("fullName")} />
-                                            {form.formState.errors.fullName && (
+                                            <FieldLabel htmlFor="fullname">Tên đầy đủ *</FieldLabel>
+                                            <Input id="fullname" type="text"
+                                                   placeholder="Tên đầy đủ" {...form.register("fullname")} />
+                                            {form.formState.errors.fullname && (
                                                 <FieldError>
-                                                    {form.formState.errors.fullName.message}
+                                                    {form.formState.errors.fullname.message}
                                                 </FieldError>
                                             )}
                                         </Field>
@@ -136,7 +146,7 @@ const SignUpForm = () => {
                                     <div className={"flex items-center justify-center w-full"}>
                                         <Button type="button" className={"w-full"}
                                                 onClick={async () => {
-                                                    const isValid = await form.trigger(["fullName", "email", "dateOfBirth"]);
+                                                    const isValid = await form.trigger(["fullname", "email", "dateOfBirth"]);
                                                     if (isValid) setFormState("accountInfo");
                                                 }}>
                                             Tiếp theo

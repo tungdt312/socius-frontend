@@ -16,6 +16,7 @@ import {signInSchema} from "@/schema/authSchema";
 import {fetcher} from "@/lib/fetcher";
 import {AccountStatus} from "@/constants/enum";
 import OTPModal from "@/components/OTPModal";
+import {LoginRequest, LoginResponse, SendVerifyEmailResponse} from "@/types/api";
 
 const SignInForm = () => {
     const router = useRouter()
@@ -38,11 +39,14 @@ const SignInForm = () => {
         setIsLoading(true);
         try {
             //Gui thông tin
-            const res = await fetcher("/api/auth/login", {
+            const req: LoginRequest = {
+                username: values.username,
+                password: values.password,
+            }
+            const res = await fetcher<LoginResponse>("/api/auth/login", {
                 method: "POST",
-                body: JSON.stringify(values),
+                body: JSON.stringify(req),
             });
-            console.log(res);
             if (res.status !== AccountStatus.BLOCKED && res.status !== AccountStatus.PENDING) {
                 toast.success("Đăng nhập thành công.")
                 router.push("/");
@@ -56,7 +60,7 @@ const SignInForm = () => {
                     action: {
                         label: "Gửi mail",
                         onClick: async()=> {
-                            const sendEmail = await fetcher("/api/auth/sendOtp",{
+                            const sendEmail = await fetcher<SendVerifyEmailResponse>("/api/auth/sendOtp",{
                                 method: "POST",
                                 body: JSON.stringify({email: res.email}),
                             })
