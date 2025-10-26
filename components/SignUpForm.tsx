@@ -55,7 +55,6 @@ const SignUpForm = () => {
                 method: "POST",
                 body: JSON.stringify(req),
             })
-            console.log(res)
             toast.success("Đăng ký thành công.");
 
             const otpReq: SendVerifyEmailRequest = {email: values.email}
@@ -63,7 +62,6 @@ const SignUpForm = () => {
                 method: "POST",
                 body: JSON.stringify(otpReq),
             })
-            console.log(sendEmail)
             toast.success("Email xác thực đã được gửi.");
 
             setIsOpen(true);

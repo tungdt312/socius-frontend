@@ -5,6 +5,7 @@ import * as SelectPrimitive from "@radix-ui/react-select"
 import { CheckIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import {ThemeProvider} from "@/components/ThemeProvider";
 
 function Select({
   ...props
@@ -59,6 +60,7 @@ function SelectContent({
 }: React.ComponentProps<typeof SelectPrimitive.Content>) {
   return (
     <SelectPrimitive.Portal>
+      <ThemeProvider>
       <SelectPrimitive.Content
         data-slot="select-content"
         className={cn(
@@ -83,6 +85,7 @@ function SelectContent({
         </SelectPrimitive.Viewport>
         <SelectScrollDownButton />
       </SelectPrimitive.Content>
+      </ThemeProvider>
     </SelectPrimitive.Portal>
   )
 }

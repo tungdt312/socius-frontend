@@ -9,3 +9,4 @@ export enum AccountStatus {
     NOT_AUTHORIZED = "NOT_AUTHORIZED", // chưa được cấp quyền
     NOT_SOLVED = "NOT_SOLVED",    // lỗi kỹ thuật hoặc chưa hoàn tất xử lý
 }
+

@@ -60,8 +60,6 @@ export function ThemeProvider({
 
     const themeMode =
         storedTheme.mode === "system" ? systemMode : storedTheme.mode;
-
-    console.log("ThemeProviderContextProvider", JSON.stringify(storedTheme));
     return (
         <ThemeProviderContext.Provider {...props} value={value}>
             <div data-theme={`${storedTheme.color}-${themeMode}`} className={themeMode}>
