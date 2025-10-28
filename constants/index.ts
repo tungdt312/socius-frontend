@@ -7,21 +7,13 @@ export const userNavItems = [
         url: "/",
         icon: House
     },{
-        name: "Tìm kiếm",
-        url: "/",
-        icon: Search
+        name: "Khám phá",
+        url: "/explore",
+        icon: Compass
     },{
         name: "Tin nhắn",
         url: "/message",
         icon: MessageCircle
-    },{
-        name: "Thông báo",
-        url: "/",
-        icon: Bell
-    },{
-        name: "Tạo",
-        url: "/",
-        icon: PlusSquare
     },{
         name: "Cài đặt",
         url: "/setting",

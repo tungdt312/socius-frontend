@@ -6,15 +6,11 @@ import {Button} from "@/components/ui/button";
 import {Bell, House, PlusSquare} from "lucide-react";
 import {useRouter} from "next/navigation";
 
-const Header = ({user}: { user: any }) => {
+const Header2 = ({user}: { user: any }) => {
     const router = useRouter();
     return (
         <div
-            className={"sticky top-0 h-auto w-full flex items-center justify-between bg-accent rounded-none border-b-1 border-border px-4 py-1 md:hidden"}>
-            <Link href="/">
-                <Image alt={"logo"} src={'/Logo-full.svg'} height={100} width={100}
-                       className="h-auto w-auto"/>
-            </Link>
+            className={"sticky top-0 h-auto w-full items-center justify-end bg-accent rounded-none px-4 py-1 hidden md:flex"}>
             <div className="flex items-center h-auto w-auto space-x-4">
                 <Button
                     variant="link"
@@ -44,4 +40,4 @@ const Header = ({user}: { user: any }) => {
         </div>
     )
 }
-export default Header
+export default Header2
