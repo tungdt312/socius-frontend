@@ -2,14 +2,11 @@
 import React from 'react'
 import Image from 'next/image'
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
-import {userNavItems, userSettingNavItems} from "@/constants";
+import {ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY, userNavItems, userSettingNavItems} from "@/constants";
 import Link from "next/link";
 import {usePathname, useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
-import {UserResponse} from "@/types/dtos/user";
-import {ScrollArea} from "@/components/ui/scroll-area";
 import {LogOut} from "lucide-react";
-import {clearToken, globalState} from "@/lib/token";
 
 const SettingSideNav = () => {
     const router = useRouter();
@@ -40,10 +37,12 @@ const SettingSideNav = () => {
                 </div>
                 <Button
                     onClick={() => {
-                        clearToken()
+                        localStorage.removeItem(USER_KEY);
+                        localStorage.removeItem(ACCESS_TOKEN_KEY);
+                        localStorage.removeItem(REFRESH_TOKEN_KEY);
                         router.push("/sign-in")
                     }}
-                    className="gap-2 size-fit h-fit lg:w-full justify-start items-center px-2 lg:px-4 py-2 text-primary-foreground rounded-[8px] bg-destructive hover:bg-destructive/30"
+                    className="gap-2 size-fit h-fit lg:w-full justify-start items-center px-2 lg:px-4 py-2 text-white rounded-[8px] bg-destructive hover:bg-destructive/30"
                 >
                     <LogOut className="size-5"/>
                     <p className=" hidden lg:block ">

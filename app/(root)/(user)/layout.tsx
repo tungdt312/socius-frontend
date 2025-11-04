@@ -1,6 +1,4 @@
-import {MessageCircle} from 'lucide-react'
 import React from 'react'
-import Link from "next/link";
 import {ScrollArea} from "@/components/ui/scroll-area";
 
 const Layout = ({children}: { children: React.ReactNode }) => {

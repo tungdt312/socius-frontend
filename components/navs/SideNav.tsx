@@ -1,5 +1,5 @@
 "use client"
-import React, {useEffect} from 'react'
+import React, {useEffect, useState} from 'react'
 import Image from 'next/image'
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
 import {USER_KEY, userNavItems} from "@/constants";
@@ -17,21 +17,22 @@ const SideNav = () => {
     const router = useRouter();
     const pathName = usePathname();
     const rootPath = getFirstPath(pathName);
-    let user : UserResponse = {
-        id: '',
-        displayName: '',
-        avatarUrl: '',
-        isActive: false,
-        bio: '',
-        favorites: '',
-        dateOfBirth: ''
-    } ;
+    const [user, setUser] = useState<UserResponse | null>(null);
+
     useEffect(() => {
         const data = localStorage.getItem(USER_KEY)
-        if (data) user = JSON.parse(data);
-        else router.push("/sign-in");
-    })
+        if (data) {
+            setUser(JSON.parse(data));
+        } else {
+            if (pathName !== "/sign-in") {
+                router.push("/sign-in");
+            }
+        }
+    }, [router, pathName])
 
+    if (!user) {
+        return null;
+    }
     return (
 
         <div
@@ -71,7 +72,7 @@ const SideNav = () => {
                     >
                         <Image
                             alt="avatar"
-                            src={(user.avatarUrl)?? process.env.NEXT_PUBLIC_AVATAR_URL}
+                            src={user.avatarUrl|| process.env.NEXT_PUBLIC_AVATAR_URL!}
                             height={40}
                             width={40}
                             className="size-7 rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"

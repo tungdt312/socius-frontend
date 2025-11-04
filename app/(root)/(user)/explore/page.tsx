@@ -1,7 +1,6 @@
 import React from 'react'
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import {UserList} from "@/components/user/UserList";
-import {globalState} from "@/lib/token";
 
 const Page = () => {
     return (
@@ -17,7 +16,7 @@ const Page = () => {
                 </TabsContent>
                 <TabsContent className={"gap-2"} value="user">
                     <p className={"heading5 mb-4"}>Người dùng</p>
-                    <UserList userId={globalState.owner?.id ?? ""} type={"None"}/>
+                    <UserList type={"search"}/>
                 </TabsContent>
             </Tabs>
         </div>

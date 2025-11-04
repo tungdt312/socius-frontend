@@ -19,57 +19,46 @@ import {BASE, formatNumber} from "@/lib/utils";
 import {FollowListItem, FriendListItem, UserListItemSkeleton} from "@/components/user/ListItem";
 import {Page} from "@/types/dtos/base";
 import {ScrollArea} from "@/components/ui/scroll-area";
+import {listMapper, UserListType} from "@/constants/enum";
+import {getFriendsList} from "@/services/friendService";
+import {getFollowList, getUsersList} from "@/services/userService";
+import {toast} from "sonner";
+import {USER_KEY} from "@/constants";
+import {router} from "next/client";
+import {useRouter} from "next/navigation";
 
-type UserListType = "Friends" | "Followers" | "Followings" | "Blockeds" | "None" | "Sent" | "Pending";
-const listMapper: Record<UserListType, { endpoint: string; label: string }> = {
-    Friends: {
-        endpoint: "",
-        label: "Bạn bè",
-    },
-    Followers: {
-        endpoint: "/followers",
-        label: "Người theo dõi",
-    },
-    Followings: {
-        endpoint: "/followings",
-        label: "Đang theo dõi",
-    },
-    Blockeds: {
-        endpoint: "blocked",
-        label: "Đã chặn",
-    },
-    Sent: {
-        endpoint: "sent",
-        label: "Lời mời đã gửi",
-    },
-    Pending: {
-        endpoint: "pending",
-        label: "Lời mời kết bạn",
-    },
-    None: {
-        endpoint: "search",
-        label: "Người dùng",
-    }
-};
+
 export const UserListTag = ({userId, type}: { userId: string, type: UserListType }) => {
     const [page, setPage] = useState<Page<UserRelationResponse>>();
-    const {endpoint, label} = listMapper[type];
-    const baseEndpoint = ["Blockeds", "Friends"].includes(type) ? "friends" : "users"
-    const Endpoint = `${BASE}/api/${baseEndpoint}/${userId}${endpoint}`
-    const fetchUsers = async () => {
-        try {
-            const res = await fetch(Endpoint, {
-                method: "GET",
-            });
-            const data: Page<UserRelationResponse> = await res.json();
-            setPage(data);
-        } catch (err) {
-            throw new Error("GetUser");
-        }
-    };
+    const {label} = listMapper[type];
     useEffect(() => {
+        const fetchUsers = async () => {
+            try {
+                let res: Page<UserRelationResponse>;
+                switch (type) {
+                    case "friends":
+                        res = await getFriendsList(undefined, userId)
+                        break;
+                    case "following":
+                        res = await getFollowList(userId, type);
+                        break;
+                    case "followers":
+                        res = await getFollowList(userId, type);
+                        break;
+                    case "search":
+                        res = await getUsersList();
+                        break;
+                    default:
+                        res = await getFriendsList(type);
+                }
+                setPage(res);
+            } catch (err) {
+                throw new Error((err as Error).message ?? "Lấy danh sách người dùng thất bại");
+            }
+        }
         fetchUsers();
     }, [userId]);
+
     return (
         <AlertDialog>
             <AlertDialogTrigger className="cursor-pointer body2 hover:opacity-75 ">
@@ -84,8 +73,9 @@ export const UserListTag = ({userId, type}: { userId: string, type: UserListType
                         <X/>
                     </AlertDialogCancel>
                 </AlertDialogHeader>
-                <AlertDialogDescription className={"h-[450px] w-full"}>
-                    <Separator/>
+                <Separator/>
+                <AlertDialogDescription className={"h-[450px] mt-2 w-full"}>
+
                     <UserList userId={userId} type={type}/>
                 </AlertDialogDescription>
             </AlertDialogContent>
@@ -94,44 +84,63 @@ export const UserListTag = ({userId, type}: { userId: string, type: UserListType
         ;
 };
 export const UserList = ({userId, type}: {
-    userId: string,
+    userId?: string,
     type: UserListType
 }) => {
+    const router = useRouter();
     const [users, setUsers] = useState<UserRelationResponse[]>([]);
     const [page, setPage] = useState<Page<UserRelationResponse>>();
     const [isLoading, setIsLoading] = useState(false);
-    const [error, setError] = useState<string | null>(null);
+    const [error, setError] = useState(false);
     const [search, setSearch] = useState("");
-    const {endpoint, label} = listMapper[type];
-    const baseEndpoint = (type === "None")? 'users/search' :(["Blockeds", "Friends","Sent","Pending"].includes(type) ? `friends?type=${endpoint}` : `users/${userId}/${endpoint}`)
-    const Endpoint = `${BASE}/api/${baseEndpoint}`
-
-    const fetchUsers = async () => {
-        setIsLoading(true);
-        setError(null);
-        try {
-            const res = await fetch(Endpoint, {
-                method: "GET",
-                cache: "no-cache"
-            });
-            if (!res.ok) {
-                setError(`Không thể tải danh sách ${label}`);
-                return
-            }
-            const data: Page<UserRelationResponse> = await res.json();
-            setUsers(data.content)
-            setPage(data)
-            console.log(data)
-        } catch (err) {
-            throw new Error("getUser");
-        } finally {
-            setIsLoading(false);
-        }
-    };
-
+    const {label} = listMapper[type];
     useEffect(() => {
+        const fetchUsers = async () => {
+            setIsLoading(true);
+            setError(false);
+
+            try {
+                let effectiveUserId = userId;
+
+                if (!effectiveUserId && (type === "following" || type === "followers")) {
+                    const storedUser = localStorage.getItem(USER_KEY);
+                    if (storedUser) {
+                        effectiveUserId = JSON.parse(storedUser).id;
+                    } else {
+                        throw new Error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+                    }
+                }
+
+                let res: Page<UserRelationResponse>;
+                switch (type) {
+                    case "friends":
+                        res = await getFriendsList(undefined, userId);
+                        break;
+                    case "following":
+                    case "followers":
+                        res = await getFollowList(effectiveUserId!, type);
+                        break;
+                    case "search":
+                        res = await getUsersList();
+                        break;
+                    default:
+                        res = await getFriendsList(type);
+                }
+
+                setPage(res);
+                setUsers(users.concat(res.content ?? []));
+
+            } catch (err) {
+                toast.error((err as Error).message ?? "Lấy danh sách người dùng thất bại");
+                setError(true);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
         fetchUsers();
-    }, [userId]);
+    }, [type, userId]);
+
 
     const filtered = users.filter((user) =>
         user.displayName.toLowerCase().includes(search.toLowerCase())
@@ -139,37 +148,34 @@ export const UserList = ({userId, type}: {
 
     return (
         <>
-            <div className="flex w-full items-center gap-2 mb-2">
-                <Input
-                    type="text"
-                    placeholder="Tìm kiếm"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                />
-            </div>
+
+            <Input className="flex w-full items-center gap-2 mb-2"
+                   type="text"
+                   placeholder="Tìm kiếm"
+                   value={search}
+                   onChange={(e) => setSearch(e.target.value)}
+            />
             <ScrollArea className="flex flex-col items-center w-full h-[450px] overflow-hidden">
                 <div className={"flex flex-col items-center gap-2 w-full h-fit"}>
-                {error ? (
-                    <>
-                        <p>{error}</p>
-                        <Button onClick={fetchUsers} variant={"outline"}>Thử lại</Button>
-                    </>
-                ) : (
-                    <>
-                        {filtered.length > 0 ? (
-                            filtered.map((user) => (
-                                (type == "Followers" || type == "Followings")?
-                                    <FollowListItem user={user} key={user.id}/>    :
-                                <FriendListItem user={user} key={user.id}/>
-                            ))
-                        ) : (
-                            <>
+                    {error ? (
+                        <>
+                            <p>{error}</p>
+                            <Button onClick={router.refresh} variant={"outline"} size={"sm"}>Thử lại</Button>
+                        </>
+                    ) : (
+                        <>
+                            {filtered.length > 0 ? (
+                                filtered.map((user) => (
+                                    (type == "followers" || type == "following") ?
+                                        <FollowListItem user={user} key={user.id}/> :
+                                        <FriendListItem user={user} key={user.id}/>
+                                ))
+                            ) : (
                                 <p className={"text-center w-full"}>Không có {label} nào</p>
-                            </>
-                        )}
-                    </>
-                )}
-                {isLoading && <UserListItemSkeleton/>}
+                            )}
+                        </>
+                    )}
+                    {isLoading && <UserListItemSkeleton/>}
                 </div>
             </ScrollArea>
         </>

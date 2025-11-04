@@ -1,6 +1,5 @@
 import React from 'react'
 import {UserList} from "@/components/user/UserList";
-import {globalState} from "@/lib/token";
 import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 
 const Page = () => {
@@ -15,15 +14,15 @@ const Page = () => {
                 </TabsList>
                 <TabsContent className={"gap-2"} value="friend">
                     <p className={"heading5 mb-4"}>Danh sách bạn bè</p>
-                    <UserList userId={globalState.owner?.id ?? ""} type={"Friends"} />
+                    <UserList type={"friends"} />
                 </TabsContent>
                 <TabsContent className={"gap-2"} value="request">
                     <p className={"heading5 mb-4"}>Lời mời kết bạn</p>
-                    <UserList userId={globalState.owner?.id ?? ""} type={"Pending"} />
+                    <UserList type={"pending"} />
                 </TabsContent>
                 <TabsContent className={"gap-2"} value="sent">
                     <p className={"heading5 mb-4"}>Lời mời đã gửi</p>
-                    <UserList userId={globalState.owner?.id ?? ""} type={"Sent"} />
+                    <UserList type={"sent"} />
                 </TabsContent>
             </Tabs>
         </div>

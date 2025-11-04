@@ -6,9 +6,11 @@ import {Dot} from "lucide-react";
 import {Skeleton} from "@/components/ui/skeleton";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
-import {globalState} from "@/lib/token";
-import {useState} from "react";
+import {useEffect, useState} from "react";
 import {FriendActionTypes, FriendshipStatus} from "@/constants/enum";
+import {follow, unfollow} from "@/services/userService";
+import {deleteFriendAction, postFriendAction} from "@/services/friendService";
+import {USER_KEY} from "@/constants";
 
 export const UserListItemSkeleton = () => {
     return <Item className="w-full flex-row items-center justify-between">
@@ -25,44 +27,30 @@ export const UserListItemSkeleton = () => {
     </Item>
 }
 
-/*export const FriendListItem = ({user}: { user: UserRelationResponse }) => {
-    return (
-        <Link href={`/user/${user.id}`} className="w-full flex-row items-center justify-between">
-            <Item >
-                <ItemMedia>
-                    <Image
-                        src={user.avatarUrl ?? process.env.NEXT_PUBLIC_AVATAR_URL!}
-                        alt={user.displayName}
-                        width={44}
-                        height={44}
-                        className="size-full rounded-full max-w-11 mx-auto"
-                        loading={"lazy"}
-                    />
-                </ItemMedia>
-                <ItemContent className="flex-row items-center justify-between w-full">
-                    <ItemTitle>
-                        <p className={"truncate max-w-60"}>{user.displayName}</p>
-                    </ItemTitle>
-                    <Dot className={user.isActive ? "text-success size-10" : "text-muted-foreground  size-10"}/>
-                </ItemContent>
-            </Item>
-        </Link>
-    );
-};*/
+export const FollowListItem = ({ user }: { user: UserRelationResponse }) => {
+    // 2. Dùng state cục bộ để UI phản hồi ngay lập tức
+    const [isFollowing, setIsFollowing] = useState(user.following);
+    const [isLoading, setIsLoading] = useState(false);
 
-export const FollowListItem = ({user}: { user: UserRelationResponse }) => {
-    const FollowHandle = async (isFollowing: boolean) => {
+    const FollowHandle = async (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
+
+        setIsLoading(true);
+
+        const action = isFollowing ? "unfollow" : "follow";
+
         try {
-            const res = await fetch(`api/users/follow?targetId=${user.id}`, {
-                method: (isFollowing) ? "DELETE" : "POST",
-            })
-            if (!res.ok) {
-                toast.error((isFollowing) ? "Hủy theo dõi thất bại" : "Theo dõi thất bại")
-            }
+            isFollowing ? await follow(user.id): unfollow(user.id);
+            setIsFollowing(!isFollowing);
+            toast.success(isFollowing ? "Hủy theo dõi thành công" : "Theo dõi thành công");
         } catch (error) {
-            throw new Error("Follow failed");
+            toast.error(isFollowing ? "Hủy theo dõi thất bại" : "Theo dõi thất bại");
+        } finally {
+            setIsLoading(false);
         }
     }
+
     return (
         <Link href={`/user/${user.id}`} className="w-full flex-row items-center justify-between">
             <Item>
@@ -81,8 +69,9 @@ export const FollowListItem = ({user}: { user: UserRelationResponse }) => {
                         <p className={"truncate max-w-60"}>{user.displayName}</p>
                     </ItemTitle>
                     <ItemActions>
-                        <Button size={"sm"} onClick={()=>FollowHandle(user.following)}>
-                            {(user.following) ? "Hủy theo dõi" : "Theo dõi"}
+                        {/* 6. Dùng state 'isFollowing' và 'isLoading' */}
+                        <Button size={"sm"} onClick={FollowHandle} disabled={isLoading}>
+                            {isFollowing ? "Hủy theo dõi" : "Theo dõi"}
                         </Button>
                     </ItemActions>
                 </ItemContent>
@@ -90,30 +79,39 @@ export const FollowListItem = ({user}: { user: UserRelationResponse }) => {
         </Link>
     );
 }
-export const FriendListItem = ({user}: { user: UserRelationResponse }) => {
-    const currentUserId = globalState.owner?.id;
-    const initialType = (() => {
-        const status = user.friendship?.status;
-        if (!status) return "";
-        if (status === FriendshipStatus.PENDING) {
-            return user.friendship.senderId === currentUserId ? FriendActionTypes.unsend : FriendActionTypes.accept;
-        }
-        if (status === FriendshipStatus.FRIEND) return "";
-        if (status === FriendshipStatus.BLOCKED) return FriendActionTypes.unblock;
-        return FriendActionTypes.send;
-    })();
-    const [type, setType] = useState(initialType);
-    const HandleAction = async (type: FriendActionTypes) => {
-        try {
-            const res = await fetch(`api/friends?type=${type}&&targetId=${user.id}`, {
-                method: [FriendActionTypes.unblock, FriendActionTypes.unfriend].includes(type as FriendActionTypes)
-                    ? "DELETE" : "POST",
-            })
-            if (!res.ok) {
-                toast.error("Thao tác thất bại")
-                return
+
+export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
+    const currentUserId = JSON.parse(localStorage.getItem(USER_KEY)??"").id;
+    const [type, setType] = useState("");
+    const [isLoading, setIsLoading] = useState(false);
+
+    useEffect(() => {
+        const initialType = (() => {
+            const status = user.friendship?.status;
+            if (!status) return FriendActionTypes.send; // Mặc định là 'send' nếu không có quan hệ
+            if (status === FriendshipStatus.PENDING) {
+                return user.friendship.senderId === currentUserId ? FriendActionTypes.unsend : FriendActionTypes.accept;
             }
-            switch (type) {
+            if (status === FriendshipStatus.FRIEND) return ""; // Trạng thái bạn bè, không có action
+            if (status === FriendshipStatus.BLOCKED) return FriendActionTypes.unblock;
+            return FriendActionTypes.send;
+        })();
+    },[])
+    const HandleAction = async (e: React.MouseEvent, actionType: FriendActionTypes) => {
+        // 2. NGĂN CHẶN LINK ĐIỀU HƯỚNG
+        e.preventDefault();
+        e.stopPropagation();
+
+        setIsLoading(true);
+
+        const isDeleteAction = [FriendActionTypes.unblock, FriendActionTypes.unfriend].includes(actionType);
+        const action = isDeleteAction ? deleteFriendAction : postFriendAction;
+
+        try {
+            await action(user.id, actionType);
+            toast.success("Thao tác thành công");
+
+            switch (actionType) {
                 case FriendActionTypes.send:
                     setType(FriendActionTypes.unsend);
                     break;
@@ -129,9 +127,12 @@ export const FriendListItem = ({user}: { user: UserRelationResponse }) => {
                     setType(FriendActionTypes.send);
             }
         } catch (error) {
-            throw new Error("Action failed")
+            toast.error("Thao tác thất bại");
+        } finally {
+            setIsLoading(false);
         }
     };
+
     const getActionLabel = (actionType: string) => {
         const labels = {
             [FriendActionTypes.send]: "Gửi lời mời",
@@ -141,10 +142,10 @@ export const FriendListItem = ({user}: { user: UserRelationResponse }) => {
             [FriendActionTypes.unfriend]: "Hủy kết bạn",
             [FriendActionTypes.block]: "Chặn",
             [FriendActionTypes.unblock]: "Bỏ chặn",
-
         };
         return labels[actionType as FriendActionTypes] ?? "Thao tác";
     };
+
     return (
         <Link href={`/user/${user.id}`} className="w-full flex-row items-center justify-between">
             <Item>
@@ -163,13 +164,23 @@ export const FriendListItem = ({user}: { user: UserRelationResponse }) => {
                         <p className={"truncate max-w-60"}>{user.displayName}</p>
                     </ItemTitle>
                     {type.length === 0 ? (
-                            <Dot className={user.isActive ? "text-success size-10" : "text-muted-foreground  size-10"}/>) :
+                            <Dot className={user.isActive ? "text-success size-10" : "text-muted-foreground  size-10"} />) :
                         <ItemActions>
-                            <Button size={"sm"} variant={(type === FriendActionTypes.unblock) ? "destructive": "default"} onClick={() => HandleAction(type as FriendActionTypes)}>
+                            <Button
+                                size={"sm"}
+                                variant={(type === FriendActionTypes.unblock) ? "destructive" : "default"}
+                                onClick={(e) => HandleAction(e, type as FriendActionTypes)}
+                                disabled={isLoading}
+                            >
                                 {getActionLabel(type as FriendActionTypes)}
                             </Button>
                             {type == FriendActionTypes.accept &&
-                                <Button size={"sm"}  variant={"secondary"} onClick={() => HandleAction(FriendActionTypes.reject)}>
+                                <Button
+                                    size={"sm"}
+                                    variant={"secondary"}
+                                    onClick={(e) => HandleAction(e, FriendActionTypes.reject)}
+                                    disabled={isLoading}
+                                >
                                     {getActionLabel(FriendActionTypes.reject)}
                                 </Button>}
                         </ItemActions>

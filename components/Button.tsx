@@ -7,8 +7,8 @@ import {UserRelationResponse} from "@/types/dtos/user";
 import {FriendActionTypes, FriendshipStatus} from '@/constants/enum';
 import {ChevronDown} from "lucide-react";
 import {BASE} from "@/lib/utils";
-import {globalState} from "@/lib/token";
 import {useRouter} from "next/navigation";
+import {USER_KEY} from "@/constants";
 
 export const FollowButton =  ({user}: { user: UserRelationResponse }) => {
     const router = useRouter()
@@ -56,7 +56,7 @@ export const FollowButton =  ({user}: { user: UserRelationResponse }) => {
 export const FriendButton =  ({user}: { user: UserRelationResponse }) => {
     const router = useRouter()
     const [state, setState] = useState<FriendshipStatus>(user.friendship.status ?? FriendshipStatus.NONE)
-    const [isSend, setIsSend] = useState<boolean>(globalState.owner?.id === (user.friendship.senderId ?? -1))
+    const [isSend, setIsSend] = useState<boolean>(JSON.parse(localStorage.getItem(USER_KEY)?? "").id === (user.friendship.senderId ?? -1))
 
     const HandleAction = async (type: FriendActionTypes) => {
         try {

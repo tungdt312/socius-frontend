@@ -6,7 +6,7 @@ import {
     ResetPasswordRequest,
     SendVerifyEmailRequest
 } from "@/types/dtos/auth";
-import {apiFetch} from "@/services/baseService";
+import {apiFetch, processResponse} from "@/services/baseService";
 import {BaseResponse} from "@/types/dtos/base";
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
@@ -20,7 +20,7 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
     });
     if (!res.ok) throw new Error(res.statusText);
     console.log("Sign in success");
-    return res.json();
+    return processResponse(res);
 }
 
 export async function register(data: RegisterRequest): Promise<RegisterResponse> {
@@ -33,7 +33,7 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
         body: JSON.stringify(data),
     })
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }
 
 export async function resetPassword(data: ResetPasswordRequest): Promise<BaseResponse> {
@@ -46,7 +46,7 @@ export async function resetPassword(data: ResetPasswordRequest): Promise<BaseRes
         body: JSON.stringify(data),
     })
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }
 
 export async function sendVerifyEmail(data: SendVerifyEmailRequest): Promise<BaseResponse> {
@@ -59,7 +59,7 @@ export async function sendVerifyEmail(data: SendVerifyEmailRequest): Promise<Bas
         body: JSON.stringify(data),
     })
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }
 
 export async function verifyOTP(data: OtpVerificationRequest ): Promise<BaseResponse>{
@@ -72,5 +72,5 @@ export async function verifyOTP(data: OtpVerificationRequest ): Promise<BaseResp
         body: JSON.stringify(data),
     })
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }

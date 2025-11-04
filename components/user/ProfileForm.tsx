@@ -1,15 +1,14 @@
 "use client"
-import React from "react";
+import React, {useEffect, useState} from "react";
 import {Field, FieldGroup, FieldLabel, FieldSet} from "@/components/ui/field";
 import {Input} from "@/components/ui/input";
 import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";
 import Image from "next/image";
-import {globalState} from "@/lib/token";
 import {toast} from "sonner";
-import {BASE} from "@/lib/utils";
-import {updateUserProfile} from "@/lib/fetcher";
 import {putMe} from "@/services/userService";
+import {USER_KEY} from "@/constants";
+import {UserResponse} from "@/types/dtos/user";
 
 interface ProfileFormProps {
     initialDisplayName?: string;
@@ -23,32 +22,46 @@ const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
 const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
 
 const ProfileForm = () => {
-    const initialUser = globalState.owner
-    console.log("initialUser", initialUser?.bio)
-    const [displayName, setDisplayName] = React.useState(initialUser?.displayName ?? "");
-    const [bio, setBio] = React.useState(initialUser?.bio ?? "");
-    const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
-    const [previewUrl, setPreviewUrl] = React.useState<string | null>(initialUser?.avatarUrl || null);
-    const [error, setError] = React.useState<string | null>(null);
-    const [loading, setLoading] = React.useState(false);
+    const [displayName, setDisplayName] = useState("");
+    const [bio, setBio] = useState("");
+    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Dùng null
+    const [isLoadingData, setIsLoadingData] = useState(true); // State cho lần tải đầu
 
-    React.useEffect(() => {
+    const [error, setError] = useState<string | null>(null);
+    const [loading, setLoading] = useState(false); // State cho lúc submit
+
+    // useEffect này chỉ dùng để tải dữ liệu LẦN ĐẦU
+    useEffect(() => {
+        const data = localStorage.getItem(USER_KEY);
+        if (data) {
+            const user: UserResponse = JSON.parse(data); // Parse trong useEffect
+            setBio(user.bio);
+            setDisplayName(user.displayName);
+            setPreviewUrl(user.avatarUrl); // Set URL ban đầu
+        }
+        setIsLoadingData(false); // Đánh dấu đã tải xong
+    },[]);
+
+
+    useEffect(() => {
         if (!avatarFile) return;
         const url = URL.createObjectURL(avatarFile);
-        setPreviewUrl(url);
+        setPreviewUrl(url); // Ghi đè preview
         return () => URL.revokeObjectURL(url);
     }, [avatarFile]);
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+
         setError(null);
         const file = e.target.files?.[0] ?? null;
         if (!file) return;
         if (!ACCEPTED_TYPES.includes(file.type)) {
-            setError("Loại file này không được hỗ trợ. Hãy thử lại với PNG/JPEG/WEBP.");
+            toast.error("Loại file này không được hỗ trợ. Hãy thử lại với PNG/JPEG/WEBP.");
             return;
         }
         if (file.size > MAX_AVATAR_SIZE) {
-            setError("Ảnh đại diện quá lớn. Dung lượng tối đa là 2MB.");
+            toast.error("Ảnh đại diện quá lớn. Dung lượng tối đa là 2MB.");
             return;
         }
         setAvatarFile(file);
@@ -69,17 +82,24 @@ const ProfileForm = () => {
         if (avatarFile) {
             form.append("avatarFile", avatarFile);
         }
-        debugger
         setLoading(true);
         try {
-            const res = await putMe(form)
-            toast.error("Lưu trang cá nhân thành công");
+            const updatedUser: UserResponse = await putMe(form);
+
+            localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+            setPreviewUrl(updatedUser.avatarUrl);
+            setAvatarFile(null);
+            toast.success("Lưu trang cá nhân thành công");
         } catch (error) {
             setError((error as Error).message ?? "Lỗi không xác định");
         } finally {
             setLoading(false);
         }
     };
+
+    if (isLoadingData) {
+        return <div>Đang tải dữ liệu...</div>;
+    }
 
     return (
         <form onSubmit={handleSubmit} className="w-full max-w-lg">
@@ -91,9 +111,15 @@ const ProfileForm = () => {
                             className="flex flex-col md:flex-row items-center justify-between rounded-2xl bg-accent p-4 gap-2">
                             <div
                                 className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-                                {previewUrl ? (
-                                    <Image src={previewUrl} alt="avatar preview" className="object-cover" width={80}
-                                           height={80}/>
+
+                                {previewUrl ? ( // 6. Sửa: Chỉ cần check truthy
+                                    <Image
+                                        src={previewUrl || process.env.NEXT_PUBLIC_AVATAR_URL!}
+                                        alt="avatar preview"
+                                        className="object-cover"
+                                        width={80}
+                                        height={80}
+                                    />
                                 ) : (
                                     <div className="text-sm text-gray-400">No avatar</div>
                                 )}
@@ -110,7 +136,6 @@ const ProfileForm = () => {
                             </div>
                         </div>
                     </Field>
-
                     <Field orientation={"vertical"}>
                         <FieldLabel>Tên hiển thị</FieldLabel>
                         <Input
@@ -121,7 +146,6 @@ const ProfileForm = () => {
                             className="w-full"
                         />
                     </Field>
-
                     <Field orientation={"vertical"}>
                         <FieldLabel>Giới thiệu</FieldLabel>
                         <Textarea
@@ -135,9 +159,6 @@ const ProfileForm = () => {
                     </Field>
                 </FieldSet>
             </FieldGroup>
-
-            {error && <div className="text-sm text-red-600 mt-3">{error}</div>}
-
             <div className="mt-4 flex justify-end gap-2">
                 <Button
                     type="submit"

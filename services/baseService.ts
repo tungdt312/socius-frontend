@@ -47,7 +47,7 @@ async function refreshAccessToken(): Promise<string | null> {
  * @param options Tùy chọn của Fetch (method, body, headers...)
  * @returns {Promise<Response>} Trả về Response gốc
  */
-export async function apiFetch(url: string, needAuth: boolean, options: RequestInit = {}): Promise<Response> {
+export async function apiFetch(url: string, needAuth: boolean,  options: RequestInit = {}): Promise<Response> {
     // 1. Lấy token từ localStorage
     try {
         const token = localStorage.getItem(ACCESS_TOKEN_KEY);
@@ -92,4 +92,70 @@ export async function apiFetch(url: string, needAuth: boolean, options: RequestI
     } catch (error) {
         throw new Error((error as Error).message ?? "Lỗi server hoặc API");
     }
+}
+
+// Chỉ để nhắc bạn nhớ về "cỗ máy"
+// ... (apiFetch, refreshAccessToken, processResponse đã sửa...)
+
+/*export const http = {
+    get: async <T>(url: string): Promise<T> => {
+        const res = await apiFetch(url, { method: 'GET' });
+        return processResponse(res); // <--- Tự động xử lý lỗi JSON
+    },
+    post: async <T>(url: string, body?: any): Promise<T> => {
+        const options: RequestInit = {
+            method: 'POST',
+            body: (body instanceof FormData) ? body : JSON.stringify(body),
+        };
+        const res = await apiFetch(url, options);
+        return processResponse(res); // <--- Tự động xử lý lỗi JSON
+    },
+    del: async <T>(url: string, body?: any): Promise<T> => {
+        const options: RequestInit = {
+            method: 'DELETE',
+            body: JSON.stringify(body),
+        };
+        const res = await apiFetch(url, options);
+        return processResponse(res); // <--- Tự động xử lý lỗi JSON
+    }
+};*/
+/**
+ * Hàm nội bộ xử lý kết quả trả về (Phiên bản chống lỗi)
+ */
+export async function processResponse<T>(res: Response): Promise<T> {
+
+    // 1. Kiểm tra các status không có nội dung
+    if (res.status === 204 || res.statusText === "No Content") {
+        return undefined as T; // Trả về void (không có nội dung)
+    }
+
+    // 2. Đọc body dưới dạng text TRƯỚC
+    const text = await res.text();
+
+    // 3. Nếu text rỗng, coi như là thành công (void)
+    if (!text) {
+        if (!res.ok) {
+            // Vẫn ném lỗi nếu status là 4xx, 5xx
+            throw new Error(`API Error: ${res.status} ${res.statusText}`);
+        }
+        // Nếu 200 OK nhưng body rỗng, trả về void
+        return undefined as T;
+    }
+
+    // 4. Nếu text không rỗng, BÂY GIỜ mới parse
+    let data;
+    try {
+        data = JSON.parse(text);
+    } catch (e) {
+        // Bẫy lỗi nếu backend trả về text (không phải JSON)
+        console.error("Failed to parse JSON:", text);
+        throw new Error("Phản hồi API không phải là JSON hợp lệ.");
+    }
+
+    // 5. Xử lý lỗi từ API
+    if (!res.ok) {
+        throw new Error(data.message || `API Error: ${res.status}`);
+    }
+
+    return data as T;
 }

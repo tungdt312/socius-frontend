@@ -26,3 +26,34 @@ export enum FriendActionTypes {
     unblock = "unblock",
     unfriend = "unfriend",
 }
+export type UserListType =  "followers" | "following" | "search" | "blocked" | "friends" | "sent" | "pending";
+export const listMapper: Record<UserListType, { endpoint: string; label: string }> = {
+    friends: {
+        endpoint: "",
+        label: "Bạn bè",
+    },
+    followers: {
+        endpoint: "followers",
+        label: "Người theo dõi",
+    },
+    following: {
+        endpoint: "followings",
+        label: "Đang theo dõi",
+    },
+    blocked: {
+        endpoint: "blocked",
+        label: "Đã chặn",
+    },
+    sent: {
+        endpoint: "sent",
+        label: "Lời mời đã gửi",
+    },
+    pending: {
+        endpoint: "pending",
+        label: "Lời mời kết bạn",
+    },
+    search: {
+        endpoint: "search",
+        label: "Người dùng",
+    }
+};

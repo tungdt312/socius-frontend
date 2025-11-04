@@ -1,5 +1,4 @@
 import React from 'react'
-import SideNav from "@/components/navs/SideNav";
 import SettingSideNav from "@/components/navs/SettingSideNav";
 import SettingDropNav from "@/components/navs/SettingDropNav";
 import {ScrollArea} from "@/components/ui/scroll-area";

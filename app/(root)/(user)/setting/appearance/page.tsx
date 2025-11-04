@@ -1,5 +1,5 @@
 import React from 'react'
-import ThemeModeToggle, {ThemeForm} from "@/components/ThemeToggle";
+import {ThemeForm} from "@/components/ThemeToggle";
 
 const Page = () => {
     return (
