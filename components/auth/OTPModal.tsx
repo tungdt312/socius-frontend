@@ -14,12 +14,14 @@ import {REGEXP_ONLY_DIGITS} from 'input-otp';
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
 import {OtpType} from "@/constants/enum";
-import {ErrorResponse, OtpVerificationRequest, SendVerifyEmailRequest} from "@/types/apis/auth";
+import {ErrorResponse, OtpVerificationRequest, SendVerifyEmailRequest} from "@/types/dtos/auth";
+import {resetPassword, sendVerifyEmail, verifyOTP} from "@/services/authService";
 
 type verifyType = "verifyEmail" | "resetPassword";
 
-const OTPModal = ({email, onClose, type}: {
+const OTPModal = ({email, onClose, newPassword, type}: {
     email: string,
+    newPassword?: string,
     onClose: () => void,
     type: verifyType
 }) => {
@@ -36,19 +38,12 @@ const OTPModal = ({email, onClose, type}: {
                 code: code,
                 type: type === "verifyEmail" ? OtpType.verifyEmail : OtpType.resetPassword
             }
-            const res = await fetch("/api/auth/verifyOtp", {
-                method: "POST",
-                body: JSON.stringify(req),
-            })
-            if (!res.ok) {
-                toast.error((type === "verifyEmail") ? "Xác thực thất bại" : "Đổi mật khẩu thất bại")
-                return
-            }
+            const res = await verifyOTP(req)
             setIsOpen(false)
             onClose()
             toast.success((type === "verifyEmail") ? "Xác thực thành công" : "Đổi mật khẩu thành công")
-        } catch (err) {
-            toast.error("Lỗi không xác định!");
+        } catch (error: unknown) {
+            toast.error((error as Error).message ??"Lỗi không xác định!");
         } finally {
             setIsLoading(false)
         }
@@ -58,19 +53,13 @@ const OTPModal = ({email, onClose, type}: {
         console.log("resend otp")
         try {
             const otpReq: SendVerifyEmailRequest = {email: email}
-            const sendEmail =
-                await fetch((type === "verifyEmail") ? "/api/auth/sendOtp" : "/api/auth/resetPassword", {
-                    method: "POST",
-                    body: JSON.stringify(otpReq),
-                })
-            if (!sendEmail.ok) {
-                const errorData: ErrorResponse = await sendEmail.json();
-                toast.error(errorData.message === "" ? `Gửi email thất bại` : errorData.message);
-                return;
-            }
+            const sendEmail = (type === "verifyEmail") ? await sendVerifyEmail(otpReq) : await resetPassword({
+                email,
+                newPassword: newPassword ?? ""
+            })
             toast.success("Email xác thực đã được gửi.");
         } catch (error) {
-            toast.error("Lỗi không xác định!");
+            toast.error((error as Error).message ??"Lỗi không xác định!");
         }
     }
 

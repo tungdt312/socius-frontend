@@ -1,6 +1,6 @@
 import {NextResponse} from "next/server";
 import {callExternalApi} from "@/lib/fetcher";
-import {ErrorResponse, OtpVerificationRequest, SendVerifyEmailResponse} from "@/types/apis/auth";
+import {ErrorResponse, OtpVerificationRequest, SendVerifyEmailResponse} from "@/types/dtos/auth";
 
 const EXTERNAL_BASE = process.env.API_BASE_URL!;
 const PATH = "/auth/verify-otp";

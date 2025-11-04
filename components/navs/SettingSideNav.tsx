@@ -6,7 +6,7 @@ import {userNavItems, userSettingNavItems} from "@/constants";
 import Link from "next/link";
 import {usePathname, useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
-import {UserResponse} from "@/types/apis/user";
+import {UserResponse} from "@/types/dtos/user";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {LogOut} from "lucide-react";
 import {clearToken, globalState} from "@/lib/token";

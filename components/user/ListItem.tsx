@@ -1,4 +1,4 @@
-import {UserRelationResponse} from "@/types/apis/user";
+import {UserRelationResponse} from "@/types/dtos/user";
 import Link from "next/link";
 import {Item, ItemActions, ItemContent, ItemMedia, ItemTitle} from "@/components/ui/item";
 import Image from "next/image";

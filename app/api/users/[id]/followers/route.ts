@@ -1,7 +1,7 @@
 import {callExternalApi} from "@/lib/fetcher";
-import {ErrorResponse} from "@/types/apis/auth";
-import {Page} from "@/types/apis/base";
-import {UserRelationResponse} from "@/types/apis/user";
+import {ErrorResponse} from "@/types/dtos/auth";
+import {Page} from "@/types/dtos/base";
+import {UserRelationResponse} from "@/types/dtos/user";
 
 export async function GET(req: Request, {params}: { params: { id: string } }) {
     try {

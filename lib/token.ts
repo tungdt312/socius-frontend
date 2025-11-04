@@ -1,6 +1,6 @@
 // lib/global.ts
 
-import {UserResponse} from "@/types/apis/user";
+import {UserResponse} from "@/types/dtos/user";
 
 // @ts-expect-error
 if (!globalThis.myGlobalState ) {

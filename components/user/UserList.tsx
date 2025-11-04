@@ -12,12 +12,12 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import {UserRelationResponse} from "@/types/apis/user";
+import {UserRelationResponse} from "@/types/dtos/user";
 import {Separator} from "@/components/ui/separator";
 import {X} from "lucide-react";
 import {BASE, formatNumber} from "@/lib/utils";
 import {FollowListItem, FriendListItem, UserListItemSkeleton} from "@/components/user/ListItem";
-import {Page} from "@/types/apis/base";
+import {Page} from "@/types/dtos/base";
 import {ScrollArea} from "@/components/ui/scroll-area";
 
 type UserListType = "Friends" | "Followers" | "Followings" | "Blockeds" | "None" | "Sent" | "Pending";

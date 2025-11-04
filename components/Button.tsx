@@ -3,7 +3,7 @@ import React, {useState} from 'react'
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
-import {UserRelationResponse} from "@/types/apis/user";
+import {UserRelationResponse} from "@/types/dtos/user";
 import {FriendActionTypes, FriendshipStatus} from '@/constants/enum';
 import {ChevronDown} from "lucide-react";
 import {BASE} from "@/lib/utils";

@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {ErrorResponse, RegisterResponse, SendVerifyEmailResponse} from "@/types/apis/auth";
+import {ErrorResponse, RegisterResponse, SendVerifyEmailResponse} from "@/types/dtos/auth";
 import {callExternalApi} from "@/lib/fetcher";
 
 const EXTERNAL_BASE = process.env.API_BASE_URL!;

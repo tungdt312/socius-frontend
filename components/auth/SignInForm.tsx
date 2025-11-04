@@ -15,7 +15,10 @@ import {toast} from "sonner";
 import {signInSchema} from "@/schema/authSchema";
 import {AccountStatus} from "@/constants/enum";
 import OTPModal from "@/components/auth/OTPModal";
-import {ErrorResponse, LoginRequest, LoginResponse} from "@/types/apis/auth";
+import {ErrorResponse, LoginRequest, LoginResponse} from "@/types/dtos/auth";
+import {login, sendVerifyEmail} from "@/services/authService";
+import {ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY} from "@/constants";
+import {getMe} from "@/services/userService";
 
 const SignInForm = () => {
     const router = useRouter()
@@ -42,19 +45,15 @@ const SignInForm = () => {
                 username: values.username,
                 password: values.password,
             }
-            const res = await fetch("/api/auth/login", {
-                method: "POST",
-                body: JSON.stringify(req),
-            });
-            if (!res.ok) {
-                const errorData: ErrorResponse = await res.json();
-                toast.error(errorData.message === "" ? `Đăng nhập thất bại (${res.status})` : errorData.message);
-                return
-            }
-            const data: LoginResponse = await res.json();
+            const data = await login(req);
+            localStorage.setItem(ACCESS_TOKEN_KEY, data.token.accessToken);
+            localStorage.setItem(REFRESH_TOKEN_KEY, data.token.refreshToken);
+            const me = await getMe()
+            localStorage.setItem(USER_KEY, JSON.stringify(me))
             if (data) {
                 if (data.status != AccountStatus.BLOCKED && data.status != AccountStatus.PENDING) {
                     toast.success("Đăng nhập thành công.")
+
                     router.push("/");
                 } else if (data.status == AccountStatus.BLOCKED) {
                     toast.warning("Tài khoản đã bị hạn chế một số chức năng. Liên hệ hỗ trợ để biết thêm chi tiết.")
@@ -64,15 +63,7 @@ const SignInForm = () => {
                         action: {
                             label: "Gửi mail",
                             onClick: async () => {
-                                const sendEmail = await fetch("/api/auth/sendOtp", {
-                                    method: "POST",
-                                    body: JSON.stringify({email: data.email}),
-                                })
-                                if (!res.ok) {
-                                    const errorData: ErrorResponse = await res.json();
-                                    toast.error(errorData.message === "" ? `Gửi email thất bại (${res.status})` : errorData.message);
-                                    return;
-                                }
+                                const sendEmail = sendVerifyEmail({email})
                                 toast.success("Email xác thực đã được gửi.");
                                 setEmail(data.email);
                                 setIsOpen(true);
@@ -84,8 +75,8 @@ const SignInForm = () => {
                     toast.error("Người dùng không xác định!")
                 }
             }
-        } catch (error) {
-            toast.error("Lỗi không xác định!");
+        } catch (error: unknown) {
+            toast.error((error as Error).message ??"Lỗi không xác định!");
         } finally {
             setIsLoading(false);
         }

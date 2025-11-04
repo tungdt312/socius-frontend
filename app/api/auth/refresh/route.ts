@@ -1,6 +1,6 @@
 // app/api/auth/refresh/route.ts
 import {NextRequest, NextResponse} from "next/server";
-import {TokenResponse} from "@/types/apis/auth";
+import {TokenResponse} from "@/types/dtos/auth";
 import {callExternalApi} from "@/lib/fetcher";
 import {clearToken, setToken} from "@/lib/token";
 import {cookies} from "next/headers";

@@ -1,6 +1,6 @@
 "use server"
 import {clearToken, globalState, setToken} from "@/lib/token";
-import {TokenResponse} from "@/types/apis/auth";
+import {TokenResponse} from "@/types/dtos/auth";
 import {redirect} from "next/navigation";
 
 const EXTERNAL_BASE = process.env.API_BASE_URL!;

@@ -1,7 +1,7 @@
 import {callExternalApi} from "@/lib/fetcher";
-import {ErrorResponse} from "@/types/apis/auth";
-import {UserRelationResponse, UserResponse} from "@/types/apis/user";
-import {Page} from "@/types/apis/base";
+import {ErrorResponse} from "@/types/dtos/auth";
+import {UserRelationResponse, UserResponse} from "@/types/dtos/user";
+import {Page} from "@/types/dtos/base";
 
 const PATH = "/friends";
 

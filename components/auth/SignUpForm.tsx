@@ -15,7 +15,8 @@ import {Calendar} from "@/components/ui/calendar";
 import OTPModal from "@/components/auth/OTPModal";
 import {toast} from "sonner";
 import {signUpSchema} from "@/schema/authSchema";
-import {ErrorResponse, RegisterRequest, SendVerifyEmailRequest} from "@/types/apis/auth";
+import {ErrorResponse, RegisterRequest, SendVerifyEmailRequest} from "@/types/dtos/auth";
+import {register, sendVerifyEmail} from '@/services/authService';
 
 
 type signUpState = "personalInfo" | "accountInfo";
@@ -50,30 +51,14 @@ const SignUpForm = () => {
                 email: values.email,
                 dateOfBirth: values.dateOfBirth.toISOString(),
             }
-            const res = await fetch("/api/auth/register", {
-                method: "POST",
-                body: JSON.stringify(req),
-            })
-            if (!res.ok) {
-                const errorData: ErrorResponse = await res.json();
-                toast.error(errorData.message === "" ? `Đăng ký thất bại (${res.status})` : errorData.message);
-                return;
-            }
+            const res = await register(req);
             toast.success("Đăng ký thành công.");
             const otpReq: SendVerifyEmailRequest = {email: values.email}
-            const sendEmail = await fetch("/api/auth/sendOtp", {
-                method: "POST",
-                body: JSON.stringify(otpReq),
-            })
-            if (sendEmail.ok) {
+            const sendEmail = await sendVerifyEmail(otpReq)
                 toast.success("Email xác thực đã được gửi.");
                 setIsOpen(true);
-            } else {
-                const errorData: ErrorResponse = await res.json();
-                toast.error(errorData.message === "" ? `Gửi email xác thực thất bại (${res.status})` : errorData.message);
-            }
         } catch (error) {
-            toast.error("Lỗi không xác định!");
+            toast.error((error as Error).message??"Lỗi không xác định!");
         } finally {
             setIsLoading(false);
         }

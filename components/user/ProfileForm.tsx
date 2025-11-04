@@ -9,6 +9,7 @@ import {globalState} from "@/lib/token";
 import {toast} from "sonner";
 import {BASE} from "@/lib/utils";
 import {updateUserProfile} from "@/lib/fetcher";
+import {putMe} from "@/services/userService";
 
 interface ProfileFormProps {
     initialDisplayName?: string;
@@ -71,15 +72,10 @@ const ProfileForm = () => {
         debugger
         setLoading(true);
         try {
-            const res = await updateUserProfile(form)
-            debugger
-            if (res.status !== 200) {
-                toast.error("Lưu trang cá nhân thất bại");
-                return
-            }
+            const res = await putMe(form)
             toast.error("Lưu trang cá nhân thành công");
-        } catch (err: Error) {
-            setError(err.message);
+        } catch (error) {
+            setError((error as Error).message ?? "Lỗi không xác định");
         } finally {
             setLoading(false);
         }

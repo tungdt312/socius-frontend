@@ -1,6 +1,6 @@
-import { ErrorResponse } from "@/types/apis/auth";
+import { ErrorResponse } from "@/types/dtos/auth";
 import { callExternalApi } from "@/lib/fetcher";
-import { UserResponse } from "@/types/apis/user";
+import { UserResponse } from "@/types/dtos/user";
 
 const PATH = "/users/follow";
 const DELETEPATH = "/users/unfollow";

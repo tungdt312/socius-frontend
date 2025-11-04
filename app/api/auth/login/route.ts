@@ -1,6 +1,6 @@
 // app/api/auth/login/route.ts
 import {setToken} from "@/lib/token";
-import {ErrorResponse, LoginResponse} from "@/types/apis/auth";
+import {ErrorResponse, LoginResponse} from "@/types/dtos/auth";
 import {callExternalApi} from "@/lib/fetcher";
 
 const PATH = "/auth/login";

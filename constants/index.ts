@@ -13,6 +13,9 @@ import {
 } from "lucide-react";
 import {ForwardedRef} from "react";
 
+export const ACCESS_TOKEN_KEY = "access-token";
+export const REFRESH_TOKEN_KEY = "refresh-token";
+export const USER_KEY = "user";
 export const userNavItems = [
     {
         name: "Trang chủ",

@@ -1,5 +1,5 @@
 import React from 'react'
-import {UserRelationResponse, UserResponse} from "@/types/apis/user";
+import {UserRelationResponse, UserResponse} from "@/types/dtos/user";
 import {BASE, parseStringify} from "@/lib/utils";
 import Image from "next/image";
 import {Separator} from "@/components/ui/separator";

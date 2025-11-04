@@ -18,7 +18,8 @@ import {useForm} from "react-hook-form";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {changePasswordSchema} from "@/schema/authSchema";
-import {ErrorResponse} from "@/types/apis/auth";
+import {ErrorResponse} from "@/types/dtos/auth";
+import {resetPassword} from "@/services/authService";
 
 
 const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
@@ -33,23 +34,15 @@ const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
     const handleSubmit = async () => {
         setIsLoading(true);
         try{
-            const res = await fetch("/api/auth/resetPassword", {
-                method: "POST",
-                body: JSON.stringify({
+            const res = await resetPassword({
                     email: form.getValues("email"),
                     newPassword: form.getValues("password")
                 })
-            })
-            if (!res.ok) {
-                const errorData: ErrorResponse = await res.json();
-                toast.error(errorData.message === "" ? `Có lỗi xảy ra (${res.status})` : errorData.message);
-                return
-            }
             toast.success("Email xác thực đã được gửi.");
             setIsVerifying(true)
         }
-        catch(err){
-            toast.error("Gửi email thất bại");
+        catch(error: unknown) {
+            toast.error((error as Error).message??"Gửi email thất bại");
         }
         finally {
             setIsLoading(false);
@@ -122,6 +115,7 @@ const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
             </AlertDialogContent>
         </AlertDialog>
             {isVerifying && <OTPModal type={"resetPassword"} email={form.getValues("email")}
+                                      newPassword={form.getValues("password")}
                                       onClose={()=> {setIsVerifying(false)
                                           onClose()}}/>}
         </>

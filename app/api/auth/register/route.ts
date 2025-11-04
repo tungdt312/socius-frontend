@@ -1,5 +1,5 @@
 import {NextResponse} from "next/server";
-import {ErrorResponse, LoginResponse, RegisterResponse} from "@/types/apis/auth";
+import {ErrorResponse, LoginResponse, RegisterResponse} from "@/types/dtos/auth";
 import {callExternalApi} from "@/lib/fetcher";
 import {setToken} from "@/lib/token";
 

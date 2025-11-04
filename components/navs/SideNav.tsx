@@ -1,22 +1,37 @@
 "use client"
-import React from 'react'
+import React, {useEffect} from 'react'
 import Image from 'next/image'
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
-import {userNavItems} from "@/constants";
+import {USER_KEY, userNavItems} from "@/constants";
 import Link from "next/link";
 import {usePathname, useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
-import {UserResponse} from "@/types/apis/user";
+import {UserResponse} from "@/types/dtos/user";
 import {ScrollArea} from "@/components/ui/scroll-area";
 const getFirstPath = (pathName?: string) => {
     if (!pathName) return "/";
     const parts = pathName.split("/").filter(Boolean);
     return parts.length === 0 ? "/" : `/${parts[0]}`;
 };
-const SideNav = ({user}: { user: UserResponse }) => {
+const SideNav = () => {
     const router = useRouter();
     const pathName = usePathname();
     const rootPath = getFirstPath(pathName);
+    let user : UserResponse = {
+        id: '',
+        displayName: '',
+        avatarUrl: '',
+        isActive: false,
+        bio: '',
+        favorites: '',
+        dateOfBirth: ''
+    } ;
+    useEffect(() => {
+        const data = localStorage.getItem(USER_KEY)
+        if (data) user = JSON.parse(data);
+        else router.push("/sign-in");
+    })
+
     return (
 
         <div
@@ -56,7 +71,7 @@ const SideNav = ({user}: { user: UserResponse }) => {
                     >
                         <Image
                             alt="avatar"
-                            src={user.avatarUrl ?? process.env.NEXT_PUBLIC_AVATAR_URL}
+                            src={(user.avatarUrl)?? process.env.NEXT_PUBLIC_AVATAR_URL}
                             height={40}
                             width={40}
                             className="size-7 rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"

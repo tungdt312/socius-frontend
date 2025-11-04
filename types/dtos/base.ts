@@ -13,3 +13,6 @@ export interface Base{
     createdBy: string,
     updatedBy: string,
 }
+export interface BaseResponse{
+
+}
