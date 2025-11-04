@@ -17,7 +17,7 @@ interface PageProps {
 
 const Page = async ({params}: PageProps) => {
     const userId = (await params).id;
-    const isOwner = userId && userId == (globalState.owner?.id ?? "");
+    const isOwner: boolean = userId == (globalState.owner?.id ?? "");
     let user: UserRelationResponse
     try {
         const res = await fetch(`${BASE}/api/users/${userId}/relation-status`, {
@@ -25,7 +25,7 @@ const Page = async ({params}: PageProps) => {
             cache: "no-cache",
         });
         if (!res.ok) notFound()
-        const data = await res.json();
+        const data  = await res.json();
         user = parseStringify(data);
     } catch(error){
         throw new Error("Get user relation failed");

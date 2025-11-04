@@ -26,7 +26,7 @@ export async function POST(req: Request) {
             await clearToken();
             return Response.redirect("/sign-in");
         }
-        if (data) {
+        if (data !== null) {
             await setToken(data.accessToken, data.refreshToken ?? refreshToken);
         }
         return Response.json(data);

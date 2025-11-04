@@ -21,7 +21,7 @@ export async function GET(req: Request) {
         return Response.json(data);
     } catch (error) {
         return Response.json(
-            { message: error.message || "Internal server error" },
+            { message: "Internal server error" },
             { status: 500 }
         );
     }
@@ -63,7 +63,7 @@ export async function POST(req: Request) {
         return Response.json(await res.json());
     } catch (error) {
         return Response.json(
-            { message: error.message || "Internal server error" },
+            { message: "Internal server error" },
             { status: 500 }
         );
     }
@@ -95,7 +95,7 @@ export async function DELETE(req: Request) {
         return Response.json(await res.json());
     } catch (error) {
         return Response.json(
-            { message: error.message || "Internal server error" },
+            { message: "Internal server error" },
             { status: 500 }
         );
     }

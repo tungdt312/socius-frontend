@@ -18,7 +18,7 @@ export async function POST(req: Request) {
         }
         const data: LoginResponse = await res.json();
         console.log("login", data);
-        if (data && data.token) {
+        if (data !== null && data.token !== null) {
             setToken(data.token.accessToken, data.token.refreshToken);
         }
         return Response.json(data, {status: res.status});

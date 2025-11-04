@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         const data = await res.json();
         return Response.json(data, {status: res.status});
     } catch (error) {
-        console.error("Lỗi resetPw:", error);
+        console.error("Lỗi resetPw:");
         return Response.json(
             {message: "Lỗi server hoặc kết nối API thất bại"},
             {status: 500}
