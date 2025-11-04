@@ -77,8 +77,8 @@ const ProfileForm = () => {
                     const text = await res.text();
                     toast.error(text || "Lưu trang cá nhân thất bại");
                 }
-        } catch (err: any) {
-            setError(err?.message || "Lưu trang cá nhân thất bại");
+        } catch (err) {
+            setError("Lưu trang cá nhân thất bại");
         } finally {
             setLoading(false);
         }

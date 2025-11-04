@@ -19,7 +19,7 @@ export async function GET(req: Request,
         const data: UserResponse = await res.json();
         console.log("getUser", data);
         return Response.json(data);
-    } catch (error: any) {
-        throw new Error( error.message);
+    } catch (error) {
+        throw new Error( "GetUSer");
     }
 }

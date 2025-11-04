@@ -28,8 +28,8 @@ export async function GET(req: Request, {params}: { params: { id: string } }) {
         const data: Page<UserRelationResponse> = await res.json();
         console.log("getfollower", data);
         return Response.json(data);
-    } catch (error: any) {
-        throw new Error( error.message);
+    } catch (error) {
+        throw new Error("getfollower");
 
     }
 }

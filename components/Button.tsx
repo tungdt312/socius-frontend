@@ -25,8 +25,8 @@ export const FollowButton =  ({user}: { user: UserRelationResponse }) => {
             }
             router.refresh()
             setIsFollowing(!isFollowing);
-        } catch (error: any) {
-            throw new Error(error.message)
+        } catch (error) {
+            throw new Error("Action Failed")
         }
     }
     if (isFollowing) {
@@ -70,8 +70,8 @@ export const FriendButton =  ({user}: { user: UserRelationResponse }) => {
             }
             router.refresh()
             return 1
-        } catch (error: any) {
-            throw new Error(error.message)
+        } catch (error) {
+            throw new Error("Action failed")
         }
     };
     if (state == FriendshipStatus.PENDING){

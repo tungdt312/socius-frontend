@@ -7,8 +7,9 @@ import {userNavItems} from "@/constants";
 import {House, MessageCircle, PlusSquare, Search} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {usePathname, useRouter} from "next/navigation";
+import {UserResponse} from "@/types/apis/user";
 
-const FootNav = ({user}: { user: any }) => {
+const FootNav = ({user}: { user: UserResponse }) => {
     const router = useRouter();
     const pathName = usePathname();
 

@@ -84,7 +84,7 @@ const SignInForm = () => {
                     toast.error("Người dùng không xác định!")
                 }
             }
-        } catch (error: any) {
+        } catch (error) {
             toast.error("Lỗi không xác định!");
         } finally {
             setIsLoading(false);

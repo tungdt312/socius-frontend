@@ -30,7 +30,7 @@ export async function POST(req: Request) {
             await setToken(data.accessToken, data.refreshToken ?? refreshToken);
         }
         return Response.json(data);
-    } catch (error: any) {
+    } catch (error) {
         console.error("Lỗi refresh:", error);
         return Response.json(
             {message: "Lỗi server hoặc kết nối API thất bại"},

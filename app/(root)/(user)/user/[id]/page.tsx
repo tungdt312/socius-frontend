@@ -27,8 +27,8 @@ const Page = async ({params}: PageProps) => {
         if (!res.ok) notFound()
         const data = await res.json();
         user = parseStringify(data);
-    } catch(error: any){
-        throw new Error(error.message);
+    } catch(error){
+        throw new Error("Get user relation failed");
     }    return (
         <div
             className={"flex flex-col gap-4 mx-auto w-full max-w-[600px] min-h-full h-fit p-4 text-foreground"}>

@@ -48,8 +48,8 @@ const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
             toast.success("Email xác thực đã được gửi.");
             setIsVerifying(true)
         }
-        catch(err: any){
-            toast.error(err.message);
+        catch(err){
+            toast.error("Gửi email thất bại");
         }
         finally {
             setIsLoading(false);

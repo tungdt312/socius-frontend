@@ -55,7 +55,7 @@ export async function callExternalApi(
         }
         const data = await res.json();
         return Response.json(data, {status: res.status});
-    } catch (error: any) {
-        throw new Error(error.message ?? "Lỗi server hoặc kết nối API thất bại");
+    } catch (error) {
+        throw new Error( "Lỗi server hoặc kết nối API thất bại");
     }
 }

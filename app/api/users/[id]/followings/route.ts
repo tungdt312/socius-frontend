@@ -28,7 +28,7 @@ export async function GET(req: Request, {params}: { params: { id: string } }) {
         const data: Page<UserRelationResponse> = await res.json();
         console.log("getfollowing", data);
         return Response.json(data);
-    } catch (error: any) {
+    } catch (error) {
         throw new Error( error.message);
 
     }

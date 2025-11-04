@@ -2,9 +2,9 @@
 
 import {UserResponse} from "@/types/apis/user";
 
-// @ts-ignore
+// @ts-expect-error
 if (!globalThis.myGlobalState ) {
-    // @ts-ignore
+    // @ts-expect-error
     globalThis.myGlobalState= {
         accessToken: null,
         refreshToken: null,
@@ -12,7 +12,7 @@ if (!globalThis.myGlobalState ) {
     };
 }
 
-// @ts-ignore
+//@ts-expect-error
 export const globalState = globalThis.myGlobalState as {
     accessToken: string | null,
     refreshToken: string | null,

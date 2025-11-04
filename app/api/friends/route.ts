@@ -19,7 +19,7 @@ export async function GET(req: Request) {
 
         const data: Page<UserRelationResponse> = await res.json();
         return Response.json(data);
-    } catch (error: any) {
+    } catch (error) {
         return Response.json(
             { message: error.message || "Internal server error" },
             { status: 500 }
@@ -61,7 +61,7 @@ export async function POST(req: Request) {
         }
 
         return Response.json(await res.json());
-    } catch (error: any) {
+    } catch (error) {
         return Response.json(
             { message: error.message || "Internal server error" },
             { status: 500 }
@@ -93,7 +93,7 @@ export async function DELETE(req: Request) {
         }
 
         return Response.json(await res.json());
-    } catch (error: any) {
+    } catch (error) {
         return Response.json(
             { message: error.message || "Internal server error" },
             { status: 500 }

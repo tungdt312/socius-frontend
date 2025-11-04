@@ -22,7 +22,7 @@ export async function POST(req: Request) {
             setToken(data.token.accessToken, data.token.refreshToken);
         }
         return Response.json(data, {status: res.status});
-    } catch (error: any) {
+    } catch (error) {
         console.error("Lỗi login:", error);
         return Response.json(
             {message: "Lỗi server hoặc kết nối API thất bại"},

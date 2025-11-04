@@ -63,8 +63,8 @@ export const UserListTag = ({userId, type}: { userId: string, type: UserListType
             });
             const data: Page<UserRelationResponse> = await res.json();
             setPage(data);
-        } catch (err: any) {
-            throw new Error(err.message);
+        } catch (err) {
+            throw new Error("GetUser");
         }
     };
     useEffect(() => {
@@ -122,8 +122,8 @@ export const UserList = ({userId, type}: {
             setUsers(data.content)
             setPage(data)
             console.log(data)
-        } catch (err: any) {
-            throw new Error(err.message);
+        } catch (err) {
+            throw new Error("getUser");
         } finally {
             setIsLoading(false);
         }

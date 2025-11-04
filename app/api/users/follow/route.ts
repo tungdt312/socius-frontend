@@ -30,7 +30,7 @@ export async function POST(req: Request) {
 
         const data = await res.json();
         return Response.json(data);
-    } catch (error: any) {
+    } catch (error) {
         return Response.json(
             { message: error.message || "Internal server error" },
             { status: 500 }
@@ -63,7 +63,7 @@ export async function DELETE(req: Request) {
 
         const data = await res.json();
         return Response.json(data);
-    } catch (error: any) {
+    } catch (error) {
         return Response.json(
             { message: error.message || "Internal server error" },
             { status: 500 }

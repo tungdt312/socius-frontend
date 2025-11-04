@@ -19,7 +19,7 @@ export async function POST(req: Request) {
         }
         const data: SendVerifyEmailResponse = await res.json();
         return Response.json(data, {status: res.status});
-    } catch (error: any) {
+    } catch (error) {
         console.error("Lỗi sendOtp:", error);
         return Response.json(
             {message: "Lỗi server hoặc kết nối API thất bại"},

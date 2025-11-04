@@ -59,8 +59,8 @@ export const FollowListItem = ({user}: { user: UserRelationResponse }) => {
             if (!res.ok) {
                 toast.error((isFollowing) ? "Hủy theo dõi thất bại" : "Theo dõi thất bại")
             }
-        } catch (error: any) {
-            throw new Error(error.message)
+        } catch (error) {
+            throw new Error("Follow failed");
         }
     }
     return (
@@ -128,8 +128,8 @@ export const FriendListItem = ({user}: { user: UserRelationResponse }) => {
                 default:
                     setType(FriendActionTypes.send);
             }
-        } catch (error: any) {
-            throw new Error(error.message)
+        } catch (error) {
+            throw new Error("Action failed")
         }
     };
     const getActionLabel = (actionType: string) => {

@@ -72,7 +72,7 @@ const SignUpForm = () => {
                 const errorData: ErrorResponse = await res.json();
                 toast.error(errorData.message === "" ? `Gửi email xác thực thất bại (${res.status})` : errorData.message);
             }
-        } catch (error: any) {
+        } catch (error) {
             toast.error("Lỗi không xác định!");
         } finally {
             setIsLoading(false);

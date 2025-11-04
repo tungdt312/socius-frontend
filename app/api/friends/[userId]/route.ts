@@ -18,8 +18,8 @@ export async function GET(req: Request,  {params}: { params: { userId: string }}
         }
         const data: Page<UserRelationResponse> = await res.json();
         return Response.json(data);
-    } catch (error: any) {
-        throw new Error( error.message);
+    } catch (error) {
+        throw new Error("Load Friend Failed");
 
     }
 }
