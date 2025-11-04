@@ -1,13 +1,14 @@
 "use client"
 import React from "react";
-import { Field, FieldGroup, FieldLabel, FieldSet } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
+import {Field, FieldGroup, FieldLabel, FieldSet} from "@/components/ui/field";
+import {Input} from "@/components/ui/input";
+import {Textarea} from "@/components/ui/textarea";
 import {Button} from "@/components/ui/button";
 import Image from "next/image";
 import {globalState} from "@/lib/token";
 import {toast} from "sonner";
 import {BASE} from "@/lib/utils";
+import {updateUserProfile} from "@/lib/fetcher";
 
 interface ProfileFormProps {
     initialDisplayName?: string;
@@ -24,7 +25,7 @@ const ProfileForm = () => {
     const initialUser = globalState.owner
     console.log("initialUser", initialUser?.bio)
     const [displayName, setDisplayName] = React.useState(initialUser?.displayName ?? "");
-    const [bio, setBio] = React.useState(initialUser?.bio ??"");
+    const [bio, setBio] = React.useState(initialUser?.bio ?? "");
     const [avatarFile, setAvatarFile] = React.useState<File | null>(null);
     const [previewUrl, setPreviewUrl] = React.useState<string | null>(initialUser?.avatarUrl || null);
     const [error, setError] = React.useState<string | null>(null);
@@ -67,18 +68,18 @@ const ProfileForm = () => {
         if (avatarFile) {
             form.append("avatarFile", avatarFile);
         }
+        debugger
         setLoading(true);
         try {
-                const res = await fetch(`${BASE}/api/user/me`, {
-                    method: "PUT",
-                    body: form,
-                });
-                if (!res.ok) {
-                    const text = await res.text();
-                    toast.error(text || "Lưu trang cá nhân thất bại");
-                }
-        } catch (err) {
-            setError("Lưu trang cá nhân thất bại");
+            const res = await updateUserProfile(form)
+            debugger
+            if (res.status !== 200) {
+                toast.error("Lưu trang cá nhân thất bại");
+                return
+            }
+            toast.error("Lưu trang cá nhân thành công");
+        } catch (err: Error) {
+            setError(err.message);
         } finally {
             setLoading(false);
         }
@@ -90,22 +91,25 @@ const ProfileForm = () => {
                 <FieldSet>
                     <Field orientation={"vertical"}>
                         <FieldLabel>Ảnh đại diện</FieldLabel>
-                        <div className="flex flex-col md:flex-row items-center justify-between rounded-2xl bg-accent p-4 gap-2">
-                            <div className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
+                        <div
+                            className="flex flex-col md:flex-row items-center justify-between rounded-2xl bg-accent p-4 gap-2">
+                            <div
+                                className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
                                 {previewUrl ? (
-                                    <Image src={previewUrl} alt="avatar preview" className="object-cover" width={80} height={80} />
+                                    <Image src={previewUrl} alt="avatar preview" className="object-cover" width={80}
+                                           height={80}/>
                                 ) : (
                                     <div className="text-sm text-gray-400">No avatar</div>
                                 )}
                             </div>
 
                             <div className="flex flex-col gap-2">
-                                    <Input
-                                        type="file"
-                                        accept="image/*"
-                                        onChange={handleFileChange}
-                                        aria-label="Chọn ảnh đại diện"
-                                    />
+                                <Input
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleFileChange}
+                                    aria-label="Chọn ảnh đại diện"
+                                />
                                 <div className="subtitle2 text-gray-500">PNG, JPEG, WEBP — max 2MB</div>
                             </div>
                         </div>
