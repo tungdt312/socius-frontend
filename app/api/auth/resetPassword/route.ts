@@ -1,19 +1,28 @@
 import {NextResponse} from "next/server";
 import {callExternalApi} from "@/lib/fetcher";
-import {SendVerifyEmailResponse} from "@/types/api";
+import {ErrorResponse, RegisterResponse, SendVerifyEmailResponse} from "@/types/apis/auth";
 
 const EXTERNAL_BASE = process.env.API_BASE_URL!;
 const PATH = "/auth/reset-password";
 
 export async function POST(req: Request) {
-    const body = await req.json();
-    const { data, status, ok } = await callExternalApi(PATH, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body),
-    });
-    if (!ok) return NextResponse.json({ error: "Gửi mail xác thực thất bại" }, { status });
-    return NextResponse.json({ ok: true });
+    try {
+        const res = await callExternalApi(
+            PATH,
+            false,
+            req
+        );
+        if (!res.ok) {
+            const errorData: ErrorResponse = await res.json();
+            return Response.json(errorData, {status: res.status});
+        }
+        const data = await res.json();
+        return Response.json(data, {status: res.status});
+    } catch (error: any) {
+        console.error("Lỗi resetPw:", error);
+        return Response.json(
+            {message: "Lỗi server hoặc kết nối API thất bại"},
+            {status: 500}
+        );
+    }
 }

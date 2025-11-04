@@ -10,3 +10,19 @@ export enum AccountStatus {
     NOT_SOLVED = "NOT_SOLVED",    // lỗi kỹ thuật hoặc chưa hoàn tất xử lý
 }
 
+export enum FriendshipStatus {
+    PENDING = "PENDING",
+    FRIEND = "FRIEND",
+    BLOCKED = "BLOCKED",
+    NONE = "NONE",
+}
+
+export enum FriendActionTypes {
+    accept = "accept",
+    reject = "reject",
+    send = "send",
+    unsend = "unsend",
+    block = "block",
+    unblock = "unblock",
+    unfriend = "unfriend",
+}

@@ -2,7 +2,7 @@
 
 import React, {useState} from 'react'
 import {Card, CardContent} from "@/components/ui/card";
-import {Input} from './ui/input';
+import {Input} from '../ui/input';
 import {Field, FieldError, FieldGroup, FieldLabel, FieldLegend, FieldSeparator, FieldSet,} from "@/components/ui/field"
 import {Button} from "@/components/ui/button";
 import {ArrowBigLeft, CalendarDays, LoaderCircle} from "lucide-react";
@@ -12,11 +12,10 @@ import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Calendar} from "@/components/ui/calendar";
-import OTPModal from "@/components/OTPModal";
+import OTPModal from "@/components/auth/OTPModal";
 import {toast} from "sonner";
 import {signUpSchema} from "@/schema/authSchema";
-import {fetcher} from "@/lib/fetcher";
-import {RegisterRequest, RegisterResponse, SendVerifyEmailRequest, SendVerifyEmailResponse} from "@/types/api";
+import {ErrorResponse, RegisterRequest, SendVerifyEmailRequest} from "@/types/apis/auth";
 
 
 type signUpState = "personalInfo" | "accountInfo";
@@ -51,22 +50,30 @@ const SignUpForm = () => {
                 email: values.email,
                 dateOfBirth: values.dateOfBirth.toISOString(),
             }
-            const res  = await fetcher<RegisterResponse>("/api/auth/register", {
+            const res = await fetch("/api/auth/register", {
                 method: "POST",
                 body: JSON.stringify(req),
             })
+            if (!res.ok) {
+                const errorData: ErrorResponse = await res.json();
+                toast.error(errorData.message === "" ? `Đăng ký thất bại (${res.status})` : errorData.message);
+                return;
+            }
             toast.success("Đăng ký thành công.");
-
             const otpReq: SendVerifyEmailRequest = {email: values.email}
-            const sendEmail  = await fetcher<SendVerifyEmailResponse>("/api/auth/sendOtp",{
+            const sendEmail = await fetch("/api/auth/sendOtp", {
                 method: "POST",
                 body: JSON.stringify(otpReq),
             })
-            toast.success("Email xác thực đã được gửi.");
-
-            setIsOpen(true);
+            if (sendEmail.ok) {
+                toast.success("Email xác thực đã được gửi.");
+                setIsOpen(true);
+            } else {
+                const errorData: ErrorResponse = await res.json();
+                toast.error(errorData.message === "" ? `Gửi email xác thực thất bại (${res.status})` : errorData.message);
+            }
         } catch (error: any) {
-            toast.error(error.message);
+            toast.error("Lỗi không xác định!");
         } finally {
             setIsLoading(false);
         }
@@ -178,15 +185,15 @@ const SignUpForm = () => {
                                             )}
                                         </Field>
                                         <Field orientation={"responsive"}>
-                                        <FieldLabel>Xác nhận mật khẩu *</FieldLabel>
-                                        <Input type={"password"}
-                                               placeholder="Xác nhận mật khẩu" {...form.register("confirmPassword")}/>
+                                            <FieldLabel>Xác nhận mật khẩu *</FieldLabel>
+                                            <Input type={"password"}
+                                                   placeholder="Xác nhận mật khẩu" {...form.register("confirmPassword")}/>
                                             {(form.formState.errors.confirmPassword) && (
                                                 <FieldError>
                                                     {form.formState.errors.confirmPassword.message}
                                                 </FieldError>
                                             )}
-                                    </Field>
+                                        </Field>
                                     </FieldGroup>
                                     <div className={"flex items-center justify-center w-full space-x-2 px-6"}>
                                         <Button type="button" className={"size-9 "}
@@ -206,16 +213,21 @@ const SignUpForm = () => {
                     </form>
                     <div className="w-full max-w-md flex items-center justify-center space-x-1 subtitle2">
                         <p>Đã có tài khoản?</p>
-                        <Button className={"p-0"} variant={"link"} type={"button"} onClick={() => router.push("/sign-in")}>
+                        <Button className={"p-0"} variant={"link"} type={"button"}
+                                onClick={() => router.push("/sign-in")}>
                             Đăng nhập ngay
                         </Button>
                     </div>
                 </CardContent>
             </Card>
-            {isOpen && (<OTPModal type={"verifyEmail"} email={form.getValues("email")} password={form.getValues("password")} onSuccess={() => {
-                toast.success("Xác thực thành công.");
-                router.push("/sign-in");
-            }} onClose={()=> {setIsOpen(false)}}/>)}
+            {isOpen && (
+                <OTPModal type={"verifyEmail"} email={form.getValues("email")}
+                          onSuccess={() => {
+                              toast.success("Xác thực thành công.");
+                              router.push("/sign-in");
+                          }} onClose={() => {
+                    setIsOpen(false)
+                }}/>)}
         </>
 
     )

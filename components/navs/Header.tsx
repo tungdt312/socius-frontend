@@ -6,14 +6,14 @@ import {Button} from "@/components/ui/button";
 import {Bell, House, PlusSquare} from "lucide-react";
 import {useRouter} from "next/navigation";
 
-const Header = ({user}: { user: any }) => {
+const Header = () => {
     const router = useRouter();
     return (
         <div
-            className={"sticky top-0 h-auto w-full flex items-center justify-between bg-accent rounded-none border-b-1 border-border px-4 py-1 md:hidden"}>
-            <Link href="/">
+            className={"sticky top-0 h-auto w-full flex items-center justify-between bg-background rounded-none border-b-1 border-border px-4 py-1 md:hidden"}>
+            <Link href="/public">
                 <Image alt={"logo"} src={'/Logo-full.svg'} height={100} width={100}
-                       className="h-auto w-auto"/>
+                       className="h-11 w-auto"/>
             </Link>
             <div className="flex items-center h-auto w-auto space-x-4">
                 <Button
@@ -31,15 +31,6 @@ const Header = ({user}: { user: any }) => {
                     className="w-full justify-start items-center gap-2 size-fit !p-1 text-foreground">
                     <Bell className="size-7 "/>
                 </Button>
-                <Link href={`/user/${user?.id}`} title={"Trang cá nhân"}>
-                    <Image
-                        alt="avatar"
-                        src="https://tse2.mm.bing.net/th/id/OIP.Q6R49EFCR62g4QtakGPRFAHaHZ?rs=1&pid=ImgDetMain&o=7&rm=3"
-                        height={40}
-                        width={40}
-                        className="size-7 rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                    />
-                </Link>
             </div>
         </div>
     )

@@ -1,6 +1,6 @@
 "use client"
-import React, {useState} from 'react'
-import OTPModal from "@/components/OTPModal";
+import React from 'react'
+import OTPModal from "@/components/auth/OTPModal";
 import {
     AlertDialog,
     AlertDialogAction,
@@ -17,8 +17,8 @@ import {Field, FieldError, FieldGroup, FieldLabel, FieldSet} from "@/components/
 import {useForm} from "react-hook-form";
 import {z} from "zod";
 import {zodResolver} from "@hookform/resolvers/zod";
-import {changePasswordSchema, emailInputSchema} from "@/schema/authSchema";
-import {fetcher} from "@/lib/fetcher";
+import {changePasswordSchema} from "@/schema/authSchema";
+import {ErrorResponse} from "@/types/apis/auth";
 
 
 const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
@@ -33,13 +33,18 @@ const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
     const handleSubmit = async () => {
         setIsLoading(true);
         try{
-            const res = await fetcher("/api/auth/resetPassword", {
+            const res = await fetch("/api/auth/resetPassword", {
                 method: "POST",
                 body: JSON.stringify({
                     email: form.getValues("email"),
                     newPassword: form.getValues("password")
                 })
             })
+            if (!res.ok) {
+                const errorData: ErrorResponse = await res.json();
+                toast.error(errorData.message === "" ? `Có lỗi xảy ra (${res.status})` : errorData.message);
+                return
+            }
             toast.success("Email xác thực đã được gửi.");
             setIsVerifying(true)
         }
@@ -117,10 +122,6 @@ const ForgetPasswordForm = ({onClose}: {onClose: () => void }) => {
             </AlertDialogContent>
         </AlertDialog>
             {isVerifying && <OTPModal type={"resetPassword"} email={form.getValues("email")}
-                                      onSuccess={() => {
-                                          toast.success("Đổi mật khẩu thành công.")
-                                          setIsOpen(false)
-                                      }}
                                       onClose={()=> {setIsVerifying(false)
                                           onClose()}}/>}
         </>

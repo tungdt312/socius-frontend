@@ -1,4 +1,16 @@
-import {Bell, Compass, House, MessageCircle, PlusSquare, Search, Settings, User, UserCog, UserLock} from "lucide-react";
+import {
+    Bell,
+    Compass,
+    House, Info,
+    MessageCircle, Palette,
+    PlusSquare,
+    Search,
+    Settings,
+    User,
+    UserCog,
+    UserLock, UserRoundCheck, UserRoundPen, UserRoundX,
+    UsersRound
+} from "lucide-react";
 import {ForwardedRef} from "react";
 
 export const userNavItems = [
@@ -11,12 +23,16 @@ export const userNavItems = [
         url: "/explore",
         icon: Compass
     },{
+        name: "Bạn bè",
+        url: "/friend",
+        icon: UsersRound
+    },{
         name: "Tin nhắn",
         url: "/message",
         icon: MessageCircle
     },{
         name: "Cài đặt",
-        url: "/setting",
+        url: "/setting/profile",
         icon: Settings
     },
 ]
@@ -60,6 +76,30 @@ export const adminNavItems = [
         icon: Settings
     },
 ]
+export const userSettingNavItems = [
+    {
+        name: "Sửa trang cá nhân",
+        url: "/setting/profile",
+        icon: UserRoundPen
+    },{
+        name: "Tùy chọn giao diện",
+        url: "/setting/appearance",
+        icon: Palette
+    },{
+        name: "Trạng thái tài khoản",
+        url: "/setting/status",
+        icon: UserRoundCheck
+    },{
+        name: "Người dùng đã chặn",
+        url: "/setting/blocked",
+        icon: UserRoundX
+    },{
+        name: "Báo cáo và hỗ trợ",
+        url: "/setting/helping",
+        icon: Info
+    },
+]
+
 export const roleMap = new Map<string, {name: string, url: string, icon: ForwardedRef<any>}>([
     ["USER", {name: "Người dùng", url: "/", icon: User }],
     ["MODERATOR", {name: "Kiểm duyệt viên", url: "/moderator/", icon:UserLock }],

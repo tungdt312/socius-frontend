@@ -1,6 +1,10 @@
 //Auth
 import {OtpType} from "@/constants/enum";
 
+export interface ErrorResponse {
+    message: string;
+}
+
 export interface RefreshTokenRequest {
     refreshToken: string;
 }
@@ -34,7 +38,7 @@ export interface SendVerifyEmailResponse {
     message: string;
     code: string;
 }
-export interface PasswordResetRequest {
+export interface ResetPasswordRequest {
     email: string;
     newPassword: string;
 }

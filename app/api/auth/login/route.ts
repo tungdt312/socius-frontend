@@ -1,27 +1,32 @@
 // app/api/auth/login/route.ts
-import { NextResponse } from "next/server";
-import { setAuthCookies } from "@/lib/cookie";
-import {LoginResponse, RegisterResponse} from "@/types/api";
+import {setToken} from "@/lib/token";
+import {ErrorResponse, LoginResponse} from "@/types/apis/auth";
 import {callExternalApi} from "@/lib/fetcher";
 
-const EXTERNAL_BASE = process.env.API_BASE_URL!;
 const PATH = "/auth/login";
 
 export async function POST(req: Request) {
-    const body = await req.json();
-    const { data, status, ok } = await callExternalApi<LoginResponse>(PATH, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body),
-    });
-    if (!ok) return NextResponse.json({ error: "Đăng nhập thất bại" }, { status });
-    if (data && data.token){
-        const response = NextResponse.json({ ok: true});
-        console.log(data.token.accessToken);
-        setAuthCookies(response, data.token.accessToken, data.token.refreshToken);
+    try {
+        const res = await callExternalApi(
+            PATH,
+            false,
+            req
+        );
+        if (!res.ok) {
+            const errorData: ErrorResponse = await res.json();
+            return Response.json(errorData, {status: res.status});
+        }
+        const data: LoginResponse = await res.json();
+        console.log("login", data);
+        if (data && data.token) {
+            setToken(data.token.accessToken, data.token.refreshToken);
+        }
+        return Response.json(data, {status: res.status});
+    } catch (error: any) {
+        console.error("Lỗi login:", error);
+        return Response.json(
+            {message: "Lỗi server hoặc kết nối API thất bại"},
+            {status: 500}
+        );
     }
-
-    return NextResponse.json({data, ok});
 }

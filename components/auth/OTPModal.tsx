@@ -1,7 +1,7 @@
-
 import React from 'react'
 import {
-    AlertDialog, AlertDialogAction,
+    AlertDialog,
+    AlertDialogAction,
     AlertDialogContent,
     AlertDialogDescription,
     AlertDialogFooter,
@@ -13,13 +13,16 @@ import {InputOTP, InputOTPGroup, InputOTPSlot} from "@/components/ui/input-otp";
 import {REGEXP_ONLY_DIGITS} from 'input-otp';
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
-import {fetcher} from "@/lib/fetcher";
 import {OtpType} from "@/constants/enum";
-import {OtpVerificationRequest} from "@/types/api";
+import {ErrorResponse, OtpVerificationRequest, SendVerifyEmailRequest} from "@/types/apis/auth";
 
 type verifyType = "verifyEmail" | "resetPassword";
 
-const OTPModal = ({email, password, onSuccess, onClose, type}: { email: string,password?: string | undefined, onSuccess: () => void, onClose: () => void, type: verifyType }) => {
+const OTPModal = ({email, onClose, type}: {
+    email: string,
+    onClose: () => void,
+    type: verifyType
+}) => {
     const [isOpen, setIsOpen] = React.useState(true)
     const [code, setCode] = React.useState<string>("")
     const [isLoading, setIsLoading] = React.useState<boolean>(false)
@@ -32,16 +35,20 @@ const OTPModal = ({email, password, onSuccess, onClose, type}: { email: string,p
                 email: email,
                 code: code,
                 type: type === "verifyEmail" ? OtpType.verifyEmail : OtpType.resetPassword
-        }
-            const res = await fetcher("/api/auth/verifyOtp",{
+            }
+            const res = await fetch("/api/auth/verifyOtp", {
                 method: "POST",
                 body: JSON.stringify(req),
             })
-            onSuccess()
+            if (!res.ok) {
+                toast.error((type === "verifyEmail") ? "Xác thực thất bại" : "Đổi mật khẩu thất bại")
+                return
+            }
             setIsOpen(false)
             onClose()
-        } catch (err:any) {
-            toast.error(err.message)
+            toast.success((type === "verifyEmail") ? "Xác thực thành công" : "Đổi mật khẩu thành công")
+        } catch (err: any) {
+            toast.error("Lỗi không xác định!");
         } finally {
             setIsLoading(false)
         }
@@ -49,28 +56,21 @@ const OTPModal = ({email, password, onSuccess, onClose, type}: { email: string,p
 
     const handleResendOTP = async () => {
         console.log("resend otp")
-        if (type === "verifyEmail") {
-            try {
-                const sendEmail = await fetcher("/api/auth/sendOtp",{
+        try {
+            const otpReq: SendVerifyEmailRequest = {email: email}
+            const sendEmail =
+                await fetch((type === "verifyEmail") ? "/api/auth/sendOtp" : "/api/auth/resetPassword", {
                     method: "POST",
-                    body: JSON.stringify({email: email}),
+                    body: JSON.stringify(otpReq),
                 })
-                toast.success("Email xác thực đã được gửi.");
+            if (!sendEmail.ok) {
+                const errorData: ErrorResponse = await sendEmail.json();
+                toast.error(errorData.message === "" ? `Gửi email thất bại` : errorData.message);
+                return;
             }
-            catch (error:any) {
-                toast.error(error.message)
-            }
-        } else{
-            try {
-                const sendEmail = await fetcher("/api/auth/resetPassword",{
-                    method: "POST",
-                    body: JSON.stringify({email: email, newPassword: password}),
-                })
-                toast.success("Email xác thực đã được gửi.");
-            }
-            catch (error:any) {
-                toast.error(error.message)
-            }
+            toast.success("Email xác thực đã được gửi.");
+        } catch (error) {
+            toast.error("Lỗi không xác định!");
         }
     }
 
@@ -101,7 +101,8 @@ const OTPModal = ({email, password, onSuccess, onClose, type}: { email: string,p
                         <InputOTPSlot index={5}/>
                     </InputOTPGroup>
                 </InputOTP>
-                <AlertDialogDescription className={"w-full text-center flex flex-col items-center justify-center space-x-1 subtitle2"}>
+                <AlertDialogDescription
+                    className={"w-full text-center flex flex-col items-center justify-center space-x-1 subtitle2"}>
                     Mã sẽ hết hạn trong vòng 15 phút. Bạn chưa thấy mã?
                     <Button variant={"link"} onClick={handleResendOTP} className={"p-0 m-1"}>Gửi lại OTP</Button>
                 </AlertDialogDescription>
@@ -118,5 +119,5 @@ const OTPModal = ({email, password, onSuccess, onClose, type}: { email: string,p
         </AlertDialog>
     )
 }
-export default OTPModal
+export default OTPModal;
 

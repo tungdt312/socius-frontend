@@ -1,5 +1,5 @@
 "use client"
-import React, {createContext, useContext, useEffect, useState} from 'react'
+import React, {createContext, useContext, useEffect, useRef, useState} from 'react'
 import {parseStringify} from "@/lib/utils";
 
 const initialState: ThemeProviderState = {
@@ -8,6 +8,7 @@ const initialState: ThemeProviderState = {
 }
 const ThemeProviderContext = createContext<ThemeProviderState>(initialState);
 
+
 export function ThemeProvider({
                                   children,
                                   defaultTheme = { mode: 'system', color: 'blue' },
@@ -15,35 +16,42 @@ export function ThemeProvider({
                                   storageColorKey = 'ui-color',
                                   ...props
                               }: ThemeProviderProps) {
-    const [storedTheme, setStoredTheme] = useState<Theme>(defaultTheme);
-    const [systemMode, setSystemMode] = useState<"light" | "dark">("light");
+
+    const [storedTheme, setStoredTheme] = useState<Theme>(() => {
+        if (typeof window === "undefined") {
+            return defaultTheme;
+        }
+        try {
+            const savedTheme = localStorage.getItem(storageThemeKey);
+            const savedColor = localStorage.getItem(storageColorKey);
+            if (savedTheme && savedColor) {
+                return { mode: savedTheme as ThemeModes, color: savedColor as ThemeColors };
+            }
+        } catch (e) {
+            console.warn("Lỗi đọc theme từ localStorage", e);
+        }
+        return defaultTheme;
+    });
+
+    const [isMounted, setIsMounted] = useState(false);
 
     useEffect(() => {
-        if (typeof window === "undefined") return;
-        const savedTheme = localStorage.getItem(storageThemeKey);
-        const savedColor = localStorage.getItem(storageColorKey);
-        if (savedTheme && savedColor) {
-            try {
-                setStoredTheme(parseStringify({ mode: savedTheme , color: savedColor }));
-            } catch {
-                console.warn("Invalid theme data in localStorage");
-            }
-        }
-    }, [storageThemeKey, storageColorKey]);
+        setIsMounted(true);
+    }, []);
 
-    // Lưu theme vào localStorage mỗi khi người dùng đổi theme
+    const [systemMode, setSystemMode] = useState<"light" | "dark">("light");
+
     useEffect(() => {
         if (typeof window === "undefined") return;
         localStorage.setItem(storageThemeKey, storedTheme.mode);
         localStorage.setItem(storageColorKey, storedTheme.color);
     }, [storedTheme, storageThemeKey, storageColorKey]);
-    // chỉ chạy trên client sau khi mount
+
     useEffect(() => {
         if (storedTheme.mode === "system" && typeof window !== "undefined") {
             const dark = window.matchMedia("(prefers-color-scheme: dark)").matches;
             setSystemMode(dark ? "dark" : "light");
 
-            // Nếu bạn muốn theme auto update khi hệ thống đổi màu
             const listener = (e: MediaQueryListEvent) => {
                 setSystemMode(e.matches ? "dark" : "light");
             };
@@ -52,30 +60,28 @@ export function ThemeProvider({
             return () => mq.removeEventListener("change", listener);
         }
     }, [storedTheme.mode]);
-
     const value = {
         theme: storedTheme,
         setTheme: (theme: Theme) => setStoredTheme(theme),
     };
 
-    const themeMode =
-        storedTheme.mode === "system" ? systemMode : storedTheme.mode;
+    const themeMode = storedTheme.mode === "system" ? systemMode : storedTheme.mode;
+
+    const serverRenderMode = defaultTheme.mode === 'system' ? 'light' : defaultTheme.mode;
+    const effectiveMode = isMounted ? themeMode : serverRenderMode;
+    const effectiveColor = isMounted ? storedTheme.color : defaultTheme.color;
+
     return (
         <ThemeProviderContext.Provider {...props} value={value}>
-            <div data-theme={`${storedTheme.color}-${themeMode}`} className={themeMode}>
+            <div data-theme={`${effectiveColor}-${effectiveMode}`} className={effectiveMode}>
                 {children}
             </div>
         </ThemeProviderContext.Provider>
     );
 }
-/**
- * Hook to get and set new theme throughout application
- */
+
 export const useTheme = () => {
     const context = useContext(ThemeProviderContext);
-
     if (context === undefined) throw new Error('useTheme must be used within a ThemeProvider');
-
     return context;
 };
-

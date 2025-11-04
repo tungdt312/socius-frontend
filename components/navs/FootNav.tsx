@@ -13,7 +13,7 @@ const FootNav = ({user}: { user: any }) => {
     const pathName = usePathname();
 
     return (
-        <ToggleGroup className={"sticky bottom-0 h-auto w-full flex items-center justify-between bg-accent rounded-none border-t-1 border-border px-4 py-1 md:hidden"} type="single" spacing={4} value={pathName}>
+        <ToggleGroup className={"sticky bottom-0 h-auto w-full flex items-center justify-between bg-background rounded-none border-t-1 border-border px-4 py-1 md:hidden"} type="single" spacing={4} value={pathName}>
             {userNavItems.map((navItem) => {
                 const Icon = navItem.icon
                 return <ToggleGroupItem asChild value={navItem.url} aria-label={navItem.name} key={navItem.url} size={"lg"}
@@ -23,6 +23,15 @@ const FootNav = ({user}: { user: any }) => {
                     </Link>
                 </ToggleGroupItem>
             })}
+            <Link href={`/user/${user?.id}`} title={"Trang cá nhân"}>
+                <Image
+                    alt="avatar"
+                    src={user.avatarUrl ?? process.env.NEXT_PUBLIC_AVATAR_URL}
+                    height={40}
+                    width={40}
+                    className="size-7 rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
+                />
+            </Link>
         </ToggleGroup>
     )
 }

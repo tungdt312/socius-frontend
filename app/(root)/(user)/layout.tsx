@@ -1,10 +1,15 @@
+import {MessageCircle} from 'lucide-react'
 import React from 'react'
+import Link from "next/link";
+import {ScrollArea} from "@/components/ui/scroll-area";
 
 const Layout = ({children}: { children: React.ReactNode }) => {
     return (
-        <div className={"flex flex-col w-full h-screen scroll-auto bg-accent"}>
-            {children}
-        </div>
+        <ScrollArea className="flex flex-col items-center w-full h-screen overflow-hidden">
+            <div className={"flex flex-col w-full h-fit bg-background text-foreground overflow-hidden relative"}>
+                {children}
+            </div>
+        </ScrollArea>
     )
 }
 export default Layout

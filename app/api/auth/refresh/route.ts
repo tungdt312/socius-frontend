@@ -1,35 +1,40 @@
 // app/api/auth/refresh/route.ts
-import { NextRequest, NextResponse } from "next/server";
-import { setAuthCookies, clearAuthCookies } from "@/lib/cookie";
-import {RegisterResponse, TokenResponse} from "@/types/api";
+import {NextRequest, NextResponse} from "next/server";
+import {TokenResponse} from "@/types/apis/auth";
 import {callExternalApi} from "@/lib/fetcher";
+import {clearToken, setToken} from "@/lib/token";
+import {cookies} from "next/headers";
+
 const PATH = "/auth/refresh";
 
-export async function POST(req: NextRequest) {
+export async function POST(req: Request) {
     // read refresh_token from cookie
-    const refreshToken = req.cookies.get("refreshToken")?.value;
-    if (!refreshToken) {
-        return NextResponse.json({ error: "No refresh token" }, { status: 401 });
-    }
+    try {
+        const refreshToken = (await cookies()).get("refreshToken")?.value;
+        if (!refreshToken) {
+            console.error("Refresh token is missing");
+            return Response.json(
+                {message: "Lỗi token"},
+                {status: 404}
+            );
+        }
 
-    const { data, status, ok } = await callExternalApi<TokenResponse>(PATH, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify({refreshToken: refreshToken}),
-    });
-    if (!ok) {
-        // clear tokens
-        const response = NextResponse.json({ error: "Refresh token không hợp lệ" }, { status });
-        clearAuthCookies(response);
-        return response;
+        const res = await callExternalApi(PATH,);
+        const {ok} = res;
+        const data: TokenResponse = await res.json();
+        if (!ok) {
+            await clearToken();
+            return Response.redirect("/sign-in");
+        }
+        if (data) {
+            await setToken(data.accessToken, data.refreshToken ?? refreshToken);
+        }
+        return Response.json(data);
+    } catch (error: any) {
+        console.error("Lỗi refresh:", error);
+        return Response.json(
+            {message: "Lỗi server hoặc kết nối API thất bại"},
+            {status: 500}
+        );
     }
-
-    if(data){
-    const response = NextResponse.json({ ok: true});
-    // maybe external returns new refresh token (rotation)
-    setAuthCookies(response, data.accessToken, data.refreshToken ?? refreshToken);
-    }
-    return NextResponse.json({ ok: true });
 }

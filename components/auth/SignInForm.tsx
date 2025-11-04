@@ -1,22 +1,21 @@
 "use client"
 
-import React, {useState} from 'react'
+import React from 'react'
 import {Card, CardContent} from "@/components/ui/card";
-import {Input} from './ui/input';
+import {Input} from '../ui/input';
 import {Field, FieldDescription, FieldError, FieldGroup, FieldLabel, FieldSet,} from "@/components/ui/field"
 import {Button} from "@/components/ui/button";
 import {EyeClosed, EyeIcon, LoaderCircle} from "lucide-react";
-import ForgetPasswordForm from "@/components/ForgetPasswordForm";
+import ForgetPasswordForm from "@/components/auth/ForgetPasswordForm";
 import {useRouter} from "next/navigation";
 import {z} from "zod";
 import {useForm} from "react-hook-form";
 import {zodResolver} from "@hookform/resolvers/zod";
 import {toast} from "sonner";
 import {signInSchema} from "@/schema/authSchema";
-import {fetcher} from "@/lib/fetcher";
 import {AccountStatus} from "@/constants/enum";
-import OTPModal from "@/components/OTPModal";
-import {LoginRequest, LoginResponse, SendVerifyEmailResponse} from "@/types/api";
+import OTPModal from "@/components/auth/OTPModal";
+import {ErrorResponse, LoginRequest, LoginResponse} from "@/types/apis/auth";
 
 const SignInForm = () => {
     const router = useRouter()
@@ -25,7 +24,7 @@ const SignInForm = () => {
     const [isForgotPassword, setIsForgotPassword] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
     const [isOpen, setIsOpen] = React.useState(false);
-    let email: string = "";
+    const [email, setEmail] = React.useState("");
 
     const form = useForm<z.infer<typeof signInSchema>>({
         resolver: zodResolver(signInSchema),
@@ -43,38 +42,50 @@ const SignInForm = () => {
                 username: values.username,
                 password: values.password,
             }
-            const res = await fetcher<LoginResponse>("/api/auth/login", {
+            const res = await fetch("/api/auth/login", {
                 method: "POST",
                 body: JSON.stringify(req),
             });
-            if (res.status !== AccountStatus.BLOCKED && res.status !== AccountStatus.PENDING) {
-                toast.success("Đăng nhập thành công.")
-                router.push("/");
+            if (!res.ok) {
+                const errorData: ErrorResponse = await res.json();
+                toast.error(errorData.message === "" ? `Đăng nhập thất bại (${res.status})` : errorData.message);
+                return
             }
-            else if (res.status == AccountStatus.BLOCKED){
-                toast.warning("Tài khoản đã bị hạn chế một số chức năng. Liên hệ hỗ trợ để biết thêm chi tiết.")
-                router.push("/");
-            }
-            else if (res.status == AccountStatus.PENDING){
-                toast.error("Tài khoản chưa xác thực email. Vui lòng xác thực", {
-                    action: {
-                        label: "Gửi mail",
-                        onClick: async()=> {
-                            const sendEmail = await fetcher<SendVerifyEmailResponse>("/api/auth/sendOtp",{
-                                method: "POST",
-                                body: JSON.stringify({email: res.email}),
-                            })
-                            toast.success("Email xác thực đã được gửi.");
-                            email = res.email;
-                            setIsOpen(true);
+            const data: LoginResponse = await res.json();
+            if (data) {
+                if (data.status != AccountStatus.BLOCKED && data.status != AccountStatus.PENDING) {
+                    toast.success("Đăng nhập thành công.")
+                    router.push("/");
+                } else if (data.status == AccountStatus.BLOCKED) {
+                    toast.warning("Tài khoản đã bị hạn chế một số chức năng. Liên hệ hỗ trợ để biết thêm chi tiết.")
+                    router.push("/");
+                } else if (data.status == AccountStatus.PENDING) {
+                    toast.error("Tài khoản chưa xác thực email. Vui lòng xác thực", {
+                        action: {
+                            label: "Gửi mail",
+                            onClick: async () => {
+                                const sendEmail = await fetch("/api/auth/sendOtp", {
+                                    method: "POST",
+                                    body: JSON.stringify({email: data.email}),
+                                })
+                                if (!res.ok) {
+                                    const errorData: ErrorResponse = await res.json();
+                                    toast.error(errorData.message === "" ? `Gửi email thất bại (${res.status})` : errorData.message);
+                                    return;
+                                }
+                                toast.success("Email xác thực đã được gửi.");
+                                setEmail(data.email);
+                                setIsOpen(true);
+                            }
                         }
-                    }
-                })
+                    })
+
+                } else {
+                    toast.error("Người dùng không xác định!")
+                }
             }
-
-
         } catch (error: any) {
-            toast.error(error.message);
+            toast.error("Lỗi không xác định!");
         } finally {
             setIsLoading(false);
         }
@@ -144,11 +155,10 @@ const SignInForm = () => {
                     </div>
                 </CardContent>
             </Card>
-            {isForgotPassword && (<ForgetPasswordForm onClose={() => setIsForgotPassword(false)} />)}
-            {isOpen && (<OTPModal type={"verifyEmail"} email={email} onSuccess={() => {
-                toast.success("Xác thực thành công.");
-                router.push("/sign-in");
-            }} onClose={()=> {setIsOpen(false)}}/>)}
+            {isForgotPassword && (<ForgetPasswordForm onClose={() => setIsForgotPassword(false)}/>)}
+            {isOpen && (<OTPModal type={"verifyEmail"} email={email} onClose={() => {
+                setIsOpen(false)
+            }}/>)}
         </>
     )
 }

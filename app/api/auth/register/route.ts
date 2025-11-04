@@ -1,19 +1,28 @@
 import {NextResponse} from "next/server";
-import {RegisterResponse} from "@/types/api";
+import {ErrorResponse, LoginResponse, RegisterResponse} from "@/types/apis/auth";
 import {callExternalApi} from "@/lib/fetcher";
+import {setToken} from "@/lib/token";
 
 const PATH = "/auth/register";
 
 export async function POST(req: Request) {
-    const body = await req.json();
-    const { data, status, ok } = await callExternalApi<RegisterResponse>(PATH, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
-        body: JSON.stringify(body),
-    });
-    if (!ok) return NextResponse.json({ error: data?.message ?? "Đăng ký thất bại" }, { status });
-    return NextResponse.json({ ok: true});
-
+    try {
+        const res = await callExternalApi(
+            PATH,
+            false,
+            req
+        );
+        if (!res.ok) {
+            const errorData: ErrorResponse = await res.json();
+            return Response.json(errorData, {status: res.status});
+        }
+        const data: RegisterResponse = await res.json();
+        return Response.json(data, {status: res.status});
+    } catch (error: any) {
+        console.error("Lỗi register:", error);
+        return Response.json(
+            {message: "Lỗi server hoặc kết nối API thất bại"},
+            {status: 500}
+        );
+    }
 }
