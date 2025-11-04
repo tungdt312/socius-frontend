@@ -222,10 +222,7 @@ const SignUpForm = () => {
             </Card>
             {isOpen && (
                 <OTPModal type={"verifyEmail"} email={form.getValues("email")}
-                          onSuccess={() => {
-                              toast.success("Xác thực thành công.");
-                              router.push("/sign-in");
-                          }} onClose={() => {
+                          onClose={() => {
                     setIsOpen(false)
                 }}/>)}
         </>

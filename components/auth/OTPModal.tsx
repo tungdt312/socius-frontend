@@ -47,7 +47,7 @@ const OTPModal = ({email, onClose, type}: {
             setIsOpen(false)
             onClose()
             toast.success((type === "verifyEmail") ? "Xác thực thành công" : "Đổi mật khẩu thành công")
-        } catch (err {
+        } catch (err) {
             toast.error("Lỗi không xác định!");
         } finally {
             setIsLoading(false)
