@@ -8,8 +8,8 @@ export interface Page<T>{
 
 export interface Base{
     id: number,
-    createdAt: Date,
-    updatedAt: Date,
+    createdAt: string,
+    updatedAt: string,
     createdBy: string,
     updatedBy: string,
 }

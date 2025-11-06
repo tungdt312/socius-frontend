@@ -7,6 +7,7 @@ import {Bell, House, PlusSquare} from "lucide-react";
 import {usePathname, useRouter} from "next/navigation";
 import {UserResponse} from "@/types/dtos/user";
 import {USER_KEY} from "@/constants";
+import PostForm from "@/components/user/PostForm";
 
 const Header2 = () => {
     const router = useRouter();
@@ -32,14 +33,14 @@ const Header2 = () => {
         <div
             className={"sticky z-10 top-0 h-auto w-full items-center justify-end bg-background rounded-none px-4 py-1 hidden md:flex"}>
             <div className="flex items-center h-auto w-auto space-x-4">
-                <Button
-                    variant="link"
-                    title={"Tạo"}
-                    onClick={() => {
-                    }}
-                    className="w-full justify-start items-center gap-2 size-fit !p-1 text-foreground">
-                    <PlusSquare className="size-7 "/>
-                </Button>
+                <PostForm onPostCreated={()=>{}}>
+                    <Button
+                        variant="link"
+                        title={"Tạo"}
+                        className="w-full justify-start items-center gap-2 size-fit !p-1 text-foreground">
+                        <PlusSquare className="size-7 "/>
+                    </Button>
+                </PostForm>
                 <Button
                     variant="link"
                     title={"Thông báo"}
@@ -53,7 +54,7 @@ const Header2 = () => {
                         src={user.avatarUrl || process.env.NEXT_PUBLIC_AVATAR_URL!}
                         height={40}
                         width={40}
-                        className="size-7 rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
+                        className="size-7 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
                     />
                     <p className="subtitle1 text-foreground ">
                         {user.displayName}

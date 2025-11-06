@@ -17,9 +17,11 @@ export interface FriendShipResponse {
 }
 
 export interface EditUserResquest {
-    displayName: string;
-    bio: string;
-    avatarFile: File;
+    displayName?: string;
+    bio?: string;
+    favorites?: string;
+    dateOfBirth?: string;
+    avatarFile?: File;
 }
 
 export interface UserRelationResponse extends UserResponse {

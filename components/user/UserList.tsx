@@ -107,7 +107,7 @@ export const UserList = ({userId, type}: {
                     if (storedUser) {
                         effectiveUserId = JSON.parse(storedUser).id;
                     } else {
-                        throw new Error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
+                        toast.error("Không thể xác định người dùng. Vui lòng đăng nhập lại.");
                     }
                 }
 
@@ -126,7 +126,6 @@ export const UserList = ({userId, type}: {
                     default:
                         res = await getFriendsList(type);
                 }
-
                 setPage(res);
                 setUsers(users.concat(res.content ?? []));
 
@@ -156,27 +155,30 @@ export const UserList = ({userId, type}: {
                    onChange={(e) => setSearch(e.target.value)}
             />
             <ScrollArea className="flex flex-col items-center w-full h-[450px] overflow-hidden">
-                <div className={"flex flex-col items-center gap-2 w-full h-fit"}>
-                    {error ? (
-                        <>
-                            <p>{error}</p>
-                            <Button onClick={router.refresh} variant={"outline"} size={"sm"}>Thử lại</Button>
-                        </>
-                    ) : (
-                        <>
-                            {filtered.length > 0 ? (
+
+                {error ? (
+                    <div className={"flex flex-col items-center gap-2 w-full h-fit"}>
+                        <p>{error}</p>
+                        <Button onClick={router.refresh} variant={"outline"} size={"sm"}>Thử lại</Button>
+                    </div>
+                ) : (
+                    <div className={"flex flex-col items-center gap-2 w-full h-fit"}>
+                        {
+                            filtered.length > 0 ? (
                                 filtered.map((user) => (
                                     (type == "followers" || type == "following") ?
-                                        <FollowListItem user={user} key={user.id}/> :
+                                        <FollowListItem user={user} key={user.id} /> :
                                         <FriendListItem user={user} key={user.id}/>
                                 ))
                             ) : (
                                 <p className={"text-center w-full"}>Không có {label} nào</p>
-                            )}
-                        </>
-                    )}
-                    {isLoading && <UserListItemSkeleton/>}
-                </div>
+                            )
+                        }
+                    </div>
+
+                )}
+                {isLoading && <UserListItemSkeleton/>}
+
             </ScrollArea>
         </>
     )

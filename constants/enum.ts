@@ -57,3 +57,23 @@ export const listMapper: Record<UserListType, { endpoint: string; label: string 
         label: "Người dùng",
     }
 };
+
+export enum postAccess{
+    PUBLIC = "PUBLIC",
+    PRIVATE = "PRIVATE",
+    FRIENDS = "FRIENDS",
+}
+
+export enum reactTargetType{
+    POST = "POST",
+    COMMENT = "COMMENT",
+    MESSAGE = "MESSAGE",
+}
+
+export enum reactType{
+    LOVE = "LOVE",
+}
+
+
+export const MAX_IMG_SIZE = 2 * 1024 * 1024; // 2MB
+export const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];

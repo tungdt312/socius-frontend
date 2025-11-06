@@ -1,6 +1,7 @@
 import {UserRelationResponse} from "@/types/dtos/user";
 import {BaseResponse, Page} from "@/types/dtos/base";
 import {apiFetch, processResponse} from "@/services/baseService";
+import {FriendActionTypes} from "@/constants/enum";
 
 export async function getFriendsList(
     type?: string,
@@ -23,7 +24,7 @@ export async function getFriendsList(
     });
     return processResponse(res);
 }
-export async function postFriendAction(targetId: string, type: string): Promise<BaseResponse> {
+export async function postFriendAction(targetId: string, type: FriendActionTypes): Promise<BaseResponse> {
     let target = "targetId"
     if (type === "accept" || type === "reject") target = "requesterId"
     const res = await apiFetch(`/friends/${type}?${target}=${targetId}`, true, {
@@ -35,7 +36,7 @@ export async function postFriendAction(targetId: string, type: string): Promise<
     if (!res.ok) throw new Error(res.statusText);
     return processResponse(res);
 }
-export async function deleteFriendAction(targetId: string, type: string): Promise<BaseResponse> {
+export async function deleteFriendAction(targetId: string, type: FriendActionTypes): Promise<BaseResponse> {
     let target = "targetId"
     if (type === "unfriend") target = "friendId"
     const res = await apiFetch(`/friends/${type}?${target}=${targetId}`, true, {

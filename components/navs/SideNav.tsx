@@ -75,7 +75,7 @@ const SideNav = () => {
                             src={user.avatarUrl|| process.env.NEXT_PUBLIC_AVATAR_URL!}
                             height={40}
                             width={40}
-                            className="size-7 rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
+                            className="size-7 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
                         />
                         <p className="subtitle1 hidden lg:block group-data-[state=on]:text-primary-foreground overflow-ellipsis">
                             Trang cá nhân

@@ -1,4 +1,4 @@
-import {UserRelationResponse} from "@/types/dtos/user";
+import {UserRelationResponse, UserResponse} from "@/types/dtos/user";
 import Link from "next/link";
 import {Item, ItemActions, ItemContent, ItemMedia, ItemTitle} from "@/components/ui/item";
 import Image from "next/image";
@@ -31,7 +31,14 @@ export const FollowListItem = ({ user }: { user: UserRelationResponse }) => {
     // 2. Dùng state cục bộ để UI phản hồi ngay lập tức
     const [isFollowing, setIsFollowing] = useState(user.following);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSelf, setIsSelf] = useState(false);
 
+    useEffect(() => {
+        const ownerDataString = localStorage.getItem(USER_KEY);
+        const ownerData: UserResponse | null = ownerDataString ? JSON.parse(ownerDataString) : null;
+
+        if (ownerData?.id == user.id) setIsSelf(true);
+    }, []);
     const FollowHandle = async (e: React.MouseEvent) => {
         e.preventDefault();
         e.stopPropagation();
@@ -60,7 +67,7 @@ export const FollowListItem = ({ user }: { user: UserRelationResponse }) => {
                         alt={user.displayName}
                         width={44}
                         height={44}
-                        className="size-full rounded-full max-w-11 mx-auto"
+                        className="size-11 object-cover rounded-full  mx-auto"
                         loading={"lazy"}
                     />
                 </ItemMedia>
@@ -69,10 +76,10 @@ export const FollowListItem = ({ user }: { user: UserRelationResponse }) => {
                         <p className={"truncate max-w-60"}>{user.displayName}</p>
                     </ItemTitle>
                     <ItemActions>
-                        {/* 6. Dùng state 'isFollowing' và 'isLoading' */}
-                        <Button size={"sm"} onClick={FollowHandle} disabled={isLoading}>
+                        {isSelf ? <Dot className={user.isActive ? "text-success size-10" : "text-muted-foreground  size-10"} />
+                        : <Button size={"sm"} onClick={FollowHandle} disabled={isLoading}>
                             {isFollowing ? "Hủy theo dõi" : "Theo dõi"}
-                        </Button>
+                        </Button>}
                     </ItemActions>
                 </ItemContent>
             </Item>
@@ -81,21 +88,26 @@ export const FollowListItem = ({ user }: { user: UserRelationResponse }) => {
 }
 
 export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
-    const currentUserId = JSON.parse(localStorage.getItem(USER_KEY)??"").id;
+
     const [type, setType] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
     useEffect(() => {
         const initialType = (() => {
+            const ownerDataString = localStorage.getItem(USER_KEY);
+            const ownerData: UserResponse | null = ownerDataString ? JSON.parse(ownerDataString) : null;
             const status = user.friendship?.status;
-            if (!status) return FriendActionTypes.send; // Mặc định là 'send' nếu không có quan hệ
+
+            if (ownerData?.id == user.id) return ""
+            if (!status) return FriendActionTypes.send;
             if (status === FriendshipStatus.PENDING) {
-                return user.friendship.senderId === currentUserId ? FriendActionTypes.unsend : FriendActionTypes.accept;
+                return user.friendship.senderId === ownerData?.id ? FriendActionTypes.unsend : FriendActionTypes.accept;
             }
-            if (status === FriendshipStatus.FRIEND) return ""; // Trạng thái bạn bè, không có action
+            if (status === FriendshipStatus.FRIEND) return "";
             if (status === FriendshipStatus.BLOCKED) return FriendActionTypes.unblock;
             return FriendActionTypes.send;
         })();
+        setType(initialType);
     },[])
     const HandleAction = async (e: React.MouseEvent, actionType: FriendActionTypes) => {
         // 2. NGĂN CHẶN LINK ĐIỀU HƯỚNG
@@ -155,7 +167,7 @@ export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
                         alt={user.displayName}
                         width={44}
                         height={44}
-                        className="size-full rounded-full max-w-11 mx-auto"
+                        className="size-11 object-cover  rounded-full  mx-auto"
                         loading={"lazy"}
                     />
                 </ItemMedia>

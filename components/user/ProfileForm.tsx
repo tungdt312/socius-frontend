@@ -9,6 +9,7 @@ import {toast} from "sonner";
 import {putMe} from "@/services/userService";
 import {USER_KEY} from "@/constants";
 import {UserResponse} from "@/types/dtos/user";
+import {ACCEPTED_TYPES, MAX_IMG_SIZE} from "@/constants/enum";
 
 interface ProfileFormProps {
     initialDisplayName?: string;
@@ -18,29 +19,28 @@ interface ProfileFormProps {
     onCancel?: () => void;
 }
 
-const MAX_AVATAR_SIZE = 2 * 1024 * 1024; // 2MB
-const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+
 
 const ProfileForm = () => {
     const [displayName, setDisplayName] = useState("");
     const [bio, setBio] = useState("");
-    const [avatarFile, setAvatarFile] = useState<File | null>(null);
+    const [avatarFile, setAvatarFile] = useState<File | undefined>(undefined);
     const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Dùng null
-    const [isLoadingData, setIsLoadingData] = useState(true); // State cho lần tải đầu
+    const [isLoadingData, setIsLoadingData] = useState(true);
 
     const [error, setError] = useState<string | null>(null);
-    const [loading, setLoading] = useState(false); // State cho lúc submit
+    const [loading, setLoading] = useState(false);
 
-    // useEffect này chỉ dùng để tải dữ liệu LẦN ĐẦU
+
     useEffect(() => {
         const data = localStorage.getItem(USER_KEY);
         if (data) {
-            const user: UserResponse = JSON.parse(data); // Parse trong useEffect
+            const user: UserResponse = JSON.parse(data);
             setBio(user.bio);
             setDisplayName(user.displayName);
-            setPreviewUrl(user.avatarUrl); // Set URL ban đầu
+            setPreviewUrl(user.avatarUrl);
         }
-        setIsLoadingData(false); // Đánh dấu đã tải xong
+        setIsLoadingData(false);
     },[]);
 
 
@@ -60,7 +60,7 @@ const ProfileForm = () => {
             toast.error("Loại file này không được hỗ trợ. Hãy thử lại với PNG/JPEG/WEBP.");
             return;
         }
-        if (file.size > MAX_AVATAR_SIZE) {
+        if (file.size > MAX_IMG_SIZE) {
             toast.error("Ảnh đại diện quá lớn. Dung lượng tối đa là 2MB.");
             return;
         }
@@ -76,19 +76,13 @@ const ProfileForm = () => {
             return;
         }
 
-        const form = new FormData();
-        form.append("displayName", displayName.trim());
-        form.append("bio", bio);
-        if (avatarFile) {
-            form.append("avatarFile", avatarFile);
-        }
         setLoading(true);
         try {
-            const updatedUser: UserResponse = await putMe(form);
+            const updatedUser: UserResponse = await putMe({displayName, bio, avatarFile});
 
             localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
             setPreviewUrl(updatedUser.avatarUrl);
-            setAvatarFile(null);
+            setAvatarFile(undefined);
             toast.success("Lưu trang cá nhân thành công");
         } catch (error) {
             setError((error as Error).message ?? "Lỗi không xác định");

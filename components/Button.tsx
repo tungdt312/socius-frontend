@@ -1,39 +1,33 @@
 "use client"
-import React, {useState} from 'react'
+import React, {useEffect, useState} from 'react'
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
-import {UserRelationResponse} from "@/types/dtos/user";
+import {UserRelationResponse, UserResponse} from "@/types/dtos/user";
 import {FriendActionTypes, FriendshipStatus} from '@/constants/enum';
-import {ChevronDown} from "lucide-react";
+import {ChevronDown, EllipsisVertical} from "lucide-react";
 import {BASE} from "@/lib/utils";
 import {useRouter} from "next/navigation";
 import {USER_KEY} from "@/constants";
+import {deleteFriendAction, postFriendAction} from "@/services/friendService";
+import {follow, unfollow} from "@/services/userService";
 
 export const FollowButton =  ({user}: { user: UserRelationResponse }) => {
-    const router = useRouter()
     const [isFollowing, setIsFollowing] = useState(user.following);
 
     const FollowHandle = async (isFollowing: boolean) => {
         try {
-            const res = await fetch(`${BASE}/api/users/follow?targetId=${user.id}`, {
-                method: (isFollowing) ? "DELETE" : "POST",
-            })
-            if (!res.ok) {
-                toast.error((isFollowing) ? "Hủy theo dõi thất bại" : "Theo dõi thất bại")
-                return 0
-            }
-            router.refresh()
+            const res = isFollowing ? await unfollow(user.id) : await follow(user.id);
             setIsFollowing(!isFollowing);
-        } catch (error) {
-            throw new Error("Action Failed")
+        } catch (error){
+            toast.error((error as Error).message ?? "Lỗi không xác định")
         }
     }
     if (isFollowing) {
         return (
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button className={"grow flex items-center"} variant={"outline"}>
+                    <Button className={"flex items-center"} variant={"outline"}>
                         Đang theo dõi
                         <ChevronDown/>
                     </Button>
@@ -56,22 +50,20 @@ export const FollowButton =  ({user}: { user: UserRelationResponse }) => {
 export const FriendButton =  ({user}: { user: UserRelationResponse }) => {
     const router = useRouter()
     const [state, setState] = useState<FriendshipStatus>(user.friendship.status ?? FriendshipStatus.NONE)
-    const [isSend, setIsSend] = useState<boolean>(JSON.parse(localStorage.getItem(USER_KEY)?? "").id === (user.friendship.senderId ?? -1))
-
+    const [isSend, setIsSend] = useState<boolean>(false);
+    useEffect(() => {
+        const ownerDataString = localStorage.getItem(USER_KEY);
+        const ownerData: UserResponse | null = ownerDataString ? JSON.parse(ownerDataString) : null;
+        setIsSend(user.friendship.senderId === ownerData?.id )
+    }, []);
     const HandleAction = async (type: FriendActionTypes) => {
         try {
-            const res = await fetch(`${BASE}/api/friends?type=${type}&&targetId=${user.id}`, {
-                method: [FriendActionTypes.unblock, FriendActionTypes.unfriend].includes(type as FriendActionTypes)
-                    ? "DELETE" : "POST",
-            })
-            if (!res.ok) {
-                toast.error("Thao tác thất bại")
-                return 0
-            }
+            const res = (type == "unfriend" )? await deleteFriendAction(user.id, type):await postFriendAction(user.id, type)
             router.refresh()
             return 1
         } catch (error) {
-            throw new Error("Action failed")
+           toast.error((error as Error).message?? "Lỗi không xác định")
+            return 0
         }
     };
     if (state == FriendshipStatus.PENDING){
@@ -90,7 +82,7 @@ export const FriendButton =  ({user}: { user: UserRelationResponse }) => {
         else return (
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button className={"grow"} variant={"outline"}>
+                    <Button variant={"outline"}>
                         Phản hồi kết bạn
                         <ChevronDown/>
                     </Button>
@@ -124,7 +116,7 @@ export const FriendButton =  ({user}: { user: UserRelationResponse }) => {
         return (
             <Popover>
                 <PopoverTrigger asChild>
-                    <Button className={"grow"} variant={"outline"}>
+                    <Button  variant={"outline"}>
                         Bạn bè
                         <ChevronDown/>
                     </Button>
@@ -158,4 +150,55 @@ export const FriendButton =  ({user}: { user: UserRelationResponse }) => {
             </Button>
         )
     }
+}
+
+export const BlockButton = ({user, onSuccess}: {user: UserRelationResponse, onSuccess: ()=>void} ) => {
+    const router = useRouter()
+    const [isBlocked, setIsBlocked] = useState<boolean>(user.friendship.status == FriendshipStatus.BLOCKED)
+    const HandleUnBlock = async () => {
+        try {
+            const res = await deleteFriendAction(user.id, FriendActionTypes.unblock)
+            toast.success("Hủy chặn thành công")
+            setIsBlocked(false)
+            onSuccess()
+        } catch (error) {
+            toast.error((error as Error).message ?? "Lỗi không xác định")
+        }
+    }
+    const HandleBlock = async () => {
+        try {
+            const res = await postFriendAction(user.id, FriendActionTypes.block)
+            toast.success("Chặn thành công")
+            setIsBlocked(true)
+            onSuccess()
+        } catch (error) {
+            toast.error((error as Error).message ?? "Lỗi không xác định")
+        }
+    }
+    if (isBlocked) {
+        return (
+            <Button variant={"destructive"} className={"grow"} onClick={async()=>{
+                await HandleUnBlock()
+            }}>
+                Bỏ chặn
+            </Button>
+        )
+    }
+    return (
+        <Popover>
+            <PopoverTrigger asChild>
+                <Button size={"icon"} variant={"outline"}>
+                   <EllipsisVertical size={40}/>
+                </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-fit p-0 flex-col">
+                <Button className={"w-full !text-destructive"}  variant={"ghost"} onClick={async() => {await HandleBlock()}}>
+                    Chặn người dùng
+                </Button>
+                <Button className={"w-full !text-destructive"}  variant={"ghost"} onClick={async() => {}}>
+                    Báo cáo người dùng
+                </Button>
+            </PopoverContent>
+        </Popover>
+    )
 }

@@ -10,7 +10,7 @@ export async function getMe():Promise<UserResponse>{
         },
     });
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }
 export async function getUserById(id:string):Promise<UserResponse>{
     const res = await apiFetch(`/users/${id}`, true, {
@@ -20,7 +20,7 @@ export async function getUserById(id:string):Promise<UserResponse>{
         },
     });
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }
 export async function getUserAndStatusById(id:string):Promise<UserRelationResponse>{
     const res = await apiFetch(`/users/${id}/relation-status`, true, {
@@ -30,7 +30,7 @@ export async function getUserAndStatusById(id:string):Promise<UserRelationRespon
         },
     });
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }
 export async function getFollowList(id: string, type: string):Promise<Page<UserRelationResponse>>{
     const res = await apiFetch(`/users/${id}/${type}`, true, {
@@ -40,7 +40,7 @@ export async function getFollowList(id: string, type: string):Promise<Page<UserR
         },
     });
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }
 export async function getUsersList():Promise<Page<UserRelationResponse>>{
     const res = await apiFetch(`/users/search`, true, {
@@ -50,15 +50,23 @@ export async function getUsersList():Promise<Page<UserRelationResponse>>{
         },
     });
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }
-export async function putMe(data: FormData):Promise<UserResponse>{
+export async function putMe(newUser: EditUserResquest):Promise<UserResponse>{
+    const {displayName, avatarFile, bio, dateOfBirth, favorites} = newUser;
+    const form = new FormData();
+    if (displayName) form.append("displayName", displayName.trim());
+    if (bio) form.append("bio", bio);
+    if (dateOfBirth) form.append("dateOfBirth", dateOfBirth);
+    if (favorites) form.append("favorites", favorites);
+    if (avatarFile) form.append("avatarFile", avatarFile);
+
     const res = await apiFetch("/users/me", true, {
         method: "PUT",
         headers: {
             "accept": "application/json",
         },
-        body: data,
+        body: form,
     })
     if (!res.ok) throw new Error(res.statusText);
     return processResponse(res);
@@ -91,5 +99,5 @@ export async function removefollow(followerId: string):Promise<BaseResponse>{
         }
     })
     if (!res.ok) throw new Error(res.statusText);
-    return res.json();
+    return processResponse(res);
 }

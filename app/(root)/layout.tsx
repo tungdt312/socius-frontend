@@ -8,14 +8,14 @@ import {ScrollArea} from "@/components/ui/scroll-area";
 const BASE = process.env.NEXT_PUBLIC_BASE_URL
 const Layout = async ({children}: { children: React.ReactNode }) => {
     return (
-        <div className={"flex flex-col md:flex-row justify-start w-full bg-background"}>
+        <div className={"flex flex-col md:flex-row justify-start w-full h-screen bg-background"}>
             <SideNav />
-            <ScrollArea className={"flex flex-col w-full h-screen bg-background"}>
+            <div className={"flex flex-col w-full h-screen bg-background"}>
                 <Header/>
                 <Header2/>
                     {children}
                 <FootNav/>
-            </ScrollArea>
+            </div>
         </div>
     )
 }

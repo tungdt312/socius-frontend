@@ -5,25 +5,26 @@ import Image from "next/image";
 import {Button} from "@/components/ui/button";
 import {Bell, House, PlusSquare} from "lucide-react";
 import {useRouter} from "next/navigation";
+import PostForm from "@/components/user/PostForm";
 
 const Header = () => {
     const router = useRouter();
     return (
         <div
             className={"sticky top-0 h-auto w-full flex items-center justify-between bg-background rounded-none border-b-1 border-border px-4 py-1 md:hidden"}>
-            <Link href="/public">
+            <Link href="/">
                 <Image alt={"logo"} src={'/Logo-full.svg'} height={100} width={100}
                        className="h-11 w-auto"/>
             </Link>
             <div className="flex items-center h-auto w-auto space-x-4">
-                <Button
-                    variant="link"
-                    title={"Tạo"}
-                    onClick={() => {
-                    }}
-                    className="w-full justify-start items-center gap-2 size-fit !p-1 text-foreground">
-                    <PlusSquare className="size-7 "/>
-                </Button>
+                <PostForm onPostCreated={()=>{}}>
+                    <Button
+                        variant="link"
+                        title={"Tạo"}
+                        className="w-full justify-start items-center gap-2 size-fit !p-1 text-foreground">
+                        <PlusSquare className="size-7 "/>
+                    </Button>
+                </PostForm>
                 <Button
                     variant="link"
                     title={"Thông báo"}
