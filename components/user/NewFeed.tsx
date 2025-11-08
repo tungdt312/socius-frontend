@@ -6,6 +6,7 @@ import {getNewFeed, getPostById, getPostsByUserId} from "@/services/postService"
 import {toast} from "sonner";
 import {PostResponse} from "@/types/dtos/post";
 import {PostCard, PostCardSkeleton} from "@/components/user/Post";
+import Link from 'next/link';
 
 const NewFeed = () => {
     const [page, setPage] = useState<Page<PostResponse>>();
@@ -32,7 +33,7 @@ const NewFeed = () => {
         <div className={"flex flex-col items-center gap-4 w-full h-fit"}>
             { posts.length > 0 &&
                 posts.map((p) => (
-                    <PostCard post={p} key={p.id}/>
+                        <PostCard post={p} key={p?.id ?? ""}/>
                 )
             )}
             {posts.length <= 0 && <p className={"text-center w-full"}>Không có Bài viết nào</p>}

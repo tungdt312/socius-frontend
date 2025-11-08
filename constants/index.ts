@@ -12,6 +12,8 @@ import {
     UsersRound
 } from "lucide-react";
 import {ForwardedRef} from "react";
+import {CategoriesConfig, CategoryConfig} from "emoji-picker-react/src/config/categoryConfig";
+import {Categories} from "emoji-picker-react";
 
 export const ACCESS_TOKEN_KEY = "access-token";
 export const REFRESH_TOKEN_KEY = "refresh-token";
@@ -108,3 +110,42 @@ export const roleMap = new Map<string, {name: string, url: string, icon: Forward
     ["MODERATOR", {name: "Kiểm duyệt viên", url: "/moderator/", icon:UserLock }],
     ["ADMIN", {name: "Quản trị viên", url: "/admin/", icon: UserCog}],
 ])
+
+export const emojiCategory: CategoryConfig[] = [
+    {
+        category: Categories.SUGGESTED,
+        name: 'Gần đây'
+    },
+    {
+        category: Categories.SMILEYS_PEOPLE,
+        name: 'Con người'
+    },
+    {
+        category: Categories.ANIMALS_NATURE,
+        name: 'Tự nhiên'
+    },
+    {
+        category: Categories.FOOD_DRINK,
+        name: 'Thực phẩm'
+    },
+    {
+        category: Categories.TRAVEL_PLACES,
+        name: 'Du lịch'
+    },
+    {
+        category: Categories.ACTIVITIES,
+        name: 'Hoạt động'
+    },
+    {
+        category: Categories.OBJECTS,
+        name: 'Vật thể'
+    },
+    {
+        category: Categories.SYMBOLS,
+        name: 'Ký hiệu'
+    },
+    {
+        category: Categories.FLAGS,
+        name: 'Cờ'
+    }
+];

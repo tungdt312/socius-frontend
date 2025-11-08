@@ -75,5 +75,5 @@ export enum reactType{
 }
 
 
-export const MAX_IMG_SIZE = 2 * 1024 * 1024; // 2MB
-export const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp"];
+export const MAX_IMG_SIZE = 20 * 1024 * 1024; // 20MB
+export const ACCEPTED_TYPES = ["image/png", "image/jpeg", "image/webp" ,"video/mp4"];

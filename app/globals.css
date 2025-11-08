@@ -41,8 +41,32 @@
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+
+}
+/* app/globals.css */
+
+/* ... (Các code khác của bạn) ... */
+
+/* === PHIÊN BẢN DEBUG CHO SCROLLBAR === */
+::-webkit-scrollbar {
+  width: 8px;  /* Độ rộng 8px */
+  height: 8px; /* Độ cao 8px */
 }
 
+::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0); /* Màu rãnh cuộn (màu xám nhạt) */
+  border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+  background: rgba(170,170,170,0.5); /* Màu thanh cuộn (màu xám đậm) */
+  border-radius: 10px;
+  /* (Chúng ta bỏ border đi để test) */
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(170,170,170,0.8) /* Màu khi di chuột vào */
+}
 @layer utilities{
   .shadow-or-ring {
     @apply shadow-md ring-0
@@ -92,6 +116,7 @@ input[type="password"]::-webkit-textfield-decoration-container {
   visibility: hidden;
   pointer-events: none;
 }
+
 [data-theme='blue-light'] {
   --radius: 8px;
   --background:  oklch(1 0 0);

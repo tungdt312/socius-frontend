@@ -7,7 +7,7 @@ import {
     SendVerifyEmailRequest
 } from "@/types/dtos/auth";
 import {apiFetch, processResponse} from "@/services/baseService";
-import {BaseResponse} from "@/types/dtos/base";
+import {BaseResponse, ErrorResponse} from "@/types/dtos/base";
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
     const res = await apiFetch("/auth/login",false, {
@@ -18,7 +18,7 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
         },
         body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error(res.statusText);
+    if (!res.ok) throw new Error((res as unknown as ErrorResponse).message);
     console.log("Sign in success");
     return processResponse(res);
 }
@@ -32,7 +32,7 @@ export async function register(data: RegisterRequest): Promise<RegisterResponse>
         },
         body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error(res.statusText);
+    if (!res.ok) throw new Error((res as unknown as ErrorResponse).message);
     return processResponse(res);
 }
 
@@ -45,7 +45,7 @@ export async function resetPassword(data: ResetPasswordRequest): Promise<BaseRes
         },
         body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error(res.statusText);
+    if (!res.ok) throw new Error((res as unknown as ErrorResponse).message);
     return processResponse(res);
 }
 
@@ -58,7 +58,7 @@ export async function sendVerifyEmail(data: SendVerifyEmailRequest): Promise<Bas
         },
         body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error(res.statusText);
+    if (!res.ok) throw new Error((res as unknown as ErrorResponse).message);
     return processResponse(res);
 }
 
@@ -71,6 +71,6 @@ export async function verifyOTP(data: OtpVerificationRequest ): Promise<BaseResp
         },
         body: JSON.stringify(data),
     })
-    if (!res.ok) throw new Error(res.statusText);
+    if (!res.ok) throw new Error((res as unknown as ErrorResponse).message);
     return processResponse(res);
 }

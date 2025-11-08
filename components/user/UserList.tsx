@@ -75,7 +75,6 @@ export const UserListTag = ({userId, type}: { userId: string, type: UserListType
                 </AlertDialogHeader>
                 <Separator/>
                 <AlertDialogDescription className={"h-[450px] mt-2 w-full"}>
-
                     <UserList userId={userId} type={type}/>
                 </AlertDialogDescription>
             </AlertDialogContent>
@@ -146,41 +145,35 @@ export const UserList = ({userId, type}: {
     );
 
     return (
-        <>
-
+        <div>
             <Input className="flex w-full items-center gap-2 mb-2"
                    type="text"
                    placeholder="Tìm kiếm"
                    value={search}
                    onChange={(e) => setSearch(e.target.value)}
             />
-            <ScrollArea className="flex flex-col items-center w-full h-[450px] overflow-hidden">
-
-                {error ? (
-                    <div className={"flex flex-col items-center gap-2 w-full h-fit"}>
-                        <p>{error}</p>
-                        <Button onClick={router.refresh} variant={"outline"} size={"sm"}>Thử lại</Button>
-                    </div>
-                ) : (
-                    <div className={"flex flex-col items-center gap-2 w-full h-fit"}>
-                        {
-                            filtered.length > 0 ? (
-                                filtered.map((user) => (
-                                    (type == "followers" || type == "following") ?
-                                        <FollowListItem user={user} key={user.id} /> :
-                                        <FriendListItem user={user} key={user.id}/>
-                                ))
-                            ) : (
-                                <p className={"text-center w-full"}>Không có {label} nào</p>
-                            )
-                        }
-                    </div>
-
-                )}
+            <div className="flex flex-col items-center w-full h-[450px]">
+                <div className={"flex flex-col items-center gap-2 w-full h-fit"}>
+                    {error ? (
+                        <>
+                            <span>{error}</span>
+                            <Button onClick={router.refresh} variant={"outline"} size={"sm"}>Thử lại</Button>
+                        </>
+                    ) : (
+                        filtered.length > 0 ? (
+                            filtered.map((user) => (
+                                (type == "followers" || type == "following") ?
+                                    <FollowListItem user={user} key={user.id}/> :
+                                    <FriendListItem user={user} key={user.id}/>
+                            ))
+                        ) : (
+                            <span className={"text-center w-full"}>Không có {label} nào</span>
+                        )
+                    )}
+                </div>
                 {isLoading && <UserListItemSkeleton/>}
-
-            </ScrollArea>
-        </>
+            </div>
+        </div>
     )
         ;
 };

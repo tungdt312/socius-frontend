@@ -1,10 +1,15 @@
 import {Base} from "@/types/dtos/base";
 import {postAccess, reactTargetType} from "@/constants/enum";
 
+export interface PostMedia {
+    type: string,
+    url: string
+}
+
 export interface PostResponse {
     id: string;
     content: string;
-    mediaUrl: string;
+    media: PostMedia[];
     accessModifier: postAccess;
 
     reactCount: number;
@@ -14,7 +19,10 @@ export interface PostResponse {
     authorName: string;
     authorAvatar: string;
     authorId: string;
+
+    sharedPostId: string;
     sharedPost: PostResponse;
+
     createdAt: string;
     updatedAt: string;
     reactSummary: ReactSummary;
@@ -24,7 +32,7 @@ export interface PostRequest {
     content?: string;
     accessModifier?: postAccess;
     sharedPostId?: string;
-    media?: File;
+    media?: File[];
 }
 
 export interface CommentRequest {
@@ -38,6 +46,14 @@ export interface EditCommentRequest {
     content?: string;
     imageFile?: File;
     removeImage: boolean;
+}
+export interface EditPostRequest {
+    postId?: string;
+    content?: string;
+    accessModifier?: postAccess;
+    keepMediaUrls?: string[];
+    removeMediaUrls?: string[];
+    media?: File[];
 }
 export interface CommentResponse {
     id: string;

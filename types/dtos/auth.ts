@@ -1,9 +1,6 @@
 //Auth
 import {OtpType} from "@/constants/enum";
 
-export interface ErrorResponse {
-    message: string;
-}
 
 export interface RefreshTokenRequest {
     refreshToken: string;

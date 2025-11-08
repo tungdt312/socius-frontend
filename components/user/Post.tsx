@@ -1,7 +1,17 @@
 import React, {useEffect, useState} from 'react'
 import {postAccess, reactTargetType, reactType} from "@/constants/enum";
-import {EllipsisVertical, Globe, Heart, Lock, MessageCircle, Share2, Users} from "lucide-react";
-import {CommentResponse, PostResponse} from "@/types/dtos/post";
+import {
+    ChevronLeft,
+    ChevronRight,
+    EllipsisVertical,
+    Globe,
+    Heart,
+    Lock,
+    MessageCircle,
+    Share2,
+    Users
+} from "lucide-react";
+import {CommentResponse, PostMedia, PostResponse} from "@/types/dtos/post";
 import Link from "next/link";
 import Image from "next/image";
 import {formatISODate, formatNumber} from "@/lib/utils";
@@ -9,12 +19,13 @@ import {Skeleton} from "@/components/ui/skeleton"; // Import Skeleton
 import {Card, CardContent, CardFooter, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
-import {CommentInputForm} from "@/components/user/CommentForm";
+import {CommentInputForm, useCurrentUserId} from "@/components/user/CommentForm";
 import {CommentItem, CommentSkeleton} from "@/components/user/Comments";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {getPostsComments} from "@/services/commentService";
-import PostForm from "@/components/user/PostForm";
+import PostForm, {PostEditForm} from "@/components/user/PostForm";
 import {react} from "@/services/reactService";
+import PostEllipsis from "@/components/user/PostEllipsis";
 
 export function getAccessIcon(access: postAccess) {
     switch (access) {
@@ -28,7 +39,16 @@ export function getAccessIcon(access: postAccess) {
     }
 }
 
-const PostHeader = ({post}: { post: PostResponse }) => (
+export const DisablePost = () => (
+    <Card className="w-full max-w-xl mx-auto my-4 h-fit overflow-hidden">
+        <CardHeader className="flex flex-col items-center justify-between px-4">
+            <p className={"subtitle1"}>Không thể hiển thị bài viết</p>
+            <p className={"subtitle2 text-muted-foreground"}>Có thể người đăng bài đã gỡ bài hoặc bạn nằm ngoài đối
+                tượng xem bài viết này</p>
+        </CardHeader>
+    </Card>
+)
+export const PostHeader = ({post}: { post: PostResponse }) => (
     <CardHeader className="flex flex-row items-center justify-between px-4">
         <div className="flex items-center gap-3">
             <Link href={`/user/${post.authorId}`}>
@@ -51,59 +71,78 @@ const PostHeader = ({post}: { post: PostResponse }) => (
                 </div>
             </div>
         </div>
-        {/* Dùng Button (ghost) của shadcn */}
-        <Button variant="ghost" size="icon" className="rounded-full">
-            <EllipsisVertical className="size-5"/>
-        </Button>
     </CardHeader>
 );
-const PostBody = ({post}: { post: PostResponse }) => (
+export const PostMediaShow = ({media}: { media: PostMedia[] }) => {
+    const [index, setIndex] = useState(0);
+    return (
+        <div className={"w-full aspect-auto rounded-lg bg-accent relative"}>
+            {media[index].type == "image" ? (
+                <Image alt={"image"} width={576} height={576} src={media[index].url}
+                       className={"max-h-[576px] w-full object-contain"}/>
+            ) : (
+                <video src={media[index].url} width={576} height={576} className={"max-h-[576px] w-full object-contain"}
+                       autoPlay muted controls>
+                    <span className={"caption text-muted-foreground"}>Trình duyệt không hỗ trợ định dạng video</span>
+                </video>
+            )}
+            <span
+                className={`text-muted-foreground caption bg-black/20 rounded-full p-1 absolute top-2 right-2 ${media.length == 1 ? "hidden" : ""}`}>{index + 1}/{media.length}</span>
+            <Button variant={"ghost"} size={"icon-sm"}
+                    className={`rounded-full absolute top-1/2 -translate-y-1/2 left-1 ${index == 0 ? "hidden" : ""}`}
+                    onClick={() => setIndex(index - 1)}>
+                <ChevronLeft size={24}/>
+            </Button>
+            <Button variant={"ghost"} size={"icon-sm"}
+                    className={`rounded-full absolute top-1/2 -translate-y-1/2 right-1 ${index == media.length - 1 ? "hidden" : ""}`}
+                    onClick={() => setIndex(index + 1)}>
+                <ChevronRight size={24}/>
+            </Button>
+
+        </div>
+    )
+}
+export const PostBody = ({post}: { post: PostResponse }) => (
     <CardContent className="p-0">
         {post.content && (
             <div className="px-4 pb-3 text-sm whitespace-pre-line">
                 {post!.content}
             </div>
         )}
-        {post.mediaUrl && (
-            <Link href={post.mediaUrl} target={"_blank"} className="w-full bg-muted-foreground overflow-hidden">
-                <Image
-                    src={post!.mediaUrl}
-                    alt="Nội dung bài post"
-                    width={1080}
-                    height={1080}
-                    className="w-full h-fit object-contain max-h-xl"
-                />
-            </Link>
+        {post.media && post.media.length > 0 && (
+            <PostMediaShow media={post.media}/>
         )}
     </CardContent>
 );
-
 export const PostCard = ({post}: { post: PostResponse }) => {
     console.log(post);
-    const [isLiked, setIsLiked] = useState((post.reactSummary?.currentUserReact || "") == reactType.LOVE);
-    const [likeCount, setLikeCount] = useState(post.reactCount);
+    const [currentPost, setCurrentPost] = useState(post);
+    const [isLiked, setIsLiked] = useState((currentPost?.reactSummary?.currentUserReact ?? "") == reactType.LOVE);
+    const [likeCount, setLikeCount] = useState(currentPost?.reactCount ?? 0);
     const [showReplies, setShowReplies] = useState(false);
     const [page, setPage] = useState(0);
     const [comments, setComments] = useState<CommentResponse[]>([]);
-    const [commentCount, setCommentCount] = useState(post.commentCount);
-    const [shareCount, setShareCount] = useState(post.shareCount);
+    const [commentCount, setCommentCount] = useState(currentPost?.commentCount ?? 0);
+    const [shareCount, setShareCount] = useState(currentPost?.shareCount ?? 0);
     const [isLoadingComments, setIsLoadingComments] = useState(false);
     const [parent, setParent] = useState<CommentResponse | undefined>(undefined);
+    const [isDelete, setIsDelete] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     if (!post) {
-        return <PostCardSkeleton/>;
+        return <DisablePost/>;
     }
     useEffect(() => {
         if (!showReplies) setComments([]);
-        if (showReplies && post.id && comments.length === 0) {
+        if (showReplies && currentPost.id && comments.length === 0) {
             const fetchComments = async () => {
                 setIsLoadingComments(true);
                 try {
-                    const fetchedComments = await getPostsComments(post.id);
+                    const fetchedComments = await getPostsComments(currentPost.id);
 
                     setPage(page + 1);
                     setComments(comments.concat(fetchedComments.content ?? []));
 
-                    console.log("Đang tải bình luận cho post " + post.id);
+                    console.log("Đang tải bình luận cho post " + currentPost.id);
 
 
                 } catch (error) {
@@ -114,7 +153,7 @@ export const PostCard = ({post}: { post: PostResponse }) => {
             };
             fetchComments();
         }
-    }, [showReplies, post.id, comments.length, commentCount]);
+    }, [showReplies, currentPost.id, comments.length, commentCount]);
     const handleLikePost = async () => {
         const newIsLiked = !isLiked;
         const newLikeCount = newIsLiked ? likeCount + 1 : likeCount - 1;
@@ -125,7 +164,7 @@ export const PostCard = ({post}: { post: PostResponse }) => {
         try {
             const res = await react({
                 reactTypeId: (1).toString(),
-                targetId: post.id,
+                targetId: currentPost.id,
                 targetType: reactTargetType.POST
             })
         } catch (error) {
@@ -139,15 +178,60 @@ export const PostCard = ({post}: { post: PostResponse }) => {
         setCommentCount(commentCount + 1);
         setParent(undefined);
     };
-    return (
-        <Card className="w-full max-w-xl mx-auto my-4 h-fit overflow-hidden">
-            <PostHeader post={post}/>
-            <PostBody post={post}/>
+    const handleDeletePost = async () => {
+        setIsDelete(true);
+    }
+    const handlePostEdited = (updatedPost: PostResponse) => {
+        setCurrentPost(updatedPost); // Cập nhật post
+        toast.success("Đã cập nhật bài viết");
+    };
 
-            {(post.sharedPost?.id ??"") !=="" && (
+    if (!currentPost) {
+        return <PostCardSkeleton/>;
+    }
+    return (
+        <Card className={`w-full max-w-xl mx-auto my-4 h-fit overflow-hidden ${(isDelete ? "hidden" : "")}`}>
+            <CardHeader className="flex flex-row items-center justify-between px-4">
+                <div className="flex items-center gap-3">
+                    <Link href={`/user/${currentPost.authorId}`}>
+                        <Image
+                            alt="avatar"
+                            src={currentPost.authorAvatar || process.env.NEXT_PUBLIC_AVATAR_URL!}
+                            height={40}
+                            width={40}
+                            className="size-10 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
+                        />
+                    </Link>
+                    <div className="flex flex-col">
+                        <Link href={`/user/${currentPost.authorId}`} className="subtitle1 hover:underline">
+                            {currentPost.authorName}
+                        </Link>
+                        <Link href={`/post/${currentPost.id}`}
+                              className="flex items-center gap-1.5 caption text-muted-foreground hover:underline">
+                            <span>{formatISODate(currentPost.createdAt)}</span>
+                            <span>·</span>
+                            {getAccessIcon(currentPost.accessModifier)}
+                        </Link>
+                    </div>
+                </div>
+                <PostEllipsis post={currentPost} onDelete={handleDeletePost} onEditClick={(p) => {
+                    setCurrentPost(p)
+                }}>
+                    <Button variant="ghost" size="icon" className="rounded-full">
+                        <EllipsisVertical className="size-5"/>
+                    </Button>
+                </PostEllipsis>
+            </CardHeader>
+            <PostBody post={currentPost}/>
+            {(currentPost.sharedPost?.id && currentPost.sharedPostId) && (
                 <div className="mx-2 pt-2 sm:mx-4 mb-2 border border-border rounded-lg overflow-hidden">
-                    <PostHeader post={post.sharedPost}/>
-                    <PostBody post={post.sharedPost}/>
+                    <PostHeader post={currentPost.sharedPost}/>
+                    <PostBody post={currentPost.sharedPost}/>
+                </div>
+            )}
+            {(!currentPost.sharedPost?.id && currentPost.sharedPostId) && (
+                <div className="mx-2 sm:mx-4">
+                    <DisablePost/>
                 </div>
             )}
             <CardFooter className="flex items-center justify-start px-3">
@@ -155,6 +239,7 @@ export const PostCard = ({post}: { post: PostResponse }) => {
                         className="flex items-center gap-1.5 text-muted-foreground" title={"Thích"}>
                     <Heart
                         className={`size-5 ${isLiked ? 'text-destructive fill-destructive' : 'text-muted-foreground'}`}/>
+                    {/*<span className={"text-[20px]"}>❤️</span>*/}
                     <span>{formatNumber(likeCount)}</span>
                 </Button>
                 <Button onClick={() => {
@@ -165,22 +250,24 @@ export const PostCard = ({post}: { post: PostResponse }) => {
                         className={`size-5 ${showReplies ? 'text-foreground fill-foreground' : 'text-muted-foreground'}`}/>
                     <span>{formatNumber(commentCount)}</span>
                 </Button>
-                <PostForm onPostCreated={()=>setShareCount(shareCount + 1)} shareId={post.id}>
-                    <Button variant="ghost" size="sm" className="flex items-center gap-1.5 text-muted-foreground"
-                            title={"Chia sẻ"}>
-                        <Share2 className="size-5"/>
-                        <span>{formatNumber(shareCount)}</span>
-                    </Button>
-                </PostForm>
+                {(currentPost.accessModifier == postAccess.PUBLIC) &&
+                    <PostForm onPostCreated={() => setShareCount(shareCount + 1)} shareId={currentPost.id}>
+                        <Button variant="ghost" size="sm"
+                                className="flex items-center gap-1.5 text-muted-foreground"
+                                title={"Chia sẻ"}>
+                            <Share2 className="size-5"/>
+                            <span>{formatNumber(shareCount)}</span>
+                        </Button>
+                    </PostForm>}
             </CardFooter>
             {showReplies && (
                 <div className="border-t border-border px-4 py-3 h-fit space-y-4">
-                    <ScrollArea className="space-y-2 h-fit max-h-[400px] overflow-auto">
+                    <div className="gap-1 h-auto max-h-[400px] overflow-auto">
                         {isLoadingComments && (
-                            <div>
+                            <>
                                 <CommentSkeleton/>
                                 <CommentSkeleton/>
-                            </div>
+                            </>
                         )}
 
                         {!isLoadingComments && comments.length === 0 && (
@@ -189,13 +276,14 @@ export const PostCard = ({post}: { post: PostResponse }) => {
                             </p>
                         )}
                         {!isLoadingComments && comments.map(comment => (
-                            <CommentItem key={comment.id} comment={comment} onReplyClick={(cmt)=> setParent(cmt)}/>
+                            <CommentItem key={comment.id} comment={comment}
+                                         onReplyClick={(cmt) => setParent(cmt)}/>
                         ))}
-                    </ScrollArea>
-                    <CommentInputForm postId={post.id} parent={parent} onCommentPosted={handleCommentPosted}/>
+                    </div>
+                    <CommentInputForm postId={post.id} parent={parent} onCommentPosted={handleCommentPosted}
+                                      onCancelReply={() => setParent(undefined)}/>
                 </div>
             )}
-
         </Card>
     );
 };
@@ -226,7 +314,7 @@ export const PostCardSkeleton: React.FC = () => {
             </CardContent>
 
             {/* Footer Skeleton */}
-            <CardFooter className="flex items-center justify-between p-4">
+            <CardFooter className="flex items-center justify-between pt-4 px-4">
                 <div className="flex items-center gap-1.5">
                     <Skeleton className="size-5 w-5 rounded"/> {/* Icon */}
                     <Skeleton className="h-4 w-12 rounded"/> {/* Count */}

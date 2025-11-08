@@ -16,3 +16,8 @@ export interface Base{
 export interface BaseResponse{
 
 }
+
+export interface ErrorResponse {
+    message: string;
+    statusCode: number;
+}

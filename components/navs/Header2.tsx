@@ -28,7 +28,11 @@ const Header2 = () => {
     if (!user) {
         return null;
     }
-    if (pathName.toLowerCase()==="/" ||  pathName.toLowerCase().startsWith("/explore")|| pathName.toLowerCase().startsWith("/user") || pathName.toLowerCase().startsWith("/friend"))
+    if (pathName.toLowerCase()==="/"
+        ||  pathName.toLowerCase().startsWith("/explore")
+        || pathName.toLowerCase().startsWith("/user")
+        || pathName.toLowerCase().startsWith("/friend")
+        || pathName.toLowerCase().startsWith("/post"))
     return (
         <div
             className={"sticky z-10 top-0 h-auto w-full items-center justify-end bg-background rounded-none px-4 py-1 hidden md:flex"}>
