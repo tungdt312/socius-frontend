@@ -65,7 +65,7 @@ export const UserListTag = ({userId, type}: { userId: string, type: UserListType
                 <b>{formatNumber(page?.totalElements ?? 0)}</b> {label}
             </AlertDialogTrigger>
 
-            <AlertDialogContent className="max-w-md w-full flex flex-col items-center gap-2">
+            <AlertDialogContent className="max-w-md w-full h-2/3 flex flex-col items-center gap-2">
                 <AlertDialogHeader className="relative w-full">
                     <AlertDialogTitle
                         className="heading5 text-center w-full">{label} ({page?.totalElements ?? 0})</AlertDialogTitle>
@@ -74,9 +74,7 @@ export const UserListTag = ({userId, type}: { userId: string, type: UserListType
                     </AlertDialogCancel>
                 </AlertDialogHeader>
                 <Separator/>
-                <AlertDialogDescription className={"h-[450px] mt-2 w-full"}>
-                    <UserList userId={userId} type={type}/>
-                </AlertDialogDescription>
+                <UserList userId={userId} type={type}/>
             </AlertDialogContent>
         </AlertDialog>
     )
@@ -145,14 +143,14 @@ export const UserList = ({userId, type}: {
     );
 
     return (
-        <div>
-            <Input className="flex w-full items-center gap-2 mb-2"
+        <div className={"flex flex-col gap-2 w-full flex-1"}>
+            <Input className="flex w-full items-center gap-2 "
                    type="text"
                    placeholder="Tìm kiếm"
                    value={search}
                    onChange={(e) => setSearch(e.target.value)}
             />
-            <div className="flex flex-col items-center w-full h-[450px]">
+            <div className="flex flex-col items-center w-full flex-1 overflow-auto">
                 <div className={"flex flex-col items-center gap-2 w-full h-fit"}>
                     {error ? (
                         <>

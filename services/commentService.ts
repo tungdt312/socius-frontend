@@ -42,11 +42,11 @@ export async function comment(comment: CommentRequest): Promise<CommentResponse>
 
 export async function editComment(comment: EditCommentRequest): Promise<CommentResponse> {
     const formData = new FormData()
-    const {commentId, content, removeImage, imageFile} = comment
+    const {commentId, content, removeImage, mediaFile} = comment
     if(commentId) formData.append('commentId', commentId)
     if(content) formData.append('content', content)
-    if(removeImage) formData.append('removeImage', String(removeImage))
-    if(imageFile) formData.append('imageFile', imageFile)
+    if(removeImage) formData.append('removeMedia', String(removeImage))
+    if(mediaFile) formData.append('mediaFile', mediaFile)
 
     const res = await apiFetch(`/comments/update`, true, {
         method: "PUT",

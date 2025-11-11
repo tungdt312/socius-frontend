@@ -31,10 +31,23 @@ export interface PostResponse {
 export interface PostRequest {
     content?: string;
     accessModifier?: postAccess;
-    sharedPostId?: string;
     media?: File[];
 }
 
+export interface SharePostRequest {
+    caption?: string;
+    accessModifier?: postAccess;
+    originalPostId: string;
+}
+
+export interface EditPostRequest {
+    postId?: string;
+    content?: string;
+    accessModifier?: postAccess;
+    keepMediaUrls?: string[];
+    removeMediaUrls?: string[];
+    media?: File[];
+}
 export interface CommentRequest {
     postId?: string;
     parentId?: string;
@@ -44,17 +57,10 @@ export interface CommentRequest {
 export interface EditCommentRequest {
     commentId?: string;
     content?: string;
-    imageFile?: File;
+    mediaFile?: File;
     removeImage: boolean;
 }
-export interface EditPostRequest {
-    postId?: string;
-    content?: string;
-    accessModifier?: postAccess;
-    keepMediaUrls?: string[];
-    removeMediaUrls?: string[];
-    media?: File[];
-}
+
 export interface CommentResponse {
     id: string;
     authorId: string;
@@ -63,7 +69,7 @@ export interface CommentResponse {
     postId: string;
     parentId: string;
     content: string;
-    mediaUrl: string;
+    media: PostMedia[];
     reactCount: number;
     childrenCount: number;
     createdAt: string;

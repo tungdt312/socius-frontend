@@ -115,7 +115,6 @@ export const PostBody = ({post}: { post: PostResponse }) => (
     </CardContent>
 );
 export const PostCard = ({post}: { post: PostResponse }) => {
-    console.log(post);
     const [currentPost, setCurrentPost] = useState(post);
     const [isLiked, setIsLiked] = useState((currentPost?.reactSummary?.currentUserReact ?? "") == reactType.LOVE);
     const [likeCount, setLikeCount] = useState(currentPost?.reactCount ?? 0);
@@ -127,7 +126,7 @@ export const PostCard = ({post}: { post: PostResponse }) => {
     const [isLoadingComments, setIsLoadingComments] = useState(false);
     const [parent, setParent] = useState<CommentResponse | undefined>(undefined);
     const [isDelete, setIsDelete] = useState(false);
-    const [isEditing, setIsEditing] = useState(false);
+    const [editingComment, setEditingComment] = useState<CommentResponse | undefined>(undefined);
     if (!post) {
         return <DisablePost/>;
     }

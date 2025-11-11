@@ -1,4 +1,4 @@
-import {EditPostRequest, PostRequest, PostResponse} from "@/types/dtos/post";
+import {EditPostRequest, PostRequest, PostResponse, SharePostRequest} from "@/types/dtos/post";
 import {Base, BaseResponse, Page} from "@/types/dtos/base";
 import {apiFetch, processResponse} from "@/services/baseService";
 
@@ -32,8 +32,8 @@ export async function getPostById(postId: string): Promise<PostResponse> {
     return processResponse(res)
 }
 
-export async function sharePost(postId: string, caption: string): Promise<PostResponse> {
-    const res = await apiFetch(`/posts/share?originalPostId=${postId}&&caption=${caption}`, true, {
+export async function sharePost(req: SharePostRequest): Promise<PostResponse> {
+    const res = await apiFetch(`/posts/share?originalPostId=${req.originalPostId}&&caption=${req.caption}&&accessScope=${req.accessModifier}`, true, {
         method: "POST",
         headers: {
             "accept": "application/json",
@@ -45,7 +45,6 @@ export async function sharePost(postId: string, caption: string): Promise<PostRe
 
 export async function createPost(post: PostRequest): Promise<PostResponse> {
     const formData = new FormData()
-    if (post.sharedPostId) formData.append('sharedPostId', post.sharedPostId)
     if (post.content) formData.append('content', post.content)
     if (post.accessModifier) formData.append('accessModifier', post.accessModifier.toString())
     if (post.media && post.media.length > 0) post.media.forEach(media => {
@@ -68,7 +67,7 @@ export async function editPost(post: EditPostRequest): Promise<PostResponse> {
     if (post.content) formData.append('content', post.content)
     if (post.accessModifier) formData.append('accessModifier', post.accessModifier.toString())
     if (post.media && post.media.length > 0) post.media.forEach(media => {
-        formData.append('media', media)
+        formData.append('mediaFiles', media)
     })
     if (post.keepMediaUrls && post.keepMediaUrls.length > 0 ) post.keepMediaUrls.forEach(url => {
         formData.append('keepMediaUrls', url.toString())
@@ -76,6 +75,7 @@ export async function editPost(post: EditPostRequest): Promise<PostResponse> {
     if (post.removeMediaUrls && post.removeMediaUrls.length > 0) post.removeMediaUrls.forEach(url => {
         formData.append('removeMediaUrls', url.toString())
     })
+    console.log(post)
     const res = await apiFetch(`/posts/update`, true, {
         method: "PUT",
         headers: {

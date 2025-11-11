@@ -1,19 +1,23 @@
 "use client";
 
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {CommentResponse, EditCommentRequest} from '@/types/dtos/post'; // Sửa đường dẫn nếu cần
 import {Button} from "@/components/ui/button";
-import {Heart} from 'lucide-react';
+import {Ellipsis, EllipsisVertical, FileImage, Film, Heart, LoaderCircle, X} from 'lucide-react';
 import {formatISODate} from "@/lib/utils";
-import {editComment, getCommentReplies} from "@/services/commentService";
+import {deleteComment, editComment, getCommentReplies} from "@/services/commentService";
 import {toast} from "sonner";
 import {Skeleton} from "@/components/ui/skeleton";
 import {react} from "@/services/reactService";
-import {reactTargetType, reactType} from "@/constants/enum";
+import {ACCEPTED_TYPES, MAX_IMG_SIZE, reactTargetType, reactType} from "@/constants/enum";
 import {useCurrentUserId} from "@/components/user/CommentForm";
 import {Textarea} from "@/components/ui/textarea";
+import {MediaPreview} from "@/components/user/PostForm";
+import {Input} from "@/components/ui/input";
+import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
+import {ConfirmDialog} from "@/components/ui/confirm-dialog";
 
 interface CommentItemProps {
     comment: CommentResponse;
@@ -21,6 +25,7 @@ interface CommentItemProps {
 }
 
 export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
+    console.log(comment)
     const currentUser = useCurrentUserId()
     const [isLiked, setIsLiked] = useState((comment.reactSummary?.currentUserReact || "") == reactType.LOVE);
     const [likeCount, setLikeCount] = useState(comment.reactCount);
@@ -32,6 +37,14 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
 
     const [currentComment, setCurrentComment] = useState(comment);
     const [isEditing, setIsEditing] = useState(false);
+    const [isDeleted, setIsDeleted] = useState(false);
+    const [isMoreOpen, setIsMoreOpen] = useState(false);
+    const handleEditSuccess = (updatedComment: CommentResponse) => {
+        setCurrentComment(updatedComment); // Cập nhật comment
+        setIsEditing(false); // Tắt chế độ sửa
+        setIsMoreOpen(false);
+        toast.success("Đã cập nhật bình luận");
+    };
 
     const handleLike = async (e: React.MouseEvent) => {
         e.preventDefault();
@@ -75,23 +88,20 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
         }
     };
 
-    const handleEditSubmit = async (content: string) => {
+    const handleDelComment = async () => {
         try {
-            const request: EditCommentRequest = {
-                commentId: currentComment.id,
-                content: content,
-                removeImage: false, // (Form này không hỗ trợ sửa ảnh)
-            };
-            const updatedComment = await editComment(request);
-            setCurrentComment(updatedComment); // Cập nhật comment
-            setIsEditing(false); // Tắt chế độ sửa
+            const res = await deleteComment(comment.id)
+            setIsDeleted(true)
             toast.success("Đã cập nhật bình luận");
         } catch (error) {
+            setIsEditing(false);
             toast.error("Sửa bình luận thất bại");
+        } finally {
+            setIsMoreOpen(false);
         }
     };
     return (
-        <div className="flex items-start gap-3 p-2 w-full">
+        <div className={`flex items-start gap-3 p-2 w-full ${isDeleted? "hidden":""}`}>
             <Link href={`/user/${currentComment.authorId}`}>
                 <Image
                     alt="avatar"
@@ -107,29 +117,37 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
                         {isEditing ? (
                             <CommentEditForm
                                 comment={currentComment}
-                                onSubmit={handleEditSubmit}
+                                onSuccess={(c)=> handleEditSuccess(c)}
                                 onCancel={() => setIsEditing(false)}
                             />
                         ) : (
                             <>
                                 <div className="flex items-baseline gap-2">
                                     <Link href={`/user/${currentComment.authorId}`}
-                                          className="text-sm font-semibold hover:underline">
+                                          className="text-sm font-semibold hover:underline overflow-ellipsis line-clamp-1">
                                         {comment.authorName}
                                     </Link>
                                     <span
                                         className="text-xs text-muted-foreground">{formatISODate(currentComment.createdAt)}</span>
                                 </div>
 
-                                <p className="text-sm whitespace-pre-line">{currentComment.content}</p>
-
-                                {currentComment.mediaUrl && (
+                                {currentComment.content && (
+                                    <p className="text-sm whitespace-pre-line">{currentComment.content}</p>
+                                )}
+                                {currentComment.media && currentComment.media[0] && currentComment.media[0].url && currentComment.media[0].type == 'image' && (
                                     <Image
-                                        src={currentComment.mediaUrl}
+                                        src={currentComment.media[0].url}
                                         alt="Media bình luận"
-                                        width={300}
-                                        height={300}
-                                        className="mt-2 rounded-lg max-w-full h-auto"
+                                        width={150}
+                                        height={150}
+                                        className="mt-2 rounded-lg h-[150px] w-[150px] object-contain"
+                                    />
+                                )}
+                                {currentComment.media && currentComment.media[0] && currentComment.media[0].url && currentComment.media[0].type == 'video' && (
+                                    <video
+                                        src={currentComment.media[0].url}
+                                        className="h-[150px] w-[150px] object-contain"
+                                        controls muted
                                     />
                                 )}
                             </>)}
@@ -145,26 +163,48 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
                         variant={"ghost"}
                         size={"sm"}
                         onClick={() => onReplyClick?.(currentComment)}
-                        className="button hover:underline p-0"
+                        className="button hover:underline p-0 h-fit"
                     >
                         Trả lời
                     </Button>
+
                     {(currentUser && currentComment.authorId == (currentUser.id ?? "")) && !isEditing && (
-                        <Button onClick={() => setIsEditing(true)} variant={"ghost"} size={"sm"} className=" p-0 button hover:underline">
-                            Sửa
-                        </Button>
+                        <Popover open={isMoreOpen} onOpenChange={setIsMoreOpen} >
+                            <PopoverTrigger asChild>
+                                <Button size={"icon"} variant={"ghost"} className={"p-0 h-fit button hover:underline"}>
+                                    <Ellipsis size={40}/>
+                                </Button>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-fit p-0 flex flex-col">
+
+                                <Button onClick={() => setIsEditing(true)} variant={"ghost"} className={""}>
+                                    Sửa bình luận
+                                </Button>
+                                <Button onClick={handleDelComment} variant={"ghost"} className={"!text-destructive"}>
+                                    Xóa bình luận
+                                </Button>
+                                <Button className={ "!text-destructive"} variant={"ghost"} onClick={async () => {
+                                }}>
+                                    Báo cáo bình luận
+                                </Button>
+                            </PopoverContent>
+                        </Popover>
+
                     )}
-                    {currentComment.childrenCount > 0 && (
-                        <Button
-                            variant={"ghost"}
-                            size={"sm"}
-                            onClick={handleLoadReplies}
-                            disabled={isLoadingReplies}
-                            className="button hover:underline p-0"
-                        >
-                            {showReplies ? 'Ẩn' : 'Xem'} {currentComment.childrenCount} câu trả lời
-                        </Button>
-                    )}
+
+                </div>
+                <div className="flex items-center px-3 text-xs text-muted-foreground">
+                {currentComment.childrenCount > 0 && (
+                    <Button
+                        variant={"ghost"}
+                        size={"sm"}
+                        onClick={handleLoadReplies}
+                        disabled={isLoadingReplies}
+                        className="button hover:underline p-0 m-0 h-fit"
+                    >
+                        {showReplies ? 'Ẩn' : 'Xem'} {currentComment.childrenCount} câu trả lời
+                    </Button>
+                )}
                 </div>
                 {showReplies && (
                     <div className="mt-2 space-y-2">
@@ -185,18 +225,80 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
 };
 interface CommentEditFormProps {
     comment: CommentResponse;
-    onSubmit: (content: string) => void;
+    onSuccess: (updatedComment: CommentResponse) => void;
     onCancel: () => void;
 }
-const CommentEditForm = ({ comment, onSubmit, onCancel }: CommentEditFormProps) => {
-    const [content, setContent] = useState(comment.content);
+const CommentEditForm = ({ comment, onSuccess, onCancel }: CommentEditFormProps) => {
+    const [content, setContent] = useState(comment.content || "");
     const [isLoading, setIsLoading] = useState(false);
 
+    // (A) Thêm logic xử lý file (giống hệt CommentInputForm)
+    const [newMediaPreview, setNewMediaPreview] = useState<MediaPreview | undefined>(undefined);
+    const [isExistingMediaRemoved, setIsExistingMediaRemoved] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // (B) Copy hàm handleFileAdd
+    const handleFileAdd = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.item(0);
+        if (!file) return;
+        if (!ACCEPTED_TYPES.includes(file.type)) {
+            toast.error("Loại file này không được hỗ trợ.");
+            return;
+        }
+        if (file.size > MAX_IMG_SIZE) {
+            toast.error("Ảnh quá lớn. Dung lượng tối đa là 20MB.");
+            return;
+        }
+        const fileType = file.type.startsWith('video/') ? 'video' : 'image';
+        const url = URL.createObjectURL(file);
+
+        // Khi thêm file mới, nó sẽ thay thế file cũ
+        setNewMediaPreview({file: file, url: url, type: fileType});
+        setIsExistingMediaRemoved(true); // Đánh dấu xóa file cũ
+        e.target.value = "";
+    };
+
+    // (C) Copy hàm handeleFileDelete (sửa tên)
+    const handeleNewFileDelete = () => {
+        if (newMediaPreview) {
+            URL.revokeObjectURL(newMediaPreview.url);
+        }
+        setNewMediaPreview(undefined);
+    };
+
+    // (D) Hàm xóa file CŨ
+    const handleRemoveExistingMedia = () => {
+        setIsExistingMediaRemoved(true);
+    };
+
+    // (E) Sửa lại handleSubmit
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+        // Cho phép gửi nếu có content, có file mới, hoặc chỉ là xóa file cũ
+        if (!content.trim() && !newMediaPreview && !isExistingMediaRemoved && comment.content === content) {
+            return onCancel(); // Không có gì thay đổi
+        }
+
         setIsLoading(true);
-        await onSubmit(content);
-        setIsLoading(false);
+        try {
+            const requestData: EditCommentRequest = {
+                commentId: comment.id,
+                content: content,
+                mediaFile: newMediaPreview?.file, // File mới
+                removeImage: isExistingMediaRemoved, // Đánh dấu xóa
+            };
+            console.log(requestData);
+            // Gọi API
+            const updatedComment = await editComment(requestData);
+
+            // Báo cho cha (CommentItem)
+            onSuccess(updatedComment);
+
+        } catch (error) {
+            toast.error("Sửa bình luận thất bại.");
+            setIsLoading(false);
+        }
+        // (Không cần setIsLoading(false) ở đây vì component sẽ unmount)
     };
 
     return (
@@ -206,14 +308,75 @@ const CommentEditForm = ({ comment, onSubmit, onCancel }: CommentEditFormProps) 
                 onChange={(e) => setContent(e.target.value)}
                 className="text-sm"
                 rows={2}
+                placeholder="Viết bình luận..."
             />
-            <div className="flex justify-end gap-2">
-                <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={isLoading}>
-                    Hủy
+
+            {/* (F) Logic render preview MỚI */}
+
+            {/* 1. Hiển thị File MỚI (nếu có) */}
+            {newMediaPreview && (
+                <div className="relative w-fit rounded-lg overflow-hidden border">
+                    {newMediaPreview.type === 'image' ? (
+                        <Image src={newMediaPreview.url} alt="Xem trước" width={100} height={100} className="h-[100px] w-[100px] object-contain" />
+                    ) : (
+                        <video src={newMediaPreview.url} className="h-[100px] w-[100px] object-contain" />
+                    )}
+                    {newMediaPreview.type === 'video' && <Film size={20} className="absolute top-1 left-1 text-white" />}
+                    <Button variant="destructive" size="icon" type="button"
+                            className="absolute top-1 right-1 rounded-full h-4 w-4"
+                            onClick={handeleNewFileDelete} disabled={isLoading}>
+                        <X className="size-3"/>
+                    </Button>
+                </div>
+            )}
+
+            {/* 2. Hiển thị File CŨ (nếu chưa bị xóa, và chưa có file mới) */}
+            {!newMediaPreview && !isExistingMediaRemoved && comment.media && comment.media[0] && comment.media[0].url  &&  (
+                <div className="relative w-fit rounded-lg overflow-hidden border">
+                    {comment.media[0].type === 'image' ? (
+                        <Image src={comment.media[0].url} alt="Media cũ" width={100} height={100} className="h-[100px] w-[100px] object-contain" />
+                    ) : (
+                        <video src={comment.media[0].url} className="h-[100px] w-[100px] object-contain" />
+                    )}
+                    {comment.media[0].type === 'video' && <Film size={20} className="absolute top-1 left-1 text-white" />}
+                    <Button variant="destructive" size="icon" type="button"
+                            className="absolute top-1 right-1 rounded-full h-4 w-4"
+                            onClick={handleRemoveExistingMedia} disabled={isLoading}>
+                        <X className="size-3"/>
+                    </Button>
+                </div>
+            )}
+
+            <div className="flex justify-between items-center">
+                {/* Nút upload file (ẩn) */}
+                <Input
+                    type="file"
+                    accept="image/*,video/*"
+                    onChange={handleFileAdd}
+                    className={"hidden"}
+                    ref={fileInputRef}
+                />
+                {/* Nút kích hoạt upload */}
+                <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    className="text-green-500"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={isLoading}
+                >
+                    <FileImage className="size-5"/>
                 </Button>
-                <Button type="submit" size="sm" disabled={isLoading || content.length==0}>
-                    {isLoading ? "Đang lưu..." : "Lưu"}
-                </Button>
+
+                {/* Nút Hủy / Lưu */}
+                <div className="flex justify-end gap-2">
+                    <Button type="button" variant="ghost" size="sm" onClick={onCancel} disabled={isLoading}>
+                        Hủy
+                    </Button>
+                    <Button type="submit" size="sm" disabled={isLoading}>
+                        {isLoading ? <LoaderCircle className={"animate-spin"}/> : "Lưu"}
+                    </Button>
+                </div>
             </div>
         </form>
     );

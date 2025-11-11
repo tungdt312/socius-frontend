@@ -9,11 +9,11 @@ import {
 } from "@/components/ui/alert-dialog";
 import {Lock, Globe, PlusSquare, Users, X, Smile, FileImage, Film} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {EditPostRequest, PostMedia, PostRequest, PostResponse} from "@/types/dtos/post";
+import {EditPostRequest, PostMedia, PostRequest, PostResponse, SharePostRequest} from "@/types/dtos/post";
 import {useCurrentUser} from "@/components/user/CommentForm";
 import {toast} from "sonner";
 import {ACCEPTED_TYPES, MAX_IMG_SIZE, postAccess} from '@/constants/enum';
-import {createPost, editPost, getPostById} from "@/services/postService";
+import {createPost, editPost, getPostById, sharePost} from "@/services/postService";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from '@/components/ui/select';
 import Image from "next/image";
 import {Textarea} from '@/components/ui/textarea';
@@ -76,7 +76,7 @@ export const SharedPostSkeleton = () => (
     </div>
 );
 
-interface MediaPreview {
+export interface MediaPreview {
     file: File;
     url: string;      // URL.createObjectURL()
     type: 'image' | 'video'; // Kiểu file
@@ -152,19 +152,36 @@ const PostForm = ({onPostCreated, children, shareId}: PostFormProps) => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsLoading(true);
-        try {
-            const requestData: PostRequest = {
-                content: content,
-                accessModifier: access,
-                sharedPostId: sharePostId,
-                media: mediaPreviews.map(p => p.file),
-            };
-            const newPost = await createPost(requestData);
-            toast.success("Đăng bài thành công!");
-            resetFormAndClose();
-        } catch (error) {
-            toast.error((error as Error).message || "Đăng bài thất bại.");
-            setIsLoading(false);
+        if (shareId && sharePostId) {
+            try {
+
+                const requestData: SharePostRequest = {
+                    caption: content,
+                    accessModifier: access,
+                    originalPostId: sharePostId,
+                };
+                const newPost = await sharePost(requestData);
+                toast.success("Chia sẻ thành công!");
+                resetFormAndClose();
+            } catch (error) {
+                toast.error((error as Error).message || "chia sẻ thất bại.");
+                setIsLoading(false);
+            }
+        }
+        else {
+            try {
+                const requestData: PostRequest = {
+                    content: content,
+                    accessModifier: access,
+                    media: mediaPreviews.map(p => p.file),
+                };
+                const newPost = await createPost(requestData);
+                toast.success("Đăng bài thành công!");
+                resetFormAndClose();
+            } catch (error) {
+                toast.error((error as Error).message || "Đăng bài thất bại.");
+                setIsLoading(false);
+            }
         }
     };
     const onEmojiClick = (emojiData: EmojiClickData) => {
@@ -279,16 +296,16 @@ const PostForm = ({onPostCreated, children, shareId}: PostFormProps) => {
                                                 alt="Xem trước"
                                                 width={150}
                                                 height={150}
-                                                className="h-[150px] w-[150px] object-cover"
+                                                className="h-[150px] w-[150px] object-contain"
                                             />
                                         ) : (
                                             <video
                                                 src={preview.url}
-                                                className="h-[150px] w-[150px] object-cover"
+                                                className="h-[150px] w-[150px] object-contain"
                                             />
                                         )}
                                         {preview.type === 'video' && (
-                                            <Film size={20} className="absolute top-2 left-2" />
+                                            <Film size={20} className="absolute top-2 left-2 text-white bg-black/50 rounded-full" />
                                         )}
                                         <Button
                                             variant="destructive"
@@ -510,7 +527,7 @@ export const PostEditForm = ({onSuccess, children, post}: PostEditFormProps) => 
                                 <DisablePost/>
                             </div>
                         )}
-                        {mediaPreviews.length > 0 || keepMediaUrls.length > 0 && (
+                        {(mediaPreviews.length > 0 || keepMediaUrls.length > 0) && (
                             <div className="flex items-start flex-wrap w-full gap-2">
                                 {keepMediaUrls.map((url, index) => (
                                     <div className="relative w-fit rounded-lg overflow-hidden border" key={index}>
@@ -520,16 +537,16 @@ export const PostEditForm = ({onSuccess, children, post}: PostEditFormProps) => 
                                                 alt="Xem trước"
                                                 width={150}
                                                 height={150}
-                                                className="h-[150px] w-[150px] object-cover"
+                                                className="h-[150px] w-[150px] object-contain"
                                             />
                                         ) : (
                                             <video
                                                 src={url.url}
-                                                className="h-[150px] w-[150px] object-cover"
+                                                className="h-[150px] w-[150px] object-contain"
                                             />
                                         )}
                                         {url.type === 'video' && (
-                                            <Film size={20} className="absolute top-2 left-2" />
+                                            <Film size={20} className="absolute top-2 left-2 text-foreground/50" />
                                         )}
                                         <Button
                                             variant="destructive"
@@ -552,16 +569,16 @@ export const PostEditForm = ({onSuccess, children, post}: PostEditFormProps) => 
                                                 alt="Xem trước"
                                                 width={150}
                                                 height={150}
-                                                className="h-[150px] w-[150px] object-cover"
+                                                className="h-[150px] w-[150px] object-contain"
                                             />
                                         ) : (
                                             <video
                                                 src={preview.url}
-                                                className="h-[150px] w-[150px] object-cover"
+                                                className="h-[150px] w-[150px] object-contain"
                                             />
                                         )}
                                         {preview.type === 'video' && (
-                                            <Film size={20} className="absolute top-2 left-2" />
+                                            <Film size={20} className="absolute top-2 left-2 text-white bg-black/50 rounded-full p-1" />
                                         )}
                                         <Button
                                             variant="destructive"
