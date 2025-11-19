@@ -8,7 +8,7 @@ import {
     Heart,
     Lock,
     MessageCircle,
-    Share2,
+    Share2, UserRound,
     Users
 } from "lucide-react";
 import {CommentResponse, PostMedia, PostResponse} from "@/types/dtos/post";
@@ -26,6 +26,7 @@ import {getPostsComments} from "@/services/commentService";
 import PostForm, {PostEditForm} from "@/components/user/PostForm";
 import {react} from "@/services/reactService";
 import PostEllipsis from "@/components/user/PostEllipsis";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 export function getAccessIcon(access: postAccess) {
     switch (access) {
@@ -193,13 +194,10 @@ export const PostCard = ({post}: { post: PostResponse }) => {
             <CardHeader className="flex flex-row items-center justify-between px-4">
                 <div className="flex items-center gap-3">
                     <Link href={`/user/${currentPost.authorId}`}>
-                        <Image
-                            alt="avatar"
-                            src={currentPost.authorAvatar || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                            height={40}
-                            width={40}
-                            className="size-10 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                        />
+                        <Avatar className={"size-10"}>
+                            <AvatarImage src={currentPost.authorAvatar} className={"object-cover"}/>
+                            <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                        </Avatar>
                     </Link>
                     <div className="flex flex-col">
                         <Link href={`/user/${currentPost.authorId}`} className="subtitle1 hover:underline">

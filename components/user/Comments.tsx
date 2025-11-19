@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {CommentResponse, EditCommentRequest} from '@/types/dtos/post'; // Sửa đường dẫn nếu cần
 import {Button} from "@/components/ui/button";
-import {Ellipsis, EllipsisVertical, FileImage, Film, Heart, LoaderCircle, X} from 'lucide-react';
+import {Ellipsis, EllipsisVertical, FileImage, Film, Heart, LoaderCircle, UserRound, X} from 'lucide-react';
 import {formatISODate} from "@/lib/utils";
 import {deleteComment, editComment, getCommentReplies} from "@/services/commentService";
 import {toast} from "sonner";
@@ -18,6 +18,7 @@ import {MediaPreview} from "@/components/user/PostForm";
 import {Input} from "@/components/ui/input";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {ConfirmDialog} from "@/components/ui/confirm-dialog";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 interface CommentItemProps {
     comment: CommentResponse;
@@ -103,13 +104,10 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
     return (
         <div className={`flex items-start gap-3 p-2 w-full ${isDeleted? "hidden":""}`}>
             <Link href={`/user/${currentComment.authorId}`}>
-                <Image
-                    alt="avatar"
-                    src={currentComment.authorAvatar || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                    height={40}
-                    width={40}
-                    className="size-9 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                />
+                <Avatar className={"size-8"}>
+                    <AvatarImage src={currentComment.authorAvatar} className={"object-cover"}/>
+                    <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                </Avatar>
             </Link>
             <div className="flex-1">
                 <div className={"flex w-full"}>

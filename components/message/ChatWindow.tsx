@@ -22,7 +22,7 @@ import {
     ChevronLeft,
     EllipsisVertical,
     Edit,
-    Plus, SquarePen, Camera, Trash2, LogOut
+    Plus, SquarePen, Camera, Trash2, LogOut, MessageCircle, User, UserRound
 } from "lucide-react";
 import {toast} from 'sonner';
 import Image from 'next/image';
@@ -50,6 +50,7 @@ import {ConversationForm, FriendItem, MemberItem} from "@/components/message/Con
 import {UserRelationResponse} from "@/types/dtos/user";
 import {getFriendsList} from "@/services/friendService";
 import {load} from "next/dist/compiled/@edge-runtime/primitives/load";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 // (Giả sử bạn có hook này)
 // import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -116,6 +117,7 @@ export const ChatWindow = ({conversationId}: { conversationId: string }) => {
                 try {
                     const newMsg = JSON.parse(message.body) as MessageResponse;
                     setMessages(prev => [newMsg,...prev]);
+
                 } catch (e) {
                     console.error("Lỗi parse tin nhắn STOMP:", e);
                 }
@@ -240,14 +242,10 @@ export const ChatWindow = ({conversationId}: { conversationId: string }) => {
                     <div className={"flex items-center gap-3 w-fit"}>
                         <ChevronLeft size={24} className={"lg:hidden block cursor-pointer"}
                                      onClick={() => router.push("/message")}/>
-                        <Image
-                            src={conversation?.mediaUrl || process.env.NEXT_PUBLIC_CONVER_URL!}
-                            alt={conversation?.title || ""}
-                            width={40}
-                            height={40}
-                            className="aspect-square object-cover rounded-full"
-                            loading={"lazy"}
-                        />
+                        <Avatar className={"size-8"}>
+                            <AvatarImage src={conversation?.mediaUrl} className={"object-cover"}/>
+                            <AvatarFallback><MessageCircle  size={"80%"}/></AvatarFallback>
+                        </Avatar>
                         <p className={"truncate w-full overflow-ellipsis"}>{conversation?.title || "Cuộc trò chuyện"}</p>
                     </div>
                     <div className={"flex items-center gap-3"}>
@@ -351,11 +349,10 @@ export const ChatWindow = ({conversationId}: { conversationId: string }) => {
                         <div className="relative group cursor-pointer" onClick={() => {
                             if (amIOwner) avatarInputRef.current?.click()
                         }}>
-                            <Image
-                                src={conversation?.mediaUrl || process.env.NEXT_PUBLIC_CONVER_URL!}
-                                alt="Avatar" width={100} height={100}
-                                className={`w-24 h-24 object-cover rounded-full border-2 border-border ${amIOwner ? "group-hover:opacity-80" : ""} transition`}
-                            />
+                            <Avatar className={"size-30"}>
+                                <AvatarImage src={conversation?.mediaUrl} className={"object-cover"}/>
+                                <AvatarFallback><MessageCircle  size={"80%"}/></AvatarFallback>
+                            </Avatar>
                             <div className={`absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition bg-black/20 rounded-full ${amIOwner ?"":"hidden"} `}>
                                 <Camera className="text-white" size={32} />
                             </div>
@@ -408,11 +405,10 @@ export const ChatWindow = ({conversationId}: { conversationId: string }) => {
                                 {conversation?.participants?.map((member) => (
                                     <div key={member.id} className="flex items-center justify-between p-2 rounded-lg hover:bg-accent/50 transition">
                                         <div className="flex items-center gap-3 overflow-hidden">
-                                            <Image
-                                                src={member.avatarUrl ||process.env.NEXT_PUBLIC_AVATAR_URL!}
-                                                width={32} height={32} alt={member.displayName}
-                                                className="size-8 rounded-full object-cover"
-                                            />
+                                            <Avatar className={"size-8"}>
+                                                <AvatarImage src={member.avatarUrl} className={"object-cover"}/>
+                                                <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                                            </Avatar>
                                             <div className="flex flex-col truncate">
                                                 <span className="text-sm font-medium truncate">{member.displayName}</span>
                                                 {/* Hiển thị label nếu là Owner - Cần logic backend */}

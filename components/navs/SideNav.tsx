@@ -8,6 +8,8 @@ import {usePathname, useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
 import {UserResponse} from "@/types/dtos/user";
 import {ScrollArea} from "@/components/ui/scroll-area";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {UserRound} from "lucide-react";
 const getFirstPath = (pathName?: string) => {
     if (!pathName) return "/";
     const parts = pathName.split("/").filter(Boolean);
@@ -68,15 +70,11 @@ const SideNav = () => {
                     <Button
                         onClick={() => router.push(`/user/${user?.id}`)}
                         className="w-full justify-start items-center gap-2 size-fit"
-                        size="lg"
                     >
-                        <Image
-                            alt="avatar"
-                            src={user.avatarUrl|| process.env.NEXT_PUBLIC_AVATAR_URL!}
-                            height={40}
-                            width={40}
-                            className="size-7 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                        />
+                        <Avatar className={"size-8"}>
+                            <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
+                            <AvatarFallback><UserRound size={"80%"}/></AvatarFallback>
+                        </Avatar>
                         <p className="subtitle1 hidden lg:block group-data-[state=on]:text-primary-foreground overflow-ellipsis">
                             Trang cá nhân
                         </p>

@@ -8,7 +8,7 @@ import {ConversationResponse, MessageResponse} from "@/types/dtos/message";
 import {Page} from "@/types/dtos/base";
 import {Input} from "@/components/ui/input";
 import Image from "next/image";
-import {SquarePen, X} from "lucide-react";
+import {MessageCircle, SquarePen, UserRound, X} from "lucide-react";
 import {
     AlertDialog,
     AlertDialogCancel,
@@ -24,6 +24,7 @@ import {Item, ItemActions, ItemContent, ItemDescription, ItemMedia, ItemTitle} f
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
 import {useStomp} from "@/components/StompContext";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 export const MessageSideNav = () => {
     const user = useCurrentUser();
@@ -58,14 +59,10 @@ export const MessageSideNav = () => {
             className={`${pathName == "/message" ? "w-full" : "hidden"} p-2 lg:w-[400px] lg:flex flex-col gap-2 border-r-1 border-border`}>
             <div className={"flex justify-between items-center h-fit w-full py-2"}>
                 <div className={"flex items-center gap-2 w-fit h-fit"}>
-                    <Image
-                        src={user.avatarUrl ?? process.env.NEXT_PUBLIC_AVATAR_URL!}
-                        alt={user.displayName ?? ""}
-                        width={44}
-                        height={44}
-                        className="h-8 w-8 aspect-square object-cover rounded-full"
-                        loading={"lazy"}
-                    />
+                    <Avatar className={"size-8"}>
+                        <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
+                        <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                    </Avatar>
                     <span className={"subtitle1 overflow-ellipsis w-full line-clamp-1"}>{user.displayName ?? "Người dùng"}</span>
                 </div>
                 <AlertDialog>
@@ -91,7 +88,7 @@ export const MessageSideNav = () => {
                    value={search}
                    onChange={(e) => setSearch(e.target.value)}
             />
-            <div className={""}>
+            <div className={"w-full"}>
                 {filtered.map(conversation => (
                     <ConversationItem conversation={conversation}  key={conversation.id} />
                 ))}
@@ -125,20 +122,16 @@ export const ConversationItem = ({conversation}: { conversation: ConversationRes
         <Item className={"p-2"} asChild>
             <Link href={`/message/${conversation.id}`}>
                 <ItemMedia>
-                    <Image
-                        src={conversation.mediaUrl ?? process.env.NEXT_PUBLIC_CONVER_URL!}
-                        alt={conversation.title ?? ""}
-                        width={44}
-                        height={44}
-                        className="size-11 object-cover rounded-full mx-auto"
-                        loading={"lazy"}
-                    />
+                    <Avatar className={"size-8"}>
+                        <AvatarImage src={conversation?.mediaUrl} className={"object-cover"}/>
+                        <AvatarFallback><MessageCircle  size={"80%"}/></AvatarFallback>
+                    </Avatar>
                 </ItemMedia>
-                <ItemContent className="w-full h-fit">
-                    <ItemTitle className={"truncate w-full overflow-ellipsis"}>
-                        {conversation.title ?? "Cuộc trò chuyện"} (Id: {conversation.id})
+                <ItemContent className="flex items-start flex-1">
+                    <ItemTitle className={"flex-1 overflow-ellipsis line-clamp-1"}>
+                        {conversation.title ?? "Cuộc trò chuyện"}
                     </ItemTitle>
-                    <ItemDescription className={`truncate w-full text-muted-foreground body1 overflow-ellipsis `}>
+                    <ItemDescription className={`flex-1 overflow-ellipsis line-clamp-1 text-muted-foreground body1 `}>
                         {message ? message : "Chưa có tin nhắn nào"}
                     </ItemDescription>
                 </ItemContent>

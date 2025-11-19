@@ -14,9 +14,10 @@ import Image from "next/image";
 import {formatISODate, formatNumber} from "@/lib/utils";
 import PostEllipsis from "@/components/user/PostEllipsis";
 import {Button} from "@/components/ui/button";
-import {EllipsisVertical, Heart, MessageCircle, Share2} from "lucide-react";
+import {EllipsisVertical, Heart, MessageCircle, Share2, UserRound} from "lucide-react";
 import PostForm from "@/components/user/PostForm";
 import {CommentItem, CommentSkeleton} from "@/components/user/Comments";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 const PostDetail = ({postId, i}: { postId: string, i: string }) => {
 
@@ -110,13 +111,10 @@ const PostDetail = ({postId, i}: { postId: string, i: string }) => {
                 <CardHeader className="flex flex-row items-center justify-between px-4">
                     <div className="flex items-center gap-3">
                         <Link href={`/user/${currentPost.authorId}`}>
-                            <Image
-                                alt="avatar"
-                                src={currentPost.authorAvatar || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                                height={40}
-                                width={40}
-                                className="size-10 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                            />
+                            <Avatar className={"size-10"}>
+                                <AvatarImage src={currentPost.authorAvatar} className={"object-cover"}/>
+                                <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                            </Avatar>
                         </Link>
                         <div className="flex flex-col">
                             <Link href={`/user/${currentPost.authorId}`} className="subtitle1 hover:underline">

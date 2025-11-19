@@ -55,6 +55,7 @@ export const FriendButton = ({user}: { user: UserRelationResponse }) => {
     const router = useRouter()
     const [state, setState] = useState<FriendshipStatus>(user.friendship.status ?? FriendshipStatus.NONE)
     const [isSend, setIsSend] = useState<boolean>(false);
+    console.log(user)
     useEffect(() => {
         const ownerDataString = localStorage.getItem(USER_KEY);
         const ownerData: UserResponse | null = ownerDataString ? JSON.parse(ownerDataString) : null;

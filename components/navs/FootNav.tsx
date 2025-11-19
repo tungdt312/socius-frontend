@@ -9,6 +9,8 @@ import {USER_KEY, userNavItems} from "@/constants";
 // import {Button} from "@/components/ui/button"; // (Bạn không dùng nên có thể xóa)
 import {usePathname, useRouter} from "next/navigation";
 import {UserResponse} from "@/types/dtos/user";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {UserRound} from "lucide-react";
 
 const FootNav = () => {
     const router = useRouter();
@@ -42,13 +44,10 @@ const FootNav = () => {
                 </ToggleGroupItem>
             })}
             <Link href={`/user/${user.id}`} title={"Trang cá nhân"}>
-                <Image
-                    alt="avatar"
-                    src={user.avatarUrl || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                    height={40}
-                    width={40}
-                    className="size-7 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                />
+                <Avatar className={"size-8"}>
+                    <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
+                    <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                </Avatar>
             </Link>
         </ToggleGroup>
     )

@@ -7,7 +7,7 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import {Lock, Globe, PlusSquare, Users, X, Smile, FileImage, Film} from "lucide-react";
+import {Lock, Globe, PlusSquare, Users, X, Smile, FileImage, Film, UserRound} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {EditPostRequest, PostMedia, PostRequest, PostResponse, SharePostRequest} from "@/types/dtos/post";
 import {useCurrentUser} from "@/components/user/CommentForm";
@@ -28,6 +28,7 @@ import EmojiPickerReact from "emoji-picker-react/src/EmojiPickerReact";
 import MyEmojipicker from "@/components/ui/emojipicker";
 import {EmojiClickData} from "emoji-picker-react";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 export interface PostFormProps {
     children: React.ReactNode;
@@ -210,13 +211,10 @@ const PostForm = ({onPostCreated, children, shareId}: PostFormProps) => {
                 <form onSubmit={handleSubmit} className="w-full flex-1 overflow-auto flex-col items-start space-y-3 ">
                     <div className="flex flex-row w-full items-center justify-between px-4">
                         <div className="flex items-center gap-3">
-                            <Image
-                                alt="avatar"
-                                src={avatarUrl || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                                height={40}
-                                width={40}
-                                className="size-10 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                            />
+                            <Avatar className={"size-10"}>
+                                <AvatarImage src={avatarUrl} className={"object-cover"}/>
+                                <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                            </Avatar>
                             <div className="flex flex-col gap-1">
                                 <p className="subtitle1 hover:underline">
                                     {displayName}
@@ -443,13 +441,10 @@ export const PostEditForm = ({onSuccess, children, post}: PostEditFormProps) => 
                 <form onSubmit={handleSubmit} className="w-full flex-1 overflow-auto flex-col items-start space-y-3 ">
                     <div className="flex flex-row w-full items-center justify-between px-4">
                         <div className="flex items-center gap-3">
-                            <Image
-                                alt="avatar"
-                                src={avatarUrl || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                                height={40}
-                                width={40}
-                                className="size-10 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                            />
+                            <Avatar className={"size-10"}>
+                                <AvatarImage src={avatarUrl} className={"object-cover"}/>
+                                <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                            </Avatar>
                             <div className="flex flex-col gap-1">
                                 <p className="subtitle1 hover:underline">
                                     {displayName}

@@ -3,11 +3,12 @@ import React, {useEffect, useState} from 'react'
 import Link from "next/link";
 import Image from "next/image";
 import {Button} from "@/components/ui/button";
-import {Bell, House, PlusSquare} from "lucide-react";
+import {Bell, House, PlusSquare, UserRound} from "lucide-react";
 import {usePathname, useRouter} from "next/navigation";
 import {UserResponse} from "@/types/dtos/user";
 import {USER_KEY} from "@/constants";
 import PostForm from "@/components/user/PostForm";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 const Header2 = () => {
     const router = useRouter();
@@ -53,13 +54,10 @@ const Header2 = () => {
                     <Bell className="size-7 "/>
                 </Button>
                 <Link href={`/user/${user?.id}`} title={"Trang cá nhân"} className="flex items-center h-auto w-auto space-x-4">
-                    <Image
-                        alt="avatar"
-                        src={user.avatarUrl || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                        height={40}
-                        width={40}
-                        className="size-7 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-                    />
+                    <Avatar className={"size-8"}>
+                        <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
+                        <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                    </Avatar>
                     <p className="subtitle1 text-foreground ">
                         {user.displayName}
                     </p>

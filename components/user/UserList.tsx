@@ -125,7 +125,7 @@ export const UserList = ({userId, type}: {
                 }
                 setPage(res);
                 setUsers(users.concat(res.content ?? []));
-
+                console.log(res);
             } catch (err) {
                 toast.error((err as Error).message ?? "Lấy danh sách người dùng thất bại");
                 setError(true);

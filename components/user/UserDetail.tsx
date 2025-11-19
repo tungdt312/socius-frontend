@@ -5,12 +5,13 @@ import {UserListTag} from "@/components/user/UserList";
 import {Button} from "@/components/ui/button";
 import Link from "next/link";
 import {BlockButton, FollowButton, FriendButton} from "@/components/Button";
-import {MessageCircle} from "lucide-react";
+import {MessageCircle, UserRound} from "lucide-react";
 import {UserRelationResponse, UserResponse} from "@/types/dtos/user";
 import {getUserAndStatusById} from "@/services/userService";
 import {toast} from "sonner";
 import {USER_KEY} from "@/constants";
 import {FriendshipStatus} from "@/constants/enum";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 const UserDetail = ({userId}: { userId: string }) => {
 
@@ -50,8 +51,10 @@ const UserDetail = ({userId}: { userId: string }) => {
         <>
             <div className="w-full h-fit flex items-center gap-4 ">
                 <div className="w-1/3 h-full ">
-                    <Image src={user.avatarUrl ?? process.env.NEXT_PUBLIC_AVATAR_URL} alt={user.displayName}
-                           width={120} height={120} className={"w-full aspect-square rounded-full max-w-30  mx-auto object-cover"}/>
+                    <Avatar className={"max-w-30 aspect-square size-full mx-auto"}>
+                        <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
+                        <AvatarFallback><UserRound size={"80%"}/></AvatarFallback>
+                    </Avatar>
                 </div>
                 <div className="flex flex-col items-start justify-center w-2/3 gap-2 ">
                     <p className={"heading2"}>{user.displayName}</p>

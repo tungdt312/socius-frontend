@@ -4,7 +4,7 @@
 import React, {useState, useEffect, useRef} from 'react';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
-import {FileImage, Film, Send, Smile, X} from 'lucide-react';
+import {FileImage, Film, Send, Smile, UserRound, X} from 'lucide-react';
 import {toast} from 'sonner';
 import {CommentResponse, CommentRequest} from '@/types/dtos/post';
 import {emojiCategory, USER_KEY} from '@/constants';
@@ -17,6 +17,7 @@ import MyEmojipicker from "@/components/ui/emojipicker";
 import {UserResponse} from "@/types/dtos/user";
 import {ACCEPTED_TYPES, MAX_IMG_SIZE} from "@/constants/enum";
 import {MediaPreview} from "@/components/user/PostForm";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 
 interface CommentInputFormProps {
@@ -119,13 +120,10 @@ export const CommentInputForm = ({
 
     return (
         <form onSubmit={handleSubmit} className={`flex items-start gap-3 w-full bg-card ${className}`}>
-            <Image
-                alt="avatar"
-                src={avatarUrl || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                height={40}
-                width={40}
-                className="size-9 object-cover rounded-full group-data-[state=on]:ring-primary-foreground group-data-[state=on]:ring-1"
-            />
+            <Avatar className={"size-9"}>
+                <AvatarImage src={avatarUrl} className={"object-cover"}/>
+                <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+            </Avatar>
             <div className={"w-full"}>
                 {parent && (<p className={"subtitle2 text-muted-foreground "}> Đang trả lời {parent.authorName} <Button
                     variant={"ghost"} size={"sm"} onClick={onCancelReply}>Hủy</Button></p>)}

@@ -2,15 +2,16 @@ import {UserRelationResponse, UserResponse} from "@/types/dtos/user";
 import Link from "next/link";
 import {Item, ItemActions, ItemContent, ItemMedia, ItemTitle} from "@/components/ui/item";
 import Image from "next/image";
-import {Dot} from "lucide-react";
+import {Dot, UserRound} from "lucide-react";
 import {Skeleton} from "@/components/ui/skeleton";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
-import {useEffect, useState} from "react";
+import React, {useEffect, useState} from "react";
 import {FriendActionTypes, FriendshipStatus} from "@/constants/enum";
 import {follow, unfollow} from "@/services/userService";
 import {deleteFriendAction, postFriendAction} from "@/services/friendService";
 import {USER_KEY} from "@/constants";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 export const UserListItemSkeleton = () => {
     return <Item className="w-full flex-row items-center justify-between">
@@ -62,14 +63,10 @@ export const FollowListItem = ({ user }: { user: UserRelationResponse }) => {
         <Link href={`/user/${user.id}`} className="w-full flex-row items-center justify-between">
             <Item>
                 <ItemMedia>
-                    <Image
-                        src={user.avatarUrl ?? process.env.NEXT_PUBLIC_AVATAR_URL!}
-                        alt={user.displayName}
-                        width={44}
-                        height={44}
-                        className="size-11 object-cover rounded-full  mx-auto"
-                        loading={"lazy"}
-                    />
+                    <Avatar className={"size-8"}>
+                        <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
+                        <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                    </Avatar>
                 </ItemMedia>
                 <ItemContent className="flex-row items-center justify-between w-full">
                     <ItemTitle>
@@ -121,7 +118,6 @@ export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
 
         try {
             await action(user.id, actionType);
-            toast.success("Thao tác thành công");
 
             switch (actionType) {
                 case FriendActionTypes.send:
@@ -162,14 +158,10 @@ export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
         <Link href={`/user/${user.id}`} className="w-full flex-row items-center justify-between">
             <Item >
                 <ItemMedia>
-                    <Image
-                        src={user.avatarUrl ?? process.env.NEXT_PUBLIC_AVATAR_URL!}
-                        alt={user.displayName}
-                        width={32}
-                        height={32}
-                        className="size-8 object-cover  rounded-full  mx-auto"
-                        loading={"lazy"}
-                    />
+                    <Avatar className={"size-8"}>
+                        <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
+                        <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                    </Avatar>
                 </ItemMedia>
                 <ItemContent className="flex-row items-center justify-between flex-1">
                     <ItemTitle className={"flex-1 overflow-ellipsis line-clamp-1"}>{user.displayName}

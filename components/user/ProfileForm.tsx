@@ -10,6 +10,8 @@ import {putMe} from "@/services/userService";
 import {USER_KEY} from "@/constants";
 import {UserResponse} from "@/types/dtos/user";
 import {ACCEPTED_TYPES, MAX_IMG_SIZE} from "@/constants/enum";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {UserRound} from "lucide-react";
 
 interface ProfileFormProps {
     initialDisplayName?: string;
@@ -25,7 +27,7 @@ const ProfileForm = () => {
     const [displayName, setDisplayName] = useState("");
     const [bio, setBio] = useState("");
     const [avatarFile, setAvatarFile] = useState<File | undefined>(undefined);
-    const [previewUrl, setPreviewUrl] = useState<string | null>(null); // Dùng null
+    const [previewUrl, setPreviewUrl] = useState<string | undefined>(undefined); // Dùng null
     const [isLoadingData, setIsLoadingData] = useState(true);
 
     const [error, setError] = useState<string | null>(null);
@@ -36,7 +38,7 @@ const ProfileForm = () => {
         const data = localStorage.getItem(USER_KEY);
         if (data) {
             const user: UserResponse = JSON.parse(data);
-            setBio(user.bio);
+            setBio(user.bio?? "");
             setDisplayName(user.displayName);
             setPreviewUrl(user.avatarUrl);
         }
@@ -105,18 +107,10 @@ const ProfileForm = () => {
                             className="flex flex-col md:flex-row items-center justify-between rounded-2xl bg-accent p-4 gap-2">
                             <div
                                 className="w-20 h-20 rounded-full overflow-hidden bg-gray-100 flex items-center justify-center">
-
-                                {previewUrl ? ( // 6. Sửa: Chỉ cần check truthy
-                                    <Image
-                                        src={previewUrl || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                                        alt="avatar preview"
-                                        className="object-cover"
-                                        width={80}
-                                        height={80}
-                                    />
-                                ) : (
-                                    <div className="text-sm text-gray-400">No avatar</div>
-                                )}
+                                    <Avatar className={"size-20"}>
+                                        <AvatarImage src={previewUrl} className={"object-cover"}/>
+                                        <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                                    </Avatar>
                             </div>
 
                             <div className="flex flex-col gap-2">
