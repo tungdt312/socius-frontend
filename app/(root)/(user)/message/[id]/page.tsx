@@ -1,8 +1,14 @@
 import React from 'react'
+import {ChatWindow} from "@/components/message/ChatWindow";
 
-const Page = () => {
+interface PageProps {
+    params: { id: string };
+}
+
+const Page = async ({params}: PageProps) => {
+    const conversationId = (await params).id;
     return (
-        <div>Page</div>
+        <ChatWindow conversationId={conversationId} />
     )
 }
 export default Page

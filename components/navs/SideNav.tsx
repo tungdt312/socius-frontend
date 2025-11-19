@@ -39,7 +39,7 @@ const SideNav = () => {
             className={" h-screen bg-background border-r-1 border-border overflow-hidden hidden flex-col md:flex p-2 transition-all md:w-fit lg:w-[250px]"}>
             <Link href="/">
                 <Image alt={"logo"} src={'/Logo.svg'} height={100} width={100}
-                       className="mb-4 size-auto block lg:hidden "/>
+                       className="mb-4 size-11 block lg:hidden "/>
                 <Image alt={"logo"} src={'/Logo-full.svg'} height={100} width={100}
                        className="mb-4 h-auto w-auto hidden lg:block"/>
             </Link>

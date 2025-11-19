@@ -15,7 +15,7 @@ import {toast} from "sonner";
 import {signInSchema} from "@/schema/authSchema";
 import {AccountStatus} from "@/constants/enum";
 import OTPModal from "@/components/auth/OTPModal";
-import {ErrorResponse, LoginRequest, LoginResponse} from "@/types/dtos/auth";
+import { LoginRequest, LoginResponse} from "@/types/dtos/auth";
 import {login, sendVerifyEmail} from "@/services/authService";
 import {ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY} from "@/constants";
 import {getMe} from "@/services/userService";

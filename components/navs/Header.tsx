@@ -4,14 +4,15 @@ import Link from "next/link";
 import Image from "next/image";
 import {Button} from "@/components/ui/button";
 import {Bell, House, PlusSquare} from "lucide-react";
-import {useRouter} from "next/navigation";
+import {usePathname, useRouter} from "next/navigation";
 import PostForm from "@/components/user/PostForm";
 
 const Header = () => {
     const router = useRouter();
+    const pathName = usePathname();
     return (
         <div
-            className={"sticky top-0 h-auto w-full flex items-center justify-between bg-background rounded-none border-b-1 border-border px-4 py-1 md:hidden"}>
+            className={`sticky top-0 h-auto w-full ${(pathName.startsWith("/message/") ? "hidden":"flex")} items-center justify-between bg-background rounded-none border-b-1 border-border px-4 py-1 md:hidden `}>
             <Link href="/">
                 <Image alt={"logo"} src={'/Logo-full.svg'} height={100} width={100}
                        className="h-11 w-auto"/>

@@ -22,7 +22,7 @@ export function formatISODate(isoString: string) {
   const month = (date.getMonth() + 1).toString().padStart(2, '0');
   const year = date.getFullYear();
 
-  return `${hours}:${minutes} - ${day}/${month}/${year}`;
+  return `${hours}:${minutes} ${day}/${month}/${year}`;
 }
 
 export const formatNumber = (num: number) => {

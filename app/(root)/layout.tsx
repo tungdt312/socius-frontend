@@ -4,6 +4,7 @@ import FootNav from "@/components/navs/FootNav";
 import Header from "@/components/navs/Header";
 import Header2 from "@/components/navs/Header2";
 import {ScrollArea} from "@/components/ui/scroll-area";
+import {StompProvider} from "@/components/StompContext";
 
 const BASE = process.env.NEXT_PUBLIC_BASE_URL
 const Layout = async ({children}: { children: React.ReactNode }) => {
@@ -13,7 +14,9 @@ const Layout = async ({children}: { children: React.ReactNode }) => {
             <div className={"flex flex-col w-full h-screen bg-background"}>
                 <Header/>
                 <Header2/>
+                <StompProvider>
                     {children}
+                </StompProvider>
                 <FootNav/>
             </div>
         </div>

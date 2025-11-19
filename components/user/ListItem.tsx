@@ -160,20 +160,19 @@ export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
 
     return (
         <Link href={`/user/${user.id}`} className="w-full flex-row items-center justify-between">
-            <Item>
+            <Item >
                 <ItemMedia>
                     <Image
                         src={user.avatarUrl ?? process.env.NEXT_PUBLIC_AVATAR_URL!}
                         alt={user.displayName}
-                        width={44}
-                        height={44}
-                        className="size-11 object-cover  rounded-full  mx-auto"
+                        width={32}
+                        height={32}
+                        className="size-8 object-cover  rounded-full  mx-auto"
                         loading={"lazy"}
                     />
                 </ItemMedia>
-                <ItemContent className="flex-row items-center justify-between w-full">
-                    <ItemTitle>
-                        <p className={"truncate max-w-60"}>{user.displayName}</p>
+                <ItemContent className="flex-row items-center justify-between flex-1">
+                    <ItemTitle className={"flex-1 overflow-ellipsis line-clamp-1"}>{user.displayName}
                     </ItemTitle>
                     {type.length === 0 ? (
                             <Dot className={user.isActive ? "text-success size-10" : "text-muted-foreground  size-10"} />) :
