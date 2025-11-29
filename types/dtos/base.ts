@@ -1,7 +1,8 @@
 export interface Page<T>{
-    id: number,
+    page: number,
     size: number,
     totalElements: number,
+    totalPages: number,
     numberOfElements: number,
     content: T[]
 }
@@ -20,4 +21,11 @@ export interface BaseResponse{
 export interface ErrorResponse {
     message: string;
     statusCode: number;
+}
+
+export interface PageRequest {
+    filter?: string;
+    page?: number;
+    size?: number;
+    sort?: string[];
 }

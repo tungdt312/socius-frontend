@@ -1,6 +1,5 @@
 "use client"
 import React, {useEffect, useState} from 'react'
-import {useCurrentUser} from "@/components/user/CommentForm";
 import {usePathname} from "next/navigation";
 import {getMyConversation} from "@/services/messageService";
 import {toast} from "sonner";
@@ -25,6 +24,8 @@ import {Button} from "@/components/ui/button";
 import Link from "next/link";
 import {useStomp} from "@/components/StompContext";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+
+import {useCurrentUser} from "@/components/userContext";
 
 export const MessageSideNav = () => {
     const user = useCurrentUser();

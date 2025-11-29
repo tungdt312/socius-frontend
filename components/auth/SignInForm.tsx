@@ -17,12 +17,14 @@ import {AccountStatus} from "@/constants/enum";
 import OTPModal from "@/components/auth/OTPModal";
 import { LoginRequest, LoginResponse} from "@/types/dtos/auth";
 import {login, sendVerifyEmail} from "@/services/authService";
-import {ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY} from "@/constants";
+import {ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY, USER_ROLE_KEY} from "@/constants";
 import {getMe} from "@/services/userService";
+import {RoleType, useRole} from "@/components/RoleContext";
 
 const SignInForm = () => {
     const router = useRouter()
 
+    const {switchRole} = useRole()
     const [showPassword, setShowPassword] = React.useState(false);
     const [isForgotPassword, setIsForgotPassword] = React.useState(false);
     const [isLoading, setIsLoading] = React.useState(false);
@@ -48,16 +50,30 @@ const SignInForm = () => {
             const data = await login(req);
             localStorage.setItem(ACCESS_TOKEN_KEY, data.token.accessToken);
             localStorage.setItem(REFRESH_TOKEN_KEY, data.token.refreshToken);
+            localStorage.setItem(USER_ROLE_KEY, JSON.stringify(data.roles))
             const me = await getMe()
             localStorage.setItem(USER_KEY, JSON.stringify(me))
+            const roles = data.roles || []; // Giả sử roles là mảng string ["ADMIN", "USER"]
             if (data) {
+                switchRole(roles[0] as RoleType)
                 if (data.status != AccountStatus.BLOCKED && data.status != AccountStatus.PENDING) {
                     toast.success("Đăng nhập thành công.")
-
-                    router.push("/");
+                    if (roles[0] == "ADMIN") {
+                        router.push("/admin"); // Chuyển trang Admin
+                    } else if (roles[0] == "MODERATOR") {
+                        router.push("/moderator"); // Chuyển trang Seller (nếu có)
+                    } else {
+                        router.push("/"); // Mặc định về trang chủ
+                    }
                 } else if (data.status == AccountStatus.BLOCKED) {
                     toast.warning("Tài khoản đã bị hạn chế một số chức năng. Liên hệ hỗ trợ để biết thêm chi tiết.")
-                    router.push("/");
+                    if (roles[0] == "ADMIN") {
+                        router.push("/admin"); // Chuyển trang Admin
+                    } else if (roles[0] == "MODERATOR") {
+                        router.push("/moderator"); // Chuyển trang Seller (nếu có)
+                    } else {
+                        router.push("/"); // Mặc định về trang chủ
+                    }
                 } else if (data.status == AccountStatus.PENDING) {
                     toast.error("Tài khoản chưa xác thực email. Vui lòng xác thực", {
                         action: {

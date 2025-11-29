@@ -1,0 +1,109 @@
+// contexts/RoleContext.tsx
+"use client";
+
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { ACTIVE_ROLE_KEY, USER_ROLE_KEY } from "@/constants";
+import { useRouter } from "next/navigation";
+
+export type RoleType = "USER" | "ADMIN" | "MODERATOR";
+
+interface RoleContextType {
+    activeRole: RoleType;
+    switchRole: (role: RoleType) => void;
+    availableRoles: RoleType[];
+    isLoading: boolean; // Thêm biến này để các component biết mà chờ
+}
+
+const RoleContext = createContext<RoleContextType>({
+    activeRole: "USER",
+    switchRole: () => {},
+    availableRoles: [],
+    isLoading: true,
+});
+
+export const useRole = () => useContext(RoleContext);
+
+// 1. Sửa lại hook này
+export const useCurrentRoles = () => {
+    const [roles, setRoles] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(true); // Mặc định là đang load
+
+    useEffect(() => {
+        // Chỉ chạy ở phía Client
+        if (typeof window !== "undefined") {
+            const data = localStorage.getItem(USER_ROLE_KEY);
+            console.log("LocalStorage Data:", data); // Debug
+
+            if (data) {
+                try {
+                    setRoles(JSON.parse(data));
+                } catch (e) {
+                    console.error("Lỗi parse roles:", e);
+                    setRoles([]);
+                }
+            }
+            setIsLoading(false); // Đã load xong (dù có data hay không)
+        }
+    }, []); // <--- QUAN TRỌNG: Thêm mảng rỗng để chỉ chạy 1 lần
+
+    return { roles, isLoading };
+}
+
+export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
+    const { roles, isLoading } = useCurrentRoles();
+    const [activeRole, setActiveRole] = useState<RoleType>("USER");
+    const router = useRouter();
+
+    useEffect(() => {
+        // Chỉ chạy logic chọn activeRole khi ĐÃ LOAD XONG roles
+        if (!isLoading && roles && roles.length > 0) {
+            const savedRole = localStorage.getItem(ACTIVE_ROLE_KEY) as RoleType;
+
+            // Kiểm tra kỹ hơn: savedRole phải hợp lệ và nằm trong danh sách roles của user
+            if (savedRole && roles.includes(savedRole)) {
+                setActiveRole(savedRole);
+            } else {
+                // Ưu tiên USER, nếu không thì lấy cái đầu tiên
+                setActiveRole((roles.includes("USER") ? "USER" : roles[0]) as RoleType);
+            }
+        }
+    }, [roles, isLoading]);
+
+    const switchRole = (role: RoleType) => {
+        // Nếu đang load thì không cho switch (hoặc bỏ qua check)
+        if (isLoading) return;
+
+        // Bảo mật:
+        if (!roles.includes(role)) {
+            console.log("Current Available Roles:", roles);
+            console.log("Target Role:", role);
+            console.error("Bạn không có quyền chuyển sang role này!");
+
+            // Chỉ redirect về sign-in nếu thực sự không có quyền và không đang ở trang sign-in
+            // router.push("/sign-in");
+            return;
+        }
+
+        console.log(`Switching to ${role}`);
+        setActiveRole(role);
+        localStorage.setItem(ACTIVE_ROLE_KEY, role);
+
+        if (role !== activeRole) {
+            if (role === 'ADMIN') router.push('/admin/dashboard'); // Sửa đường dẫn cho đúng thực tế
+            else if (role === 'USER') router.push('/');
+            else if (role === 'MODERATOR') router.push('/moderator');
+            else router.push('/sign-in')
+        }
+    };
+
+    return (
+        <RoleContext.Provider value={{
+            activeRole,
+            switchRole,
+            availableRoles: roles as RoleType[],
+            isLoading // Truyền xuống để các Guard component sử dụng
+        }}>
+            {children}
+        </RoleContext.Provider>
+    );
+};

@@ -16,6 +16,7 @@ export interface LoginRequest {
 export interface LoginResponse {
     email: string;
     status: string;
+    roles: string[];
     token: TokenResponse
 }
 export interface RegisterRequest {

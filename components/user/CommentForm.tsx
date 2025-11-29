@@ -1,23 +1,21 @@
 // components/comment/CommentInputForm.tsx
 "use client";
 
-import React, {useState, useEffect, useRef} from 'react';
+import React, {useRef, useState} from 'react';
 import {Input} from '@/components/ui/input';
 import {Button} from '@/components/ui/button';
 import {FileImage, Film, Send, Smile, UserRound, X} from 'lucide-react';
 import {toast} from 'sonner';
-import {CommentResponse, CommentRequest} from '@/types/dtos/post';
-import {emojiCategory, USER_KEY} from '@/constants';
+import {CommentRequest, CommentResponse} from '@/types/dtos/post';
 import Image from "next/image";
 import {comment} from "@/services/commentService";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import EmojiPicker, {EmojiClickData, EmojiStyle} from "emoji-picker-react";
-import {CategoriesConfig, categoryFromCategoryConfig} from "emoji-picker-react/src/config/categoryConfig";
+import {EmojiClickData} from "emoji-picker-react";
 import MyEmojipicker from "@/components/ui/emojipicker";
-import {UserResponse} from "@/types/dtos/user";
 import {ACCEPTED_TYPES, MAX_IMG_SIZE} from "@/constants/enum";
 import {MediaPreview} from "@/components/user/PostForm";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {useCurrentUser} from "@/components/userContext";
 
 
 interface CommentInputFormProps {
@@ -27,30 +25,6 @@ interface CommentInputFormProps {
     onCommentPosted: (newComment: CommentResponse) => void;
     onCancelReply: () => void;
 }
-
-/**
- * Một hook nhỏ để lấy avatar của người dùng đang đăng nhập
- */
-export const useCurrentUser = () => {
-    const [user, setUser] = useState<UserResponse | null>(null);
-    useEffect(() => {
-        const data = localStorage.getItem(USER_KEY);
-        if (data) {
-            setUser(JSON.parse(data) as UserResponse);
-        }
-    }, []);
-    return {...user};
-};
-export const useCurrentUserId = () => {
-    const [id, setId] = useState<string | null>(null);
-    useEffect(() => {
-        const data = localStorage.getItem(USER_KEY);
-        if (data) {
-            setId(JSON.parse(data).id);
-        }
-    }, []);
-    return {id};
-};
 
 export const CommentInputForm = ({
                                      className,

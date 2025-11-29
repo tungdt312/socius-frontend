@@ -1,11 +1,15 @@
-import React from 'react'
-import {ScrollArea} from "@/components/ui/scroll-area";
+"use client"
+import React, {useEffect} from 'react'
+import {useRole} from "@/components/RoleContext";
+import {useCurrentUser} from "@/components/userContext";
 
 const Layout = ({children}: { children: React.ReactNode }) => {
+    const { switchRole } = useRole();
+    useEffect(() => {
+        switchRole("USER")
+    }, []);
     return (
-        <div className={"flex flex-col w-full flex-1 bg-background text-foreground overflow-auto relative"}>
-            {children}
-        </div>
+        <>{children}</>
     )
 }
 export default Layout

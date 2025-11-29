@@ -19,7 +19,7 @@ import {Skeleton} from "@/components/ui/skeleton"; // Import Skeleton
 import {Card, CardContent, CardFooter, CardHeader} from "@/components/ui/card";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
-import {CommentInputForm, useCurrentUserId} from "@/components/user/CommentForm";
+import {CommentInputForm} from "@/components/user/CommentForm";
 import {CommentItem, CommentSkeleton} from "@/components/user/Comments";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {getPostsComments} from "@/services/commentService";
@@ -27,6 +27,7 @@ import PostForm, {PostEditForm} from "@/components/user/PostForm";
 import {react} from "@/services/reactService";
 import PostEllipsis from "@/components/user/PostEllipsis";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {useCurrentUserId} from "@/components/userContext";
 
 export function getAccessIcon(access: postAccess) {
     switch (access) {

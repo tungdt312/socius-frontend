@@ -15,7 +15,7 @@ import {Calendar} from "@/components/ui/calendar";
 import OTPModal from "@/components/auth/OTPModal";
 import {toast} from "sonner";
 import {signUpSchema} from "@/schema/authSchema";
-import {ErrorResponse, RegisterRequest, SendVerifyEmailRequest} from "@/types/dtos/auth";
+import {RegisterRequest, SendVerifyEmailRequest} from "@/types/dtos/auth";
 import {register, sendVerifyEmail} from '@/services/authService';
 
 

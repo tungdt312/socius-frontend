@@ -1,8 +1,8 @@
 import {
     Bell,
-    Compass,
-    House, Info,
-    MessageCircle, Palette,
+    Compass, FileCog, Flag,
+    House, Info, LayoutDashboard, LucideProps,
+    MessageCircle, MessageSquareWarning, Palette,
     PlusSquare,
     Search,
     Settings,
@@ -11,105 +11,112 @@ import {
     UserLock, UserRoundCheck, UserRoundPen, UserRoundX,
     UsersRound
 } from "lucide-react";
-import {ForwardedRef} from "react";
+import React, {ForwardedRef} from "react";
 import {CategoriesConfig, CategoryConfig} from "emoji-picker-react/src/config/categoryConfig";
 import {Categories} from "emoji-picker-react";
+import {NavItem} from "@/types/utils";
 
 export const ACCESS_TOKEN_KEY = "access-token";
 export const REFRESH_TOKEN_KEY = "refresh-token";
 export const USER_KEY = "user";
-export const userNavItems = [
+export const USER_ROLE_KEY = "role";
+export const ACTIVE_ROLE_KEY = "active_role";
+
+export const userNavItems: NavItem[] = [
     {
         name: "Trang chủ",
         url: "/",
         icon: House
-    },{
+    }, {
         name: "Khám phá",
         url: "/explore",
         icon: Compass
-    },{
+    }, {
         name: "Bạn bè",
         url: "/friend",
         icon: UsersRound
-    },{
+    }, {
         name: "Tin nhắn",
         url: "/message",
         icon: MessageCircle
-    },{
+    }, {
         name: "Cài đặt",
         url: "/setting/profile",
         icon: Settings
     },
 ]
-export const moderatorNavItems = [
+export const moderatorNavItems: NavItem[] = [
     {
         name: "Trang chủ",
-        url: "/moderator/",
-        icon: House
+        url: "/moderator",
+        icon: LayoutDashboard
     },
     {
         name: "Báo cáo vi phạm",
         url: "/moderator/reports",
-        icon: Search
-    },{
+        icon: Flag
+    }, {
         name: "Nội dung vi phạm",
         url: "/moderator/contents",
-        icon: Compass
-    },{
+        icon: MessageSquareWarning
+    }, {
         name: "Danh sách người dùng",
         url: "/moderator/users",
-        icon: MessageCircle
-    },{
-        name: "Cài đặt",
-        url: "/moderator/setting",
-        icon: Settings
-    },
+        icon: UsersRound
+    }
 ]
-export const adminNavItems = [
+export const adminNavItems: NavItem[] = [
     {
         name: "Trang chủ",
-        url: "/admin/",
-        icon: House
+        url: "/admin",
+        icon: LayoutDashboard
     },
     {
         name: "Người dùng",
         url: "/admin/users",
-        icon: Search
-    },{
+        icon: UsersRound
+    }, {
         name: "Cài đặt hệ thống",
-        url: "moderator/setting",
-        icon: Settings
+        url: "/admin/setting",
+        icon: FileCog
     },
 ]
-export const userSettingNavItems = [
+export const userSettingNavItems: NavItem[] = [
     {
         name: "Sửa trang cá nhân",
         url: "/setting/profile",
         icon: UserRoundPen
-    },{
+    }, {
         name: "Tùy chọn giao diện",
         url: "/setting/appearance",
         icon: Palette
-    },{
+    }, {
         name: "Trạng thái tài khoản",
         url: "/setting/status",
         icon: UserRoundCheck
-    },{
+    }, {
         name: "Người dùng đã chặn",
         url: "/setting/blocked",
         icon: UserRoundX
-    },{
+    }, {
         name: "Báo cáo và hỗ trợ",
         url: "/setting/helping",
         icon: Info
     },
 ]
 
-export const roleMap = new Map<string, {name: string, url: string, icon: ForwardedRef<any>}>([
-    ["USER", {name: "Người dùng", url: "/", icon: User }],
-    ["MODERATOR", {name: "Kiểm duyệt viên", url: "/moderator/", icon:UserLock }],
-    ["ADMIN", {name: "Quản trị viên", url: "/admin/", icon: UserCog}],
-])
+export const roleMap = new Map<string, {
+    name: string,
+    url: string,
+    navItems: NavItem[],
+    icon:  React.ForwardRefExoticComponent<Omit<LucideProps, "ref"> & React.RefAttributes<SVGSVGElement>>
+}>(
+    [
+        ["USER", {name: "Đến trang cá nhân", url: "/", navItems: userNavItems,  icon: User}],
+        ["MODERATOR", {name: "Đến trang kiểm duyệt", url: "/moderator/", navItems: moderatorNavItems, icon: UserLock}],
+        ["ADMIN", {name: "Đến trang trị viên", url: "/admin/", navItems: adminNavItems, icon: UserCog}],
+    ]
+)
 
 export const emojiCategory: CategoryConfig[] = [
     {

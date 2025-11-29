@@ -12,13 +12,13 @@ import {toast} from "sonner";
 import {Skeleton} from "@/components/ui/skeleton";
 import {react} from "@/services/reactService";
 import {ACCEPTED_TYPES, MAX_IMG_SIZE, reactTargetType, reactType} from "@/constants/enum";
-import {useCurrentUserId} from "@/components/user/CommentForm";
 import {Textarea} from "@/components/ui/textarea";
 import {MediaPreview} from "@/components/user/PostForm";
 import {Input} from "@/components/ui/input";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {ConfirmDialog} from "@/components/ui/confirm-dialog";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {useCurrentUserId} from "@/components/userContext";
 
 interface CommentItemProps {
     comment: CommentResponse;

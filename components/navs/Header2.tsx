@@ -9,22 +9,14 @@ import {UserResponse} from "@/types/dtos/user";
 import {USER_KEY} from "@/constants";
 import PostForm from "@/components/user/PostForm";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {useRole} from "@/components/RoleContext";
+import {useCurrentUser} from "@/components/userContext";
 
 const Header2 = () => {
     const router = useRouter();
     const pathName = usePathname();
-    const [user, setUser] = useState<UserResponse | null>(null);
-
-    useEffect(() => {
-        const data = localStorage.getItem(USER_KEY)
-        if (data) {
-            setUser(JSON.parse(data));
-        } else {
-            if (pathName !== "/sign-in") {
-                router.push("/sign-in");
-            }
-        }
-    }, [router, pathName])
+    const user = useCurrentUser();
+    const {activeRole} = useRole();
 
     if (!user) {
         return null;

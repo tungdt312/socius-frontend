@@ -1,11 +1,16 @@
-import React from 'react'
-import Image from 'next/image'
+"use client"
+import React, {useEffect} from 'react'
+import {useRole} from "@/components/RoleContext";
+import {useCurrentUser} from "@/components/userContext";
 
 const Layout = ({children}: { children: React.ReactNode }) => {
+    const { switchRole } = useRole();
+    useEffect(() => {
+        switchRole("MODERATOR")
+    }, []);
     return (
-        <div className="flex min-h-screen bg-secondary ">
-            {children}
-        </div>
+        <>{children}</>
+
     )
 }
 export default Layout

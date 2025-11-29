@@ -10,7 +10,6 @@ import {
 import {Lock, Globe, PlusSquare, Users, X, Smile, FileImage, Film, UserRound} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {EditPostRequest, PostMedia, PostRequest, PostResponse, SharePostRequest} from "@/types/dtos/post";
-import {useCurrentUser} from "@/components/user/CommentForm";
 import {toast} from "sonner";
 import {ACCEPTED_TYPES, MAX_IMG_SIZE, postAccess} from '@/constants/enum';
 import {createPost, editPost, getPostById, sharePost} from "@/services/postService";
@@ -29,6 +28,7 @@ import MyEmojipicker from "@/components/ui/emojipicker";
 import {EmojiClickData} from "emoji-picker-react";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {useCurrentUser} from "@/components/userContext";
 
 export interface PostFormProps {
     children: React.ReactNode;

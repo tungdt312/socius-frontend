@@ -27,7 +27,6 @@ import {
 import {toast} from 'sonner';
 import Image from 'next/image';
 import {useStomp} from "@/components/StompContext";
-import {useCurrentUser} from "@/components/user/CommentForm";
 import {MessageItem} from "@/components/message/MessageItem"; // Để preview
 import {ConversationResponse, ConversationResquest, MessageRequest, MessageResponse} from '@/types/dtos/message';
 import {useRouter} from "next/navigation";
@@ -51,6 +50,8 @@ import {UserRelationResponse} from "@/types/dtos/user";
 import {getFriendsList} from "@/services/friendService";
 import {load} from "next/dist/compiled/@edge-runtime/primitives/load";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+
+import {useCurrentUser} from "@/components/userContext";
 
 // (Giả sử bạn có hook này)
 // import { useCurrentUser } from '@/hooks/useCurrentUser';

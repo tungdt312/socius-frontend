@@ -7,7 +7,6 @@ import {
     AlertDialogTitle,
     AlertDialogTrigger
 } from "@/components/ui/alert-dialog";
-import {useCurrentUserId} from "@/components/user/CommentForm";
 import {useRouter} from "next/navigation";
 import {deleteFriendAction} from "@/services/friendService";
 import {FriendActionTypes} from "@/constants/enum";
@@ -18,6 +17,8 @@ import {X} from "lucide-react";
 import {PostEditForm} from "@/components/user/PostForm";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {ConfirmDialog} from "@/components/ui/confirm-dialog";
+
+import {useCurrentUserId} from "@/components/userContext";
 
 const PostEllipsis = ({post, children, onDelete, onEditClick}: {
     post: PostResponse,

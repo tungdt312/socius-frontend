@@ -1,8 +1,5 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
-import {postAccess} from "@/constants/enum";
-import {Globe, Lock, Users} from "lucide-react";
-import React from "react";
+import {type ClassValue, clsx} from "clsx"
+import {twMerge} from "tailwind-merge"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -32,6 +29,18 @@ export const formatNumber = (num: number) => {
   return num;
 };
 
-
+export const getFirstPath = (pathName?: string) => {
+  if (!pathName) return "/";
+  const parts = pathName.split("/").filter(Boolean);
+  return parts.length === 0 ? "/" : `/${parts[0]}`;
+};
+export const getSecondPath = (pathName?: string) => {
+  if (!pathName) return "/";
+  const parts = pathName.split("/");
+  const part0 = parts[1] ? `/${parts[1]}` : '/'
+  const part1 = parts[2] ? `/${parts[2]}` : ''
+  console.log(part0 + part1);
+  return part0+part1;
+};
 
 export const BASE = process.env.NEXT_PUBLIC_BASE_URL
