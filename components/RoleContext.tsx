@@ -89,7 +89,7 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
         localStorage.setItem(ACTIVE_ROLE_KEY, role);
 
         if (role !== activeRole) {
-            if (role === 'ADMIN') router.push('/admin/dashboard'); // Sửa đường dẫn cho đúng thực tế
+            if (role === 'ADMIN') router.push('/admin'); // Sửa đường dẫn cho đúng thực tế
             else if (role === 'USER') router.push('/');
             else if (role === 'MODERATOR') router.push('/moderator');
             else router.push('/sign-in')

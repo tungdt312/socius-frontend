@@ -17,7 +17,7 @@ const Layout = ({children}: { children: React.ReactNode }) => {
                     <Header/>
                     <Header2/>
                 <StompProvider>
-                    <div className={"flex flex-col w-full flex-1 bg-background text-foreground overflow-auto relative"}>
+                    <div className={"flex flex-col flex-1 bg-background text-foreground overflow-auto relative"}>
                         {children}
                     </div>
                 </StompProvider>

@@ -21,7 +21,7 @@ const ModeratorSideNav = () => {
                        className="mb-4 size-11 block lg:hidden"/>
                 <Image alt={"logo"} src={'/Logo-full.svg'} height={100} width={100}
                        className="mb-4 h-11 w-auto hidden lg:block"/>
-                <p className={"flex mx-auto text-center subtitle1 px-2 py-1 rounded-full ring-2  ring-primary text-muted-foreground gap-1"}>
+                <p className={" mb-2 flex mx-auto text-center subtitle1 px-2 py-1 rounded-full ring-2  ring-primary text-muted-foreground gap-1"}>
                     <UserLock className={"size-6"}/>
                     <span className={"hidden lg:block"}>Kiểm duyệt viên</span>
                 </p>

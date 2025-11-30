@@ -49,7 +49,7 @@ function DropdownMenuContent({
         )}
         {...props}
       />
-      </ThemeProvider>
+    </ThemeProvider>
     </DropdownMenuPrimitive.Portal>
   )
 }

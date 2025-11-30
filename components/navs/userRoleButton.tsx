@@ -5,12 +5,14 @@ import {Button} from "@/components/ui/button";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {useCurrentUser} from "@/components/userContext";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {ACCESS_TOKEN_KEY, ACTIVE_ROLE_KEY, REFRESH_TOKEN_KEY, USER_KEY, USER_ROLE_KEY} from "@/constants";
+import {useRouter} from "next/navigation";
 
 export const UserRoleButton = () => {
     const { activeRole, switchRole, availableRoles } = useRole();
     const user = useCurrentUser();
     //if (availableRoles.length <= 1) return null; // Nếu chỉ có 1 role thì ẩn đi
-
+    const router = useRouter();
     return (
         <Popover>
             <PopoverTrigger asChild>
@@ -37,6 +39,20 @@ export const UserRoleButton = () => {
                         {role === "USER" && "Trang cá nhân"}
                     </Button>
                 ))}
+                <Button
+                    key={"logout"}
+                    onClick={() => {
+                        localStorage.removeItem(USER_KEY);
+                        localStorage.removeItem(ACCESS_TOKEN_KEY);
+                        localStorage.removeItem(REFRESH_TOKEN_KEY);
+                        localStorage.removeItem(USER_ROLE_KEY);
+                        localStorage.removeItem(ACTIVE_ROLE_KEY);
+                        router.push("/sign-in")}}
+                    className="w-full text-destructive"
+                    variant="ghost"
+                >
+                    Đăng xuất
+                </Button>
             </PopoverContent>
 
         </Popover>

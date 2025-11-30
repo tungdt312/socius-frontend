@@ -2,7 +2,14 @@
 import React from 'react'
 import Image from 'next/image'
 import {ToggleGroup, ToggleGroupItem} from "@/components/ui/toggle-group";
-import {ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY, USER_KEY, userNavItems, userSettingNavItems} from "@/constants";
+import {
+    ACCESS_TOKEN_KEY, ACTIVE_ROLE_KEY,
+    REFRESH_TOKEN_KEY,
+    USER_KEY,
+    USER_ROLE_KEY,
+    userNavItems,
+    userSettingNavItems
+} from "@/constants";
 import Link from "next/link";
 import {usePathname, useRouter} from "next/navigation";
 import {Button} from "@/components/ui/button";
@@ -40,6 +47,8 @@ const SettingSideNav = () => {
                         localStorage.removeItem(USER_KEY);
                         localStorage.removeItem(ACCESS_TOKEN_KEY);
                         localStorage.removeItem(REFRESH_TOKEN_KEY);
+                        localStorage.removeItem(USER_ROLE_KEY);
+                        localStorage.removeItem(ACTIVE_ROLE_KEY);
                         router.push("/sign-in")
                     }}
                     className="gap-2 size-fit h-fit lg:w-full justify-start items-center px-2 lg:px-4 py-2 text-white rounded-[8px] bg-destructive hover:bg-destructive/30"

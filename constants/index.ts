@@ -113,8 +113,8 @@ export const roleMap = new Map<string, {
 }>(
     [
         ["USER", {name: "Đến trang cá nhân", url: "/", navItems: userNavItems,  icon: User}],
-        ["MODERATOR", {name: "Đến trang kiểm duyệt", url: "/moderator/", navItems: moderatorNavItems, icon: UserLock}],
-        ["ADMIN", {name: "Đến trang trị viên", url: "/admin/", navItems: adminNavItems, icon: UserCog}],
+        ["MODERATOR", {name: "Đến trang kiểm duyệt", url: "/moderator", navItems: moderatorNavItems, icon: UserLock}],
+        ["ADMIN", {name: "Đến trang trị viên", url: "/admin", navItems: adminNavItems, icon: UserCog}],
     ]
 )
 
