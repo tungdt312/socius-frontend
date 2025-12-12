@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react'
+import React, {useCallback, useEffect, useRef, useState} from 'react'
 import {postAccess, reactTargetType, reactType} from "@/constants/enum";
 import {
     ChevronLeft,
@@ -28,6 +28,8 @@ import {react} from "@/services/reactService";
 import PostEllipsis from "@/components/user/PostEllipsis";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {useCurrentUserId} from "@/components/userContext";
+import {PageRequest} from "@/types/dtos/base";
+import {getPostsByUserId} from "@/services/postService";
 
 export function getAccessIcon(access: postAccess) {
     switch (access) {
@@ -120,41 +122,62 @@ export const PostCard = ({post}: { post: PostResponse }) => {
     const [currentPost, setCurrentPost] = useState(post);
     const [isLiked, setIsLiked] = useState((currentPost?.reactSummary?.currentUserReact ?? "") == reactType.LOVE);
     const [likeCount, setLikeCount] = useState(currentPost?.reactCount ?? 0);
+
     const [showReplies, setShowReplies] = useState(false);
-    const [page, setPage] = useState(0);
+    const [currentPage, setCurrentPage] = useState(0);
     const [comments, setComments] = useState<CommentResponse[]>([]);
+    const [hasMore, setHasMore] = useState(true);
+    const [isLoadingComments, setIsLoadingComments] = useState(false);
+
+    const [newReply, setNewReply] = useState<CommentResponse | undefined>(undefined);
     const [commentCount, setCommentCount] = useState(currentPost?.commentCount ?? 0);
     const [shareCount, setShareCount] = useState(currentPost?.shareCount ?? 0);
-    const [isLoadingComments, setIsLoadingComments] = useState(false);
+
     const [parent, setParent] = useState<CommentResponse | undefined>(undefined);
     const [isDelete, setIsDelete] = useState(false);
-    const [editingComment, setEditingComment] = useState<CommentResponse | undefined>(undefined);
     if (!post) {
         return <DisablePost/>;
+    }
+    const observer = useRef<IntersectionObserver | null>(null);
+
+    const lastUserElementRef = useCallback((node: HTMLDivElement) => {
+        if (isLoadingComments) return; // Đang load thì không trigger
+
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                // Khi thấy phần tử cuối cùng -> Tăng page lên
+                setCurrentPage(prevPage => prevPage + 1);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [isLoadingComments, hasMore]);
+    const fetchComments = async () => {
+        try {
+            const page: PageRequest = {
+                page: currentPage,
+                size: 10,
+                sort: ["createdAt,desc"]
+            }
+            setIsLoadingComments(true);
+            const res = await getPostsComments(currentPost.id, page);
+            setCurrentPage(res.page)
+            setHasMore(res.numberOfElements == res.size)
+            setComments(comments.concat(res.content ?? []));
+        } catch (error) {
+            toast.error((error as Error).message ?? "Không thể tải bình luận")
+        } finally {
+            setIsLoadingComments(false);
+        }
     }
     useEffect(() => {
         if (!showReplies) setComments([]);
         if (showReplies && currentPost.id && comments.length === 0) {
-            const fetchComments = async () => {
-                setIsLoadingComments(true);
-                try {
-                    const fetchedComments = await getPostsComments(currentPost.id);
-
-                    setPage(page + 1);
-                    setComments(comments.concat(fetchedComments.content ?? []));
-
-                    console.log("Đang tải bình luận cho post " + currentPost.id);
-
-
-                } catch (error) {
-                    toast.error("Không thể tải bình luận");
-                } finally {
-                    setIsLoadingComments(false);
-                }
-            };
             fetchComments();
         }
-    }, [showReplies, currentPost.id, comments.length, commentCount]);
+    }, [showReplies, currentPost.id, comments.length, commentCount, currentPage]);
     const handleLikePost = async () => {
         const newIsLiked = !isLiked;
         const newLikeCount = newIsLiked ? likeCount + 1 : likeCount - 1;
@@ -175,7 +198,13 @@ export const PostCard = ({post}: { post: PostResponse }) => {
         }
     };
     const handleCommentPosted = (newComment: CommentResponse) => {
+        if (newComment.parentId) {
+        // TRƯỜNG HỢP TRẢ LỜI: Lưu vào state newReply để truyền xuống con
+        setNewReply(newComment);
+    } else {
+        // TRƯỜNG HỢP GỐC: Thêm vào danh sách hiện tại
         setComments(prevComments => [newComment, ...prevComments]);
+    }
         setCommentCount(commentCount + 1);
         setParent(undefined);
     };
@@ -191,13 +220,13 @@ export const PostCard = ({post}: { post: PostResponse }) => {
         return <PostCardSkeleton/>;
     }
     return (
-        <Card className={`w-full max-w-xl mx-auto my-4 h-fit overflow-hidden ${(isDelete ? "hidden" : "")}`}>
+        <Card className={`w-full max-w-xl mx-auto  h-fit overflow-hidden ${(isDelete ? "hidden" : "")}`}>
             <CardHeader className="flex flex-row items-center justify-between px-4">
                 <div className="flex items-center gap-3">
                     <Link href={`/user/${currentPost.authorId}`}>
                         <Avatar className={"size-10"}>
                             <AvatarImage src={currentPost.authorAvatar} className={"object-cover"}/>
-                            <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                            <AvatarFallback><UserRound size={"80%"}/></AvatarFallback>
                         </Avatar>
                     </Link>
                     <div className="flex flex-col">
@@ -273,10 +302,21 @@ export const PostCard = ({post}: { post: PostResponse }) => {
                                 Chưa có bình luận nào
                             </p>
                         )}
-                        {!isLoadingComments && comments.map(comment => (
-                            <CommentItem key={comment.id} comment={comment}
-                                         onReplyClick={(cmt) => setParent(cmt)}/>
-                        ))}
+                        {!isLoadingComments && comments.map((comment, index) => {
+                            if (comments.length == index+1) {
+                                return (
+                                    <div ref={lastUserElementRef} key={comment.id} className="w-full">
+                                        <CommentItem comment={comment}
+                                                     onReplyClick={(cmt) => setParent(cmt)}
+                                                     newReply={newReply} />
+                                    </div>
+                                )
+                            }
+                                return <CommentItem key={comment.id} comment={comment}
+                                                    onReplyClick={(cmt) => setParent(cmt)}
+                                                    newReply={newReply}/>
+                        })}
+
                     </div>
                     <CommentInputForm postId={post.id} parent={parent} onCommentPosted={handleCommentPosted}
                                       onCancelReply={() => setParent(undefined)}/>

@@ -48,6 +48,7 @@ const SignInForm = () => {
                 password: values.password,
             }
             const data = await login(req);
+            console.log(data);
             localStorage.setItem(ACCESS_TOKEN_KEY, data.token.accessToken);
             localStorage.setItem(REFRESH_TOKEN_KEY, data.token.refreshToken);
             localStorage.setItem(USER_ROLE_KEY, JSON.stringify(data.roles))

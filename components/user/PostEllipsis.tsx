@@ -19,6 +19,8 @@ import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {ConfirmDialog} from "@/components/ui/confirm-dialog";
 
 import {useCurrentUserId} from "@/components/userContext";
+import ReportForm from "@/components/moderator/ReportForm";
+import {ReportableType} from "@/types/dtos/report";
 
 const PostEllipsis = ({post, children, onDelete, onEditClick}: {
     post: PostResponse,
@@ -49,8 +51,6 @@ const PostEllipsis = ({post, children, onDelete, onEditClick}: {
         } catch (error) {
             toast.error((error as Error).message ?? "Lỗi không xác định")
         }
-
-
     }
 
     return (
@@ -61,7 +61,7 @@ const PostEllipsis = ({post, children, onDelete, onEditClick}: {
             <PopoverContent className="max-w-md w-full p-0 h-auto flex flex-col items-center">
                 {isOwner ?
                     <>
-                        <PostEditForm post={post} onSuccess={(p)=>{
+                        <PostEditForm post={post} onSuccess={(p) => {
                             onEditClick(p)
                             setIsOpen(false)
                         }}>
@@ -71,7 +71,7 @@ const PostEllipsis = ({post, children, onDelete, onEditClick}: {
                         </PostEditForm>
                         <ConfirmDialog title={'Xóa bài viết'}
                                        description={'Bạn có chắc muốn xóa bài viết này? Bài viết sau khi xóa sẽ không thể khôi phục.'}
-                                       onConfirm={async ()=>{
+                                       onConfirm={async () => {
                                            await deletePosts(post.id)
                                            onDelete()
                                            setIsOpen(false);
@@ -86,7 +86,7 @@ const PostEllipsis = ({post, children, onDelete, onEditClick}: {
                     : <>
                         <ConfirmDialog title={"Chặn người dùng"}
                                        description={"Người dùng này sẽ không thể tìm thấy hay nhắn tin cho bạn. Chúng tôi sẽ không thông báo cho người dùng biết về việc bị chặn."}
-                                       onConfirm={async ()=> {
+                                       onConfirm={async () => {
                                            await BlockAuthor
                                            setIsOpen(false);
                                        }}>
@@ -94,10 +94,11 @@ const PostEllipsis = ({post, children, onDelete, onEditClick}: {
                                 Chặn người dùng
                             </Button>
                         </ConfirmDialog>
-                        <Button className={"w-full !text-destructive"} variant={"ghost"} onClick={async () => {
-                        }}>
-                            Báo cáo bài viết
-                        </Button>
+                        <ReportForm targetId={post.id} targetType={ReportableType.COMMENT} >
+                            <Button className={"w-full !text-destructive"} variant={"ghost"}>
+                                Báo cáo bài viết
+                            </Button>
+                        </ReportForm>
                     </>}
             </PopoverContent>
         </Popover>

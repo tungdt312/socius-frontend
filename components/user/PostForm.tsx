@@ -39,13 +39,10 @@ export interface PostFormProps {
 export const SharedPostPreview = ({post}: { post: PostResponse }) => (
     <div className="mt-2 border border-border rounded-lg">
         <div className="flex items-center gap-3 p-3 bg-accent/50">
-            <Image
-                alt="avatar"
-                src={post.authorAvatar || process.env.NEXT_PUBLIC_AVATAR_URL!}
-                height={32}
-                width={32}
-                className="size-8 object-cover rounded-full"
-            />
+            <Avatar className={"size-10"}>
+                <AvatarImage src={post.authorAvatar} className={"object-cover"}/>
+                <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+            </Avatar>
             <div className="flex flex-col">
                 <span className="font-semibold text-sm">{post.authorName}</span>
                 <span className="text-xs text-muted-foreground">{formatISODate(post.createdAt)}</span>

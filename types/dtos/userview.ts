@@ -2,7 +2,6 @@ export interface UserViewResponse {
     id: string;
     displayName: string;
     avatarUrl: string;
-    isActive: boolean;
 
     username: string;
     email: string;

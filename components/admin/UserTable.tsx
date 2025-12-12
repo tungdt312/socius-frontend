@@ -3,14 +3,8 @@
 import * as React from "react";
 import {
     ColumnDef,
-    ColumnFiltersState,
     flexRender,
     getCoreRowModel,
-    getFacetedRowModel,
-    getFacetedUniqueValues,
-    getFilteredRowModel,
-    getPaginationRowModel,
-    getSortedRowModel,
     SortingState,
     useReactTable,
     VisibilityState,
@@ -53,15 +47,14 @@ import {
     ChevronsRight,
     ChevronsUpDown,
     Columns2,
-    Loader,
+    Loader, LockKeyhole,
     Trash,
     User,
     X
 } from "lucide-react";
 import {deleteUser, getUserViewList, putUserView} from "@/services/userviewService";
 import {Popover, PopoverContent, PopoverTrigger} from "../ui/popover";
-import {
-    Command,CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "../ui/command";
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "../ui/command";
 import {cn} from "@/lib/utils";
 import {
     AlertDialog,
@@ -75,12 +68,16 @@ import {
     AlertDialogTrigger
 } from "../ui/alert-dialog";
 import {CreateUserDrawer} from "@/components/admin/CreateUserDrawer";
+import {useEffect, useMemo, useState} from "react";
+import {useDebounce} from "@/hooks/use-rebounce";
+import {ConfirmDialog} from "@/components/ui/confirm-dialog";
 
 const AVAILABLE_ROLES = [
-    { value: "ADMIN", label: "Quản trị viên" },
-    { value: "MODERATOR", label: "Kiểm duyệt viên" },
-    { value: "USER", label: "Người dùng" },
+    {value: "ADMIN", label: "Quản trị viên"},
+    {value: "MODERATOR", label: "Kiểm duyệt viên"},
+    {value: "USER", label: "Người dùng"},
 ];
+
 // --- Components ---
 function RoleMultiSelect({
                              selected,
@@ -133,7 +130,7 @@ function RoleMultiSelect({
                                         }}
                                         onClick={(e) => handleRemove(role, e)}
                                     >
-                                        <X className="h-3 w-3 text-white hover:text-foreground" />
+                                        <X className="h-3 w-3 text-white hover:text-foreground"/>
                                     </Button>
                                 </Badge>
                             ))
@@ -141,12 +138,12 @@ function RoleMultiSelect({
                             <span className="text-muted-foreground font-normal">Chọn quyền...</span>
                         )}
                     </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50"/>
                 </Button>
             </PopoverTrigger>
             <PopoverContent className="w-[350px] p-0" align="start">
                 <Command>
-                    <CommandInput placeholder="Tìm kiếm quyền..." />
+                    <CommandInput placeholder="Tìm kiếm quyền..."/>
                     <CommandList>
                         <CommandEmpty>Không tìm thấy quyền.</CommandEmpty>
                         <CommandGroup>
@@ -163,7 +160,7 @@ function RoleMultiSelect({
                                                 : "opacity-50 [&_svg]:invisible"
                                         )}
                                     >
-                                        <Check className={cn("h-4 w-4 text-white")} />
+                                        <Check className={cn("h-4 w-4 text-white")}/>
                                     </div>
                                     <span>{role.label}</span>
                                     <span className="ml-auto text-muted-foreground text-xs font-mono">
@@ -178,10 +175,9 @@ function RoleMultiSelect({
         </Popover>
     );
 }
+
 // Drawer hiển thị chi tiết User
-function UserDrawer({user,
-                    onSuccess
-}: {
+function UserDrawer({user, onSuccess}: {
     user: UserViewResponse;
     onSuccess?: () => void; // Prop mới: Hàm reload dữ liệu
 }) {
@@ -212,13 +208,13 @@ function UserDrawer({user,
     };
 
     const handleDelete = async () => {
-        try{
+        try {
 
-        setIsLoading(true);
-        // Giả lập gọi API xóa
-        const res = await deleteUser(user.id)
-        console.log("Deleting user:", user.id);
-        onSuccess?.();
+            setIsLoading(true);
+            // Giả lập gọi API xóa
+            const res = await deleteUser(user.id)
+            console.log("Deleting user:", user.id);
+            onSuccess?.();
         } catch (error) {
             toast.error((error as Error).message ?? "Không thể khoá người dùng");
         } finally {
@@ -254,11 +250,12 @@ function UserDrawer({user,
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
                                 <Label className="text-muted-foreground text-xs uppercase tracking-wider">ID</Label>
-                                <Input value={user.id} readOnly className="bg-muted/50 font-mono text-xs" />
+                                <Input value={user.id} readOnly className="bg-muted/50 font-mono text-xs"/>
                             </div>
                             <div className="grid gap-2">
-                                <Label className="text-muted-foreground text-xs uppercase tracking-wider">Tên tài khoản</Label>
-                                <Input value={user.username} readOnly className="bg-muted/50" />
+                                <Label className="text-muted-foreground text-xs uppercase tracking-wider">Tên tài
+                                    khoản</Label>
+                                <Input value={user.username} readOnly className="bg-muted/50"/>
                             </div>
                         </div>
 
@@ -279,17 +276,26 @@ function UserDrawer({user,
                             <Label className="text-xs uppercase tracking-wider font-semibold">Trạng thái</Label>
                             <Select value={currentStatus} onValueChange={setCurrentStatus}>
                                 <SelectTrigger>
-                                    <SelectValue />
+                                    <SelectValue/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="ACTIVE">
-                                        <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-green-500"/> Hoạt động (Active)</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-green-500"/>
+                                            Hoạt động (Active)
+                                        </div>
                                     </SelectItem>
                                     <SelectItem value="BLOCKED">
-                                        <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-red-500"/> Đã khóa (Blocked)</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-red-500"/>
+                                            Đã khóa (Blocked)
+                                        </div>
                                     </SelectItem>
                                     <SelectItem value="PENDING">
-                                        <div className="flex items-center gap-2"><div className="h-2 w-2 rounded-full bg-yellow-500"/> Chờ duyệt (Pending)</div>
+                                        <div className="flex items-center gap-2">
+                                            <div className="h-2 w-2 rounded-full bg-yellow-500"/>
+                                            Chờ duyệt (Pending)
+                                        </div>
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -301,7 +307,8 @@ function UserDrawer({user,
                 <DrawerFooter className="border-t pt-4 bg-muted/10 flex-none">
                     <div className="flex flex-col gap-3 w-full">
                         <Button onClick={handleSave} disabled={isLoading} className="w-full">
-                            {isLoading ? <Loader className="mr-2 h-4 w-4 animate-spin"/> : <Check className="mr-2 h-4 w-4"/>}
+                            {isLoading ? <Loader className="mr-2 h-4 w-4 animate-spin"/> :
+                                <Check className="mr-2 h-4 w-4"/>}
                             Lưu thay đổi
                         </Button>
 
@@ -313,19 +320,22 @@ function UserDrawer({user,
                             {/* Alert Dialog cho nút Xóa */}
                             <AlertDialog>
                                 <AlertDialogTrigger asChild>
-                                    <Button variant="destructive" className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 border border-red-200 shadow-none">
-                                        <Trash className="mr-2 h-4 w-4" />
+                                    <Button variant="destructive"
+                                            className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 border border-red-200 shadow-none">
+                                        <Trash className="mr-2 h-4 w-4"/>
                                         Khóa tài khoản
                                     </Button>
                                 </AlertDialogTrigger>
                                 <AlertDialogContent>
                                     <AlertDialogHeader>
                                         <div className="flex items-center gap-2 text-destructive">
-                                            <AlertTriangle className="h-5 w-5" />
+                                            <AlertTriangle className="h-5 w-5"/>
                                             <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
                                         </div>
                                         <AlertDialogDescription>
-                                            Hành động này không thể hoàn tác. Tài khoản <strong>{user.username}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống và dữ liệu liên quan có thể bị mất.
+                                            Hành động này không thể hoàn tác. Tài
+                                            khoản <strong>{user.username}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống và
+                                            dữ liệu liên quan có thể bị mất.
                                         </AlertDialogDescription>
                                     </AlertDialogHeader>
                                     <AlertDialogFooter>
@@ -347,21 +357,35 @@ function UserDrawer({user,
     );
 }
 
-// --- Columns Definition ---
+// Helper chuyển đổi sort state sang chuỗi API Spring Boot (field,asc)
+const getSortString = (sorting: SortingState) => {
+    if (!sorting || sorting.length === 0) return undefined;
+    return sorting.map(s => `${s.id},${s.desc ? 'desc' : 'asc'}`);
+};
 
-
-// --- Main Component ---
 export default function UserTable() {
-    const [data, setData] = React.useState<UserViewResponse[]>([]);
-    const [isLoading, setIsLoading] = React.useState(true);
+    // 1. Data States
+    const [data, setData] = useState<UserViewResponse[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+    const [rowCount, setRowCount] = useState(0); // Tổng số bản ghi từ Server
 
-    // Table States
-    const [rowSelection, setRowSelection] = React.useState({});
-    const [columnVisibility, setColumnVisibility] = React.useState<VisibilityState>({});
-    const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>([]);
-    const [sorting, setSorting] = React.useState<SortingState>([]);
-    const [pagination, setPagination] = React.useState({pageIndex: 0, pageSize: 10});
-    const columns: ColumnDef<UserViewResponse>[] = [
+    // 2. Table Control States
+    const [rowSelection, setRowSelection] = useState({});
+    const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+
+    // Pagination
+    const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 10});
+
+    // Sorting
+    const [sorting, setSorting] = useState<SortingState>([]);
+
+    // Filtering
+    const [activeTab, setActiveTab] = useState("all"); // Trạng thái Tab hiện tại
+    const [searchTerm, setSearchTerm] = useState(""); // Trạng thái ô tìm kiếm
+    const debouncedSearch = useDebounce(searchTerm, 500); // Debounce để tránh spam API khi gõ
+
+    // 3. Define Columns (Giữ nguyên UI, bỏ filterFn)
+    const columns: ColumnDef<UserViewResponse>[] = useMemo(() => [
         {
             id: "select",
             header: ({table}) => (
@@ -384,278 +408,223 @@ export default function UserTable() {
             ),
             size: 40,
             enableSorting: false,
-            enableHiding: false,
         },
         {
             accessorKey: "id",
-            header: ({column}
-            ) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="hover:bg-transparent px-0"
-                    >
-                        ID
-                        <ArrowUpDown className="ml-2 h-4 w-4"/>
-                    </Button>
-                )
-            },
-            cell: ({row}) => (
-                <div className="flex items-center gap-1 text-muted-foreground">
-                    <span>{row.original.id}</span>
-                </div>
+            header: ({column}) => (
+                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="px-0 hover:bg-transparent">
+                    ID <ArrowUpDown className="ml-2 h-4 w-4"/>
+                </Button>
             ),
-            meta: {
-                label: "ID"
-            },
+            cell: ({row}) => <div className="text-muted-foreground">{row.original.id}</div>,
         },
         {
-            accessorKey: "displayName",
-            header: ({column}) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="hover:bg-transparent px-0"
-                    >
-                        Người dùng
-                        <ArrowUpDown className="ml-2 h-4 w-4"/>
-                    </Button>
-                )
-            },
-            cell:
-                ({row}) => <UserDrawer user={row.original} onSuccess={fetchData}/>,
-            meta: {
-                label: "Người dùng"
-            },
+            accessorKey: "displayName", // Giả sử search API map vào field này
+            header: ({column}) => (
+                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="px-0 hover:bg-transparent">
+                    Người dùng <ArrowUpDown className="ml-2 h-4 w-4"/>
+                </Button>
+            ),
+            cell: ({row}) => <UserDrawer user={row.original} onSuccess={() => fetchData()}/>, // Gọi fetchData wrapper
         },
         {
             accessorKey: "username",
-            header: ({column}) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="hover:bg-transparent px-0"
-                    >
-                        Tên tài khoản
-                        <ArrowUpDown className="ml-2 h-4 w-4"/>
-                    </Button>
-                )
-            },
-            cell:
-                ({row}) => (
-                    <div className="flex items-center gap-1 text-muted-foreground">
-                        <User className="size-3.5"/>
-                        <span>{row.original.username}</span>
-                    </div>
-                ),
-            meta:
-                {
-                    label: "Tên tài khoản",
-
-                }
-        }
-        ,
+            header: ({column}) => (
+                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="px-0 hover:bg-transparent">
+                    Tên tài khoản <ArrowUpDown className="ml-2 h-4 w-4"/>
+                </Button>
+            ),
+            cell: ({row}) => (
+                <div className="flex items-center gap-1 text-muted-foreground">
+                    <User className="size-3.5"/>
+                    <span>{row.original.username}</span>
+                </div>
+            ),
+        },
         {
             accessorKey: "email",
-            header: ({column}) => {
-                return (
-                    <Button
-                        variant="ghost"
-                        onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
-                        className="hover:bg-transparent px-0"
-                    >
-                        Email
-                        <ArrowUpDown className="ml-2 h-4 w-4"/>
-                    </Button>
-                )
-            },
-            cell:
-                ({row}) => (
-                    <div className="flex items-center gap-1 text-muted-foreground truncate max-w-[200px]"
-                         title={row.original.email}>
-                        <span>{row.original.email}</span>
-                    </div>
-                ),
-            meta: {
-                label: "Email"
-            },
-        }
-        ,
+            header: ({column}) => (
+                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="px-0 hover:bg-transparent">
+                    Email <ArrowUpDown className="ml-2 h-4 w-4"/>
+                </Button>
+            ),
+            cell: ({row}) => <div className="truncate max-w-[200px]"
+                                  title={row.original.email}>{row.original.email}</div>,
+        },
         {
             accessorKey: "roles",
-            header:
-                "Vai trò",
-            cell:
-                ({row}) => (
-                    <div className="flex items-start justify-start gap-1 text-muted-foreground flex-wrap max-w-[200px]"
-                         title={row.original.email}>
-                        {row.original.roles.map(r => <Badge key={r} variant="secondary">{r}</Badge>)}
-                    </div>
-                ),
-            meta: {
-                label: "Vai trò"
-            },
-        }
-        ,
+            header: "Vai trò",
+            cell: ({row}) => (
+                <div className="flex flex-wrap gap-1">
+                    {row.original.roles.map(r => <Badge key={r} variant="secondary">{r}</Badge>)}
+                </div>
+            ),
+        },
         {
             accessorKey: "status",
-            header:
-                "Trạng thái",
-            cell:
-                ({row}) => {
-                    const status = row.original.status;
-                    const statusConfig: Record<
-                        string,
-                        {
-                            label: string;
-                            variant: "default" | "destructive" | "secondary" | "outline";
-                            className?: string;
-                        }
-                    > = {
-                        ACTIVE: {
-                            label: "Hoạt động",
-                            variant: "default",
-                            className: "bg-green-600 hover:bg-green-700 border-transparent text-white",
-                        },
-                        BLOCKED: {
-                            label: "Đã khóa",
-                            variant: "destructive",
-                        },
-                        PENDING: {
-                            label: "Chờ xác nhận",
-                            variant: "secondary",
-                            className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200",
-                        },
-                        NOT_AUTHORIZED: {
-                            label: "Chờ cấp quyền",
-                            variant: "secondary",
-                        },
-                        NOT_SOLVED: {
-                            label: "Chờ xử lý",
-                            variant: "secondary",
-                            className: "bg-yellow-100 text-yellow-800 hover:bg-yellow-200 border-yellow-200",
-                        },
-                    };
-
-                    const config = statusConfig[status] || statusConfig["NOT_SOLVED"];
-
-                    return (
-                        <Badge
-                            variant={config.variant}
-                            className={`capitalize ${config.className || ""}`}
-                        >
-                            {config.label}
-                        </Badge>
-                    );
-                },
-            // Cần thiết để chức năng filter theo Tab hoạt động chính xác
-            filterFn:
-                (row, id, value) => {
-                    return value.includes(row.getValue(id));
-                },
-            meta: {
-                label: "Trạng thái"
+            header: "Trạng thái",
+            cell: ({row}) => {
+                const status = row.original.status;
+                const statusConfig: Record<string, any> = {
+                    ACTIVE: {label: "Hoạt động", variant: "default", className: "bg-green-600"},
+                    BLOCKED: {label: "Đã khóa", variant: "destructive"},
+                    PENDING: {label: "Chờ xác nhận", variant: "secondary", className: "bg-yellow-100 text-yellow-800"},
+                    NOT_AUTHORIZED: {label: "Chờ cấp quyền", variant: "secondary"},
+                    NOT_SOLVED: {label: "Chờ xử lý", variant: "secondary", className: "bg-yellow-100 text-yellow-800"},
+                };
+                const config = statusConfig[status] || statusConfig["NOT_SOLVED"];
+                return <Badge variant={config.variant}
+                              className={`capitalize ${config.className}`}>{config.label}</Badge>;
             },
-        }
-        ,
-    ]
-    // Fetch Data
+            // BỎ filterFn ở đây vì server sẽ xử lý
+        },
+    ], []); // Dùng useMemo để tránh re-render columns không cần thiết
+
+    // 4. Fetch Data Function
     const fetchData = async () => {
+        setIsLoading(true);
         try {
-            setIsLoading(true);
-            const res = await getUserViewList();
+            // Chuẩn bị filter string
+            // Logic: Kết hợp search text và status tab
+            // Backend của bạn có thể cần cấu trúc filter khác, ví dụ: "displayName~'abc' and status:'ACTIVE'"
+            // Ở đây tôi giả định bạn gửi riêng hoặc ghép chuỗi query
+
+            let filterQuery = "";
+            if (debouncedSearch) {
+                filterQuery += `displayName=ilike='${debouncedSearch}'`; // Ví dụ cú pháp RSQL/JPA Criteria
+            }
+
+            // Xử lý Tab (Status filter)
+            if (activeTab !== "all") {
+                const statusQuery = `status=='${activeTab.toUpperCase()}'`;
+                filterQuery = filterQuery ? `${filterQuery} and ${statusQuery}` : statusQuery;
+            }
+
+            const requestParams = {
+                page: pagination.pageIndex,
+                size: pagination.pageSize,
+                sort: getSortString(sorting), // Convert sorting state to string[]
+                filter: filterQuery || undefined
+            };
+
+            const res = await getUserViewList(requestParams); // Hàm này phải nhận object params
+
             setData(res.content || []);
+            setRowCount(res.totalElements || 0); // Quan trọng: Cập nhật tổng số bản ghi
+
         } catch (e) {
+            console.error(e);
             toast.error("Failed to load users");
+            setData([]);
+            setRowCount(0);
         } finally {
             setIsLoading(false);
         }
     };
-    React.useEffect(() => {
-        fetchData();
-    }, []);
 
+    // 5. Trigger Fetch khi dependency thay đổi
+    useEffect(() => {
+        fetchData();
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pagination.pageIndex, pagination.pageSize, sorting, activeTab, debouncedSearch]);
+
+
+    // 6. Table Configuration
     const table = useReactTable({
         data,
         columns,
-        state: {sorting, columnVisibility, rowSelection, columnFilters, pagination},
-        getRowId: (row) => row.id,
-        enableRowSelection: true,
-        onRowSelectionChange: setRowSelection,
-        onSortingChange: setSorting,
-        onColumnFiltersChange: setColumnFilters,
-        onColumnVisibilityChange: setColumnVisibility,
+        state: {
+            sorting,
+            columnVisibility,
+            rowSelection,
+            pagination,
+        },
+        // Bật chế độ Manual (Server-side)
+        manualPagination: true,
+        manualSorting: true,
+        manualFiltering: true, // Quan trọng
+        rowCount: rowCount, // Báo cho table biết tổng số lượng thật
+
         onPaginationChange: setPagination,
+        onSortingChange: setSorting,
+        onRowSelectionChange: setRowSelection,
+        onColumnVisibilityChange: setColumnVisibility,
+
         getCoreRowModel: getCoreRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFacetedRowModel: getFacetedRowModel(),
-        getFacetedUniqueValues: getFacetedUniqueValues(),
+        getRowId: (row) => row.id,
     });
 
-    // Xử lý khi chuyển Tab để lọc dữ liệu thực tế
+    // Handle Tab Change
     const handleTabChange = (value: string) => {
-        if (value === "all") {
-            table.getColumn("status")?.setFilterValue(undefined);
-        } else if (value === "active") {
-            table.getColumn("status")?.setFilterValue(["ACTIVE"]);
-        } else if (value === "blocked") {
-            table.getColumn("status")?.setFilterValue(["BLOCKED"]);
-        } else if (value === "pending") {
-            table.getColumn("status")?.setFilterValue(["PENDING"]);
-        } else if (value === "not_authorized") {
-            table.getColumn("status")?.setFilterValue(["NOT_AUTHORIZED"]);
-        } else if (value === "not_solved") {
-            table.getColumn("status")?.setFilterValue(["NOT_SOLVED"]);
-        }
+        setActiveTab(value);
+        setPagination(prev => ({...prev, pageIndex: 0})); // Reset về trang 1 khi đổi tab
     };
 
+    // Handle Search Change
+    const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        setSearchTerm(e.target.value);
+        setPagination(prev => ({...prev, pageIndex: 0})); // Reset về trang 1 khi tìm kiếm
+    };
+
+    const handleBulkBlock = async () => {
+        const selectedIds = Object.keys(rowSelection);
+        // Lưu ý: Không cần try-catch hay setLoading ở đây nữa
+        // vì ConfirmDialog đã lo phần loading UI.
+        // Tuy nhiên, ta vẫn cần Promise.all để truyền vào onConfirm
+
+        // Gọi API
+        await Promise.all(selectedIds.map((id) => deleteUser(id)));
+
+        // Thành công thì làm gì tiếp theo:
+        toast.success(`Đã khóa ${selectedIds.length} người dùng.`);
+        setRowSelection({});
+        fetchData();
+    };
     return (
         <div className="w-full space-y-4 pt-6">
             <Tabs defaultValue="all" className="w-full flex-col justify-start gap-6" onValueChange={handleTabChange}>
                 {/* Toolbar Header */}
                 <div className="flex flex-col items-start justify-between gap-4 w-full ">
-                    <TabsList
-                        className="**:data-[slot=badge]:bg-muted-foreground/30 **:data-[slot=badge]:size-5 **:data-[slot=badge]:rounded-full **:data-[slot=badge]:px-1 h-fit w-full overflow-auto justify-start">
-                        <TabsTrigger value="all">Tất cả <Badge variant="secondary"
-                                                               className="ml-2">{data.length}</Badge></TabsTrigger>
-                        <TabsTrigger value="active">
-                            Hoạt động <Badge variant="secondary"
-                                             className="ml-2">{data.filter(u => u.status === 'ACTIVE').length}</Badge>
-                        </TabsTrigger>
-                        <TabsTrigger value="pending">
-                            Chờ xác nhận <Badge variant="secondary"
-                                                className="ml-2">{data.filter(u => u.status === 'PENDING').length}</Badge>
-                        </TabsTrigger>
-                        <TabsTrigger value="blocked">
-                            Bị khóa <Badge variant="secondary"
-                                           className="ml-2">{data.filter(u => u.status === 'BLOCKED').length}</Badge>
-                        </TabsTrigger>
-                        <TabsTrigger value="not_authorized">
-                            Chờ cấp quyền <Badge variant="secondary"
-                                                 className="ml-2">{data.filter(u => u.status === 'NOT_AUTHORIZED').length}</Badge>
-                        </TabsTrigger>
-                        <TabsTrigger value="not_solved">
-                            Chờ xử lý <Badge variant="secondary"
-                                             className="ml-2">{data.filter(u => u.status === 'NOT_SOLVED').length}</Badge>
-                        </TabsTrigger>
+                    <TabsList className="h-fit w-full overflow-auto justify-start">
+                        {/* Lưu ý: Badge đếm số lượng (data.length) bị xóa hoặc cần API riêng để lấy stats */}
+                        <TabsTrigger value="all">Tất cả</TabsTrigger>
+                        <TabsTrigger value="active">Hoạt động</TabsTrigger>
+                        <TabsTrigger value="pending">Chờ xác nhận</TabsTrigger>
+                        <TabsTrigger value="blocked">Bị khóa</TabsTrigger>
+                        <TabsTrigger value="not_authorized">Chờ cấp quyền</TabsTrigger>
+                        <TabsTrigger value="not_solved">Chờ xử lý</TabsTrigger>
                     </TabsList>
+
                     <div className="flex items-center gap-2 w-full ">
                         <Input
-                            placeholder="Tìm người dùng..."
-                            value={(table.getColumn("displayName")?.getFilterValue() as string) ?? ""}
-                            onChange={(event) => table.getColumn("displayName")?.setFilterValue(event.target.value)}
+                            placeholder="Tìm tên hiển thị..."
+                            value={searchTerm}
+                            onChange={handleSearchChange}
                             className="h-8 w-full"
                         />
+                        {Object.keys(rowSelection).length > 0 && (
+                            <ConfirmDialog
+                                title="Xác nhận khóa tài khoản"
+                                description={
+                                    <span>Bạn có chắc chắn muốn khóa <b>{Object.keys(rowSelection).length}</b> tài khoản đang chọn?<br/>Hành động này sẽ ngăn họ truy cập hệ thống.</span>
+                                }
+                                onConfirm={handleBulkBlock} // Truyền hàm async vào
+                            >
+                                <Button variant="destructive" size="sm"
+                                        className="whitespace-nowrap animate-in fade-in zoom-in duration-200">
+                                    <LockKeyhole className="mr-2 size-4"/>
+                                    Khóa ({Object.keys(rowSelection).length})
+                                </Button>
+                            </ConfirmDialog>
+                        )}
                         <DropdownMenu>
                             <DropdownMenuTrigger asChild>
                                 <Button variant="outline" size="sm">
-                                    <Columns2 className="mr-2 size-4"/>
-                                    Xem
+                                    <Columns2 className="mr-2 size-4"/> Xem
                                 </Button>
                             </DropdownMenuTrigger>
                             <DropdownMenuContent align="end" className="w-56">
@@ -666,19 +635,19 @@ export default function UserTable() {
                                         checked={column.getIsVisible()}
                                         onCheckedChange={(value) => column.toggleVisibility(!!value)}
                                     >
-                                        {(column.columnDef.meta as any).label}
+                                        {(column.columnDef.meta as any)?.label || column.id}
                                     </DropdownMenuCheckboxItem>
                                 ))}
                             </DropdownMenuContent>
                         </DropdownMenu>
-                        <CreateUserDrawer onSuccess={fetchData} />
+                        <CreateUserDrawer onSuccess={() => fetchData()}/>
                     </div>
                 </div>
 
-                {/* Main Table Area - Chỉ cần 1 bảng duy nhất, dữ liệu thay đổi theo bộ lọc */}
+                {/* Main Table Area */}
                 <div className="rounded-md border bg-card">
                     <Table>
-                        {!(isLoading || !table.getRowModel().rows?.length) && <TableHeader>
+                        <TableHeader>
                             {table.getHeaderGroups().map((headerGroup) => (
                                 <TableRow key={headerGroup.id}>
                                     {headerGroup.headers.map((header) => (
@@ -688,12 +657,12 @@ export default function UserTable() {
                                     ))}
                                 </TableRow>
                             ))}
-                        </TableHeader>}
+                        </TableHeader>
                         <TableBody>
                             {isLoading ? (
                                 <TableRow>
                                     <TableCell colSpan={columns.length} className="h-24 text-center">
-                                        <Loader className="animate-spin inline-block mr-2"/> Tải dữ liệu...
+                                        <Loader className="animate-spin inline-block mr-2"/> Đang tải dữ liệu...
                                     </TableCell>
                                 </TableRow>
                             ) : table.getRowModel().rows?.length ? (
@@ -709,7 +678,7 @@ export default function UserTable() {
                             ) : (
                                 <TableRow>
                                     <TableCell colSpan={columns.length} className="h-24 text-center">
-                                        Không có dữ liệu.
+                                        Không tìm thấy dữ liệu.
                                     </TableCell>
                                 </TableRow>
                             )}
@@ -720,18 +689,20 @@ export default function UserTable() {
                 {/* Footer Pagination */}
                 <div className="flex items-center justify-between px-2">
                     <div className="text-sm text-muted-foreground hidden sm:block">
-                        Đã
-                        chọn {table.getFilteredSelectedRowModel().rows.length} trên {table.getFilteredRowModel().rows.length} hàng.
+                        {/* Logic hiển thị row selected chỉ đúng trên trang hiện tại với server-side */}
+                        Đã chọn {Object.keys(rowSelection).length} hàng.
                     </div>
                     <div className="flex items-center space-x-6 lg:space-x-8 ml-auto">
                         <div className="flex items-center space-x-2">
                             <p className="text-sm font-medium hidden sm:block">Hàng/ trang</p>
                             <Select
-                                value={`${table.getState().pagination.pageSize}`}
-                                onValueChange={(value) => table.setPageSize(Number(value))}
+                                value={`${pagination.pageSize}`}
+                                onValueChange={(value) => {
+                                    table.setPageSize(Number(value));
+                                }}
                             >
                                 <SelectTrigger className="h-8 w-[70px]">
-                                    <SelectValue placeholder={table.getState().pagination.pageSize}/>
+                                    <SelectValue placeholder={pagination.pageSize}/>
                                 </SelectTrigger>
                                 <SelectContent side="top">
                                     {[10, 20, 30, 40, 50].map((pageSize) => (

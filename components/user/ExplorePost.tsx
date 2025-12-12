@@ -2,13 +2,14 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react'
 import {Page, PageRequest} from "@/types/dtos/base";
 import {UserRelationResponse} from "@/types/dtos/user";
-import {getNewFeed, getPostById, getPostsByUserId} from "@/services/postService";
+import {getExplore, getNewFeed, getPostById, getPostsByUserId} from "@/services/postService";
 import {toast} from "sonner";
 import {PostResponse} from "@/types/dtos/post";
 import {PostCard, PostCardSkeleton} from "@/components/user/Post";
+import Link from 'next/link';
 import {LoaderCircle} from "lucide-react";
 
-const PostListById = ({userId}: { userId: string }) => {
+const ExplorePost = () => {
     const [currentPage, setCurrentPage] = useState(0);
     const [hasMore, setHasMore] = useState(true);
     const [isLoading, setIsLoading] = useState(false);
@@ -34,13 +35,12 @@ const PostListById = ({userId}: { userId: string }) => {
     }, [isLoading, hasMore]);
     const FetchData = async () => {
         try {
-            const page: PageRequest = {
+            const page: PageRequest ={
                 page: currentPage,
                 size: 10,
-                sort: ["createdAt,desc"]
             }
             setIsLoading(true);
-            const res = await getPostsByUserId(userId, page);
+            const res = await getExplore(page);
             setCurrentPage(res.page)
             setHasMore(res.numberOfElements == res.size)
             setPosts(posts.concat(res.content ?? []));
@@ -81,4 +81,4 @@ const PostListById = ({userId}: { userId: string }) => {
         </div>
     )
 }
-export default PostListById
+export default ExplorePost

@@ -12,13 +12,24 @@ import {toast} from "sonner";
 import {USER_KEY} from "@/constants";
 import {FriendshipStatus} from "@/constants/enum";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {postConversation} from "@/services/messageService";
+import {useRouter} from "next/navigation";
 
 const UserDetail = ({userId}: { userId: string }) => {
-
+    const router = useRouter();
     const [user, setUser] = useState<UserRelationResponse | null>(null);
     const [isOwner, setIsOwner] = useState<boolean>(false);
     const [isBlocked, setIsBlocked] = useState<boolean>()
     const [isLoading, setIsLoading] = useState(true);
+
+    const createMessage = async () => {
+        try {
+            const res = await postConversation({memberIds: [userId], isGroup: false});
+            router.push(`/message/${res.id}`);
+        } catch(error) {
+            toast.error((error as Error).message ?? "Không thể tạo cuộc trò chuyện");
+        }
+    }
     useEffect(() => {
         const fetchUserData = async () => {
             try {
@@ -77,11 +88,9 @@ const UserDetail = ({userId}: { userId: string }) => {
                 {!isBlocked && (<>
                         <FriendButton user={user}/>
                         <FollowButton user={user}/>
-                        <Button className={"grow"} asChild>
-                            <Link href={"/message"}>
+                        <Button className={"grow"} onClick={createMessage}>
                                 Nhắn tin
                                 <MessageCircle/>
-                            </Link>
                         </Button>
                     </>)}
                 <BlockButton user={user} onSuccess={() => {

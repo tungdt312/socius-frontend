@@ -1,6 +1,6 @@
 import {ConversationResponse, ConversationResquest} from "@/types/dtos/message";
 import {apiFetch, processResponse} from "@/services/baseService";
-import {BaseResponse, Page} from "@/types/dtos/base";
+import {BaseResponse, Page, PageRequest, toQueryString} from "@/types/dtos/base";
 import {NotificationResponse} from "@/types/dtos/notification";
 
 export async function readNotification(id:string): Promise<BaseResponse> {
@@ -26,9 +26,9 @@ export async function readAllNotification(): Promise<BaseResponse> {
     return processResponse(res)
 }
 
-export async function getAllNotification(): Promise<Page<NotificationResponse>> {
+export async function getAllNotification(page?: PageRequest): Promise<Page<NotificationResponse>> {
 
-    const res = await apiFetch(`/notifications`, true, {
+    const res = await apiFetch(`/notifications?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",

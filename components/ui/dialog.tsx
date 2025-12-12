@@ -5,6 +5,7 @@ import * as DialogPrimitive from "@radix-ui/react-dialog"
 import { XIcon } from "lucide-react"
 
 import { cn } from "@/lib/utils"
+import {ThemeProvider} from "@/components/ThemeProvider";
 
 function Dialog({
   ...props
@@ -57,6 +58,7 @@ function DialogContent({
   return (
     <DialogPortal data-slot="dialog-portal">
       <DialogOverlay />
+      <ThemeProvider>
       <DialogPrimitive.Content
         data-slot="dialog-content"
         className={cn(
@@ -76,6 +78,7 @@ function DialogContent({
           </DialogPrimitive.Close>
         )}
       </DialogPrimitive.Content>
+      </ThemeProvider>
     </DialogPortal>
   )
 }

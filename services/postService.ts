@@ -1,17 +1,28 @@
 import {EditPostRequest, PostRequest, PostResponse, SharePostRequest} from "@/types/dtos/post";
-import {Base, BaseResponse, Page} from "@/types/dtos/base";
+import {Base, BaseResponse, Page, PageRequest, toQueryString} from "@/types/dtos/base";
 import {apiFetch, processResponse} from "@/services/baseService";
 
-export async function getPostsByUserId(userId: string): Promise<Page<PostResponse>> {
-    const res = await apiFetch(`/posts/user/${userId}`, true, {
+export async function getPostsByUserId(userId: string, page?: PageRequest): Page<PostResponse>{
+    const res = await apiFetch(`/posts/user/${userId}?${toQueryString(page)}`, true, {
         method: "GET",
     })
     if (!res.ok) throw new Error(res.statusText)
     return processResponse(res)
 }
 
-export async function getNewFeed(): Promise<Page<PostResponse>> {
-    const res = await apiFetch(`/posts/feed`, true, {
+export async function getNewFeed(page?: PageRequest): Page<PostResponse> {
+    const res = await apiFetch(`/posts/feed?${toQueryString(page)}`, true, {
+        method: "GET",
+        headers: {
+            "accept": "application/json",
+        },
+    })
+    if (!res.ok) throw new Error(res.statusText)
+    return processResponse(res)
+}
+
+export async function getExplore(page?: PageRequest): Page<PostResponse> {
+    const res = await apiFetch(`/posts/explore?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",

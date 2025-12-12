@@ -6,12 +6,13 @@ import {toast} from "sonner";
 import {UserRelationResponse, UserResponse} from "@/types/dtos/user";
 import {FriendActionTypes, FriendshipStatus} from '@/constants/enum';
 import {ChevronDown, EllipsisVertical} from "lucide-react";
-import {BASE} from "@/lib/utils";
 import {useRouter} from "next/navigation";
 import {USER_KEY} from "@/constants";
 import {deleteFriendAction, postFriendAction} from "@/services/friendService";
 import {follow, unfollow} from "@/services/userService";
 import {ConfirmDialog} from "@/components/ui/confirm-dialog";
+import ReportForm from "@/components/moderator/ReportForm";
+import {ReportableType} from "@/types/dtos/report";
 
 export const FollowButton = ({user}: { user: UserRelationResponse }) => {
     const [isFollowing, setIsFollowing] = useState(user.following);
@@ -206,18 +207,19 @@ export const BlockButton = ({user, onSuccess}: { user: UserRelationResponse, onS
             <PopoverContent className="w-fit p-0 flex-col">
                 <ConfirmDialog title={"Chặn người dùng"}
                                description={"Người dùng này sẽ không thể tìm thấy hay nhắn tin cho bạn. Chúng tôi sẽ không thông báo cho người dùng biết về việc bị chặn."}
-                               onConfirm={async ()=>{
-                                  await HandleBlock();
-                                  setIsOpen(false)
+                               onConfirm={async () => {
+                                   await HandleBlock();
+                                   setIsOpen(false)
                                }}>
-                <Button className={"w-full !text-destructive"} variant={"ghost"} >
-                    Chặn người dùng
-                </Button>
-                    </ConfirmDialog>
-                <Button className={"w-full !text-destructive"} variant={"ghost"} onClick={async () => {
-                }}>
-                    Báo cáo người dùng
-                </Button>
+                    <Button className={"w-full !text-destructive"} variant={"ghost"}>
+                        Chặn người dùng
+                    </Button>
+                </ConfirmDialog>
+                <ReportForm targetType={ReportableType.USER} targetId={user.id}>
+                    <Button className={"w-full !text-destructive"} variant={"ghost"} >
+                        Báo cáo người dùng
+                    </Button>
+                </ReportForm>
             </PopoverContent>
         </Popover>
     )

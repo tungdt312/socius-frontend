@@ -166,8 +166,7 @@ export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
                 <ItemContent className="flex-row items-center justify-between flex-1">
                     <ItemTitle className={"flex-1 overflow-ellipsis line-clamp-1"}>{user.displayName}
                     </ItemTitle>
-                    {type.length === 0 ? (
-                            <Dot className={user.isActive ? "text-success size-10" : "text-muted-foreground  size-10"} />) :
+                    {type.length !== 0 &&
                         <ItemActions>
                             <Button
                                 size={"sm"}

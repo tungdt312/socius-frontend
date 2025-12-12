@@ -4,7 +4,6 @@ export interface UserResponse {
     id: string;
     displayName: string;
     avatarUrl: string;
-    isActive: boolean;
     bio: string;
     favorites: string;
     dateOfBirth: string;

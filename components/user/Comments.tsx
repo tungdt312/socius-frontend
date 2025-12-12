@@ -1,11 +1,11 @@
 "use client";
 
-import React, {useRef, useState} from 'react';
+import React, {useCallback, useEffect, useRef, useState} from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import {CommentResponse, EditCommentRequest} from '@/types/dtos/post'; // Sửa đường dẫn nếu cần
 import {Button} from "@/components/ui/button";
-import {Ellipsis, EllipsisVertical, FileImage, Film, Heart, LoaderCircle, UserRound, X} from 'lucide-react';
+import {Ellipsis, FileImage, Film, Heart, LoaderCircle, UserRound, X} from 'lucide-react';
 import {formatISODate} from "@/lib/utils";
 import {deleteComment, editComment, getCommentReplies} from "@/services/commentService";
 import {toast} from "sonner";
@@ -16,24 +16,29 @@ import {Textarea} from "@/components/ui/textarea";
 import {MediaPreview} from "@/components/user/PostForm";
 import {Input} from "@/components/ui/input";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
-import {ConfirmDialog} from "@/components/ui/confirm-dialog";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {useCurrentUserId} from "@/components/userContext";
+import ReportForm from "@/components/moderator/ReportForm";
+import {ReportableType} from "@/types/dtos/report";
+import { PageRequest } from '@/types/dtos/base';
+import {index} from "d3-array";
 
 interface CommentItemProps {
     comment: CommentResponse;
+    newReply?: CommentResponse
     onReplyClick?: (comment: CommentResponse) => void;
 }
 
-export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
+export const CommentItem = ({comment, onReplyClick, newReply}: CommentItemProps) => {
     console.log(comment)
     const currentUser = useCurrentUserId()
     const [isLiked, setIsLiked] = useState((comment.reactSummary?.currentUserReact || "") == reactType.LOVE);
     const [likeCount, setLikeCount] = useState(comment.reactCount);
 
     const [showReplies, setShowReplies] = useState(false);
+    const [currentPage, setCurrentPage] = useState(0);
     const [replies, setReplies] = useState<CommentResponse[]>([]);
-    const [page, setPage] = useState(0);
+    const [hasMore, setHasMore] = useState(true);
     const [isLoadingReplies, setIsLoadingReplies] = useState(false);
 
     const [currentComment, setCurrentComment] = useState(comment);
@@ -69,26 +74,51 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
         }
     };
 
-    const handleLoadReplies = async () => {
-        if (showReplies) {
-            setShowReplies(false);
-            setReplies([]);
-            return;
-        }
+    const observer = useRef<IntersectionObserver | null>(null);
 
-        setIsLoadingReplies(true);
+    const lastUserElementRef = useCallback((node: HTMLDivElement) => {
+        if (isLoadingReplies) return; // Đang load thì không trigger
+
+        if (observer.current) observer.current.disconnect();
+
+        observer.current = new IntersectionObserver(entries => {
+            if (entries[0].isIntersecting && hasMore) {
+                // Khi thấy phần tử cuối cùng -> Tăng page lên
+                setCurrentPage(prevPage => prevPage + 1);
+            }
+        });
+
+        if (node) observer.current.observe(node);
+    }, [isLoadingReplies, hasMore]);
+    const handleLoadReplies = async () => {
         try {
-            const data = await getCommentReplies(comment.id);
-            setPage(page + 1);
-            setReplies(replies.concat(data.content));
+            const page: PageRequest = {
+                page: currentPage,
+                size: 10,
+                sort: ["createdAt,desc"]
+            }
+            setIsLoadingReplies(true);
+            const res = await getCommentReplies(comment.id, page);
+            setCurrentPage(res.page)
+            setHasMore(res.numberOfElements == res.size)
+            setReplies(replies.concat(res.content ?? []));
             setShowReplies(true);
         } catch (error) {
-            toast.error("Lỗi khi tải replies:" + (error as Error).message);
+            toast.error((error as Error).message ?? "Không thể tải bình luận")
         } finally {
             setIsLoadingReplies(false);
         }
-    };
+    }
+    useEffect(() => {
+        if (newReply && newReply.parentId === comment.id) {
+            // Nếu reply này thuộc về comment này
+            setReplies(prev => [newReply, ...prev]); // Thêm vào đầu danh sách replies
+            setShowReplies(true); // Tự động mở danh sách trả lời
 
+            // Tùy chọn: Cập nhật childrenCount hiển thị (nếu cần visual ngay lập tức)
+            // setCurrentComment(prev => ({...prev, childrenCount: prev.childrenCount + 1}));
+        }
+    }, [newReply, comment.id]);
     const handleDelComment = async () => {
         try {
             const res = await deleteComment(comment.id)
@@ -101,6 +131,7 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
             setIsMoreOpen(false);
         }
     };
+
     return (
         <div className={`flex items-start gap-3 p-2 w-full ${isDeleted? "hidden":""}`}>
             <Link href={`/user/${currentComment.authorId}`}>
@@ -181,10 +212,11 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
                                 <Button onClick={handleDelComment} variant={"ghost"} className={"!text-destructive"}>
                                     Xóa bình luận
                                 </Button>
-                                <Button className={ "!text-destructive"} variant={"ghost"} onClick={async () => {
-                                }}>
+                                <ReportForm targetType={ReportableType.COMMENT} targetId={comment.id}>
+                                    <Button className={"!text-destructive"} variant={"ghost"}>
                                     Báo cáo bình luận
-                                </Button>
+                                    </Button>
+                                </ReportForm>
                             </PopoverContent>
                         </Popover>
 
@@ -207,13 +239,27 @@ export const CommentItem = ({comment, onReplyClick}: CommentItemProps) => {
                 {showReplies && (
                     <div className="mt-2 space-y-2">
                         {isLoadingReplies && <div>Đang tải...</div>}
-                        {replies.map(reply => (
-                            <CommentItem
-                                key={reply.id}
-                                comment={reply}
-                                onReplyClick={() => onReplyClick?.(reply)}
-                            />
-                        ))}
+                        {replies.map((reply, index) => {
+                            const handleReplyClick = (cmt: CommentResponse) => {
+                                onReplyClick?.(reply);
+                            };
+                            if (replies.length == index +1 ) {
+                                return <div ref={lastUserElementRef} key={reply.id} className="w-full">
+                                    <CommentItem
+                                        comment={reply}
+                                        onReplyClick={handleReplyClick}
+                                        newReply={newReply}
+                                    />
+                                </div>
+                            }
+                            return <CommentItem
+                                    key={reply.id}
+                                    comment={reply}
+                                    onReplyClick={handleReplyClick}
+                                    newReply={newReply}
+                                />
+                            }
+                        )}
                     </div>
                 )}
             </div>

@@ -9,7 +9,7 @@ import {ACCESS_TOKEN_KEY, ACTIVE_ROLE_KEY, REFRESH_TOKEN_KEY, USER_KEY, USER_ROL
 import {useRouter} from "next/navigation";
 
 export const UserRoleButton = () => {
-    const { activeRole, switchRole, availableRoles } = useRole();
+    const {activeRole, switchRole, availableRoles} = useRole();
     const user = useCurrentUser();
     //if (availableRoles.length <= 1) return null; // Nếu chỉ có 1 role thì ẩn đi
     const router = useRouter();
@@ -19,7 +19,7 @@ export const UserRoleButton = () => {
                 <Button variant="ghost" className="w-fit lg:w-full h-fit flex px-2 py-1 ">
                     <Avatar className={"size-8"}>
                         <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
-                        <AvatarFallback><UserRound  size={"80%"}/></AvatarFallback>
+                        <AvatarFallback><UserRound size={"80%"}/></AvatarFallback>
                     </Avatar>
                     <p className={"hidden lg:block line-clamp-1 overflow-ellipsis flex-1"}> {user.displayName} </p>
                     {availableRoles.length > 1 && <Repeat className={"hidden lg:block"} size={16}/>}
@@ -30,7 +30,17 @@ export const UserRoleButton = () => {
                 {availableRoles.map((role) => (
                     <Button
                         key={role}
-                        onClick={() => switchRole(role)}
+                        onClick={() => {
+                            console.log(role)
+                            if (role !== activeRole) {
+                                if (role === 'ADMIN') router.push('/admin'); // Sửa đường dẫn cho đúng thực tế
+                                else if (role === 'USER') router.push('/');
+                                else if (role === 'MODERATOR') router.push('/moderator');
+                                else router.push('/sign-in')
+                            }
+                            switchRole(role)
+
+                        }}
                         className="w-full"
                         variant="ghost"
                     >
@@ -47,7 +57,8 @@ export const UserRoleButton = () => {
                         localStorage.removeItem(REFRESH_TOKEN_KEY);
                         localStorage.removeItem(USER_ROLE_KEY);
                         localStorage.removeItem(ACTIVE_ROLE_KEY);
-                        router.push("/sign-in")}}
+                        router.push("/sign-in")
+                    }}
                     className="w-full text-destructive"
                     variant="ghost"
                 >

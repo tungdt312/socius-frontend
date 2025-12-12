@@ -31,18 +31,40 @@ export const useCurrentRoles = () => {
     useEffect(() => {
         // Chỉ chạy ở phía Client
         if (typeof window !== "undefined") {
-            const data = localStorage.getItem(USER_ROLE_KEY);
-            console.log("LocalStorage Data:", data); // Debug
+            try {
+                const data = localStorage.getItem(USER_ROLE_KEY);
+                console.log("Raw LocalStorage Data:", data);
 
-            if (data) {
-                try {
-                    setRoles(JSON.parse(data));
-                } catch (e) {
-                    console.error("Lỗi parse roles:", e);
+                // Kiểm tra kỹ: data phải tồn tại VÀ không được là chuỗi "undefined" hoặc "null"
+                if (data && data !== "undefined" && data !== "null") {
+                    const parsedRoles = JSON.parse(data);
+
+                    // Kiểm tra thêm: kết quả parse phải là mảng
+                    if (Array.isArray(parsedRoles)) {
+                        setRoles(parsedRoles);
+                    } else {
+                        console.warn("Dữ liệu role không phải là mảng, reset về rỗng.");
+                        setRoles([]);
+                    }
+                } else {
+                    // Nếu dữ liệu là null, "undefined", hoặc rỗng -> coi như chưa có role
+                    console.log("Không tìm thấy role hợp lệ, reset.");
                     setRoles([]);
+
+                    // (Tùy chọn) Xóa dữ liệu rác nếu nó là "undefined"
+                    if (data === "undefined" || data === "null") {
+                        localStorage.removeItem(USER_ROLE_KEY);
+                    }
                 }
+            } catch (e) {
+                console.error("Lỗi khi đọc roles:", e);
+                // Nếu lỗi parse, xóa luôn key hỏng để lần sau không lỗi nữa
+                localStorage.removeItem(USER_ROLE_KEY);
+                setRoles([]);
+            } finally {
+                // QUAN TRỌNG: Luôn tắt loading dù thành công hay thất bại
+                setIsLoading(false);
             }
-            setIsLoading(false); // Đã load xong (dù có data hay không)
         }
     }, []); // <--- QUAN TRỌNG: Thêm mảng rỗng để chỉ chạy 1 lần
 

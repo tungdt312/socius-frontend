@@ -19,7 +19,7 @@ import {Separator} from "@/components/ui/separator";
 interface ConfirmDialogProps {
     children: React.ReactNode;
     title: string;
-    description: string;
+    description: React.ReactNode;
     onConfirm: () => Promise<void>;
 }
 
@@ -37,11 +37,12 @@ export const ConfirmDialog = ({
         setIsLoading(true);
         try {
             await onConfirm();
+            setIsOpen(false);
         } catch (error) {
             console.error("Hành động trong ConfirmDialog thất bại:", error);
         } finally {
             setIsLoading(false);
-            setIsOpen(false);
+
         }
     };
 

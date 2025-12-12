@@ -1,21 +1,21 @@
 import {UserRelationResponse} from "@/types/dtos/user";
-import {BaseResponse, Page} from "@/types/dtos/base";
+import {BaseResponse, Page, PageRequest, toQueryString} from "@/types/dtos/base";
 import {apiFetch, processResponse} from "@/services/baseService";
 import {FriendActionTypes} from "@/constants/enum";
 
 export async function getFriendsList(
     type?: string,
-    userId?: string
+    userId?: string,
+    page?: PageRequest,
 ): Promise<Page<UserRelationResponse>> {
 
     let url = "/friends";
-
+    console.log(page)
     if (type) {
-        url = `/friends/${type}`; // Sẽ thành /api/v1/friends/pending
+        url = `/friends/${type}?${toQueryString(page)}`; // Sẽ thành /api/v1/friends/pending
     } else if (userId) {
-        url = `/friends/${userId}`; // Sẽ thành /api/v1/friends/123
+        url = `/friends/${userId}?${toQueryString(page)}`; // Sẽ thành /api/v1/friends/123
     }
-
     const res = await apiFetch(url, true, {
         method: 'GET',
         headers: {

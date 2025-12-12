@@ -1,17 +1,17 @@
-import {BaseResponse, Page} from "@/types/dtos/base";
+import {BaseResponse, Page, PageRequest, toQueryString} from "@/types/dtos/base";
 import {CommentRequest, CommentResponse, EditCommentRequest, PostResponse} from "@/types/dtos/post";
 import {apiFetch, processResponse} from "@/services/baseService";
 
-export async function getPostsComments(postId: string): Promise<Page<CommentResponse>> {
-    const res = await apiFetch(`/comments/post/${postId}`, true, {
+export async function getPostsComments(postId: string, page?: PageRequest): Promise<Page<CommentResponse>> {
+    const res = await apiFetch(`/comments/post/${postId}?${toQueryString(page)}`, true, {
         method: "GET",
     } )
     if (!res.ok) throw new Error(res.statusText)
     return processResponse(res)
 }
 
-export async function getCommentReplies(commentId: string): Promise<Page<CommentResponse>> {
-    const res = await apiFetch(`/comments/${commentId}/replies`, true,{
+export async function getCommentReplies(commentId: string, page?: PageRequest): Promise<Page<CommentResponse>> {
+    const res = await apiFetch(`/comments/${commentId}/replies?${toQueryString(page)}`, true,{
         method: "GET",
         headers: {
             "accept": "application/json",
