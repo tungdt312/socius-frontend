@@ -6,7 +6,9 @@ import {
     Eye,
     CheckCircle,
     XCircle,
-    ExternalLink
+    ExternalLink,
+    Filter,
+    ChevronsUpDown, Check
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -17,14 +19,17 @@ import {
     DropdownMenuSeparator,
     DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { ReportDTO, ReportStatus, ReportableType } from "@/types/dtos/report";
-import { reviewReport } from "@/services/reportService";
+import {ReportStatus, ReportableType, ReportResponse} from "@/types/dtos/report";
+import {processReport} from "@/services/reportService";
 import { toast } from "sonner";// Component bạn đã tạo
 import Link from "next/link";
 import {ConfirmDialog} from "@/components/ui/confirm-dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import {Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList} from "cmdk";
+import {cn} from "@/lib/utils";
 
 interface Props {
-    report: ReportDTO;
+    report: ReportResponse;
     onSuccess: () => void;
 }
 
@@ -32,8 +37,10 @@ export const ReportActionMenu = ({ report, onSuccess }: Props) => {
     // Helper tạo link đến nội dung
     const getTargetLink = () => {
         switch (report.targetType) {
-            case ReportableType.USER: return `/user/${report.targetId}`;
-            case ReportableType.POST: return `/post/${report.targetId}`;
+            case ReportableType.USER: return `/moderator/user/${report.targetId}`;
+            case ReportableType.POST: return `/moderator/post/${report.targetId}`;
+            case ReportableType.COMMENT: return `/moderator/comment/${report.targetId}`;
+            case ReportableType.MESSAGE: return `/moderator/message/${report.targetId}`;
             // Thêm các case khác nếu cần
             default: return "#";
         }
@@ -41,7 +48,7 @@ export const ReportActionMenu = ({ report, onSuccess }: Props) => {
 
     // Hàm gọi API xử lý
     const handleReview = async (status: ReportStatus) => {
-        await reviewReport(report.id, {
+        await processReport(report.id, {
             status: status,
             moderatorNotes: status === ReportStatus.APPROVED
                 ? "Đã xác nhận vi phạm qua Action Menu"
@@ -63,7 +70,7 @@ export const ReportActionMenu = ({ report, onSuccess }: Props) => {
                 <DropdownMenuLabel>Hành động</DropdownMenuLabel>
 
                 {/* 1. Xem nội dung (Mở tab mới) */}
-                <Link href={getTargetLink()} target="_blank" passHref>
+                <Link href={`/moderator/reports/${report.id}`} target="_blank" passHref>
                     <DropdownMenuItem className="cursor-pointer">
                         <ExternalLink className="mr-2 h-4 w-4" /> Xem nội dung gốc
                     </DropdownMenuItem>
@@ -108,3 +115,93 @@ export const ReportActionMenu = ({ report, onSuccess }: Props) => {
         </DropdownMenu>
     );
 };
+
+interface ReportStatusFilterProps {
+    value?: ReportStatus | null; // Giá trị hiện tại (null = tất cả)
+    onChange: (status: ReportStatus | null) => void; // Hàm callback khi chọn
+}
+
+// Map hiển thị label tiếng Việt cho đẹp
+const statusOptions = [
+    { value: ReportStatus.PENDING, label: "Chờ xử lý" },
+    { value: ReportStatus.APPROVED, label: "Vi phạm" },
+    { value: ReportStatus.REJECTED, label: "Đã từ chối" },
+];
+
+export function ReportStatusFilter({ value, onChange }: ReportStatusFilterProps) {
+    const [open, setOpen] = useState(false);
+
+    return (
+        <DropdownMenu open={open} onOpenChange={setOpen}>
+            <DropdownMenuTrigger asChild>
+                <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={open}
+                    className="w-[200px] justify-between"
+                >
+                    {/* Icon Filter cho trực quan */}
+                    <div className="flex items-center gap-2">
+                        <Filter className="h-4 w-4 opacity-50" />
+                        {value
+                            ? statusOptions.find((framework) => framework.value === value)?.label
+                            : "Tất cả trạng thái"}
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-[200px] p-0">
+                <Command>
+                    {/* Nếu list ít thì không cần Input search, có thể bỏ dòng dưới */}
+                    {/*<CommandInput placeholder="Tìm trạng thái..." />*/}
+                    <CommandList>
+                        <CommandEmpty>Không tìm thấy.</CommandEmpty>
+                        <CommandGroup>
+                            {/* Option: Tất cả */}
+                            <CommandItem
+                                value="all"
+                                onSelect={() => {
+                                    onChange(null); // Null đại diện cho không lọc (Tất cả)
+                                    setOpen(false);
+                                }}
+                                className={"flex items-center gap-2 px-2 py-1 hover:bg-muted cursor-pointer rounded-lg"}
+                            >
+
+                                Tất cả
+                                <Check
+                                className={cn(
+                                    "mr-2 h-4 w-4",
+                                    !value ? "opacity-100" : "opacity-0"
+                                )}
+                            />
+                            </CommandItem>
+
+                            {/* Các status từ Enum */}
+                            {statusOptions.map((status) => (
+                                <CommandItem
+                                    key={status.value}
+                                    value={status.label} // Command search theo label
+                                    onSelect={() => {
+                                        // Nếu bấm vào cái đang chọn thì bỏ chọn (thành null), ngược lại set value
+                                        onChange(status.value === value ? null : status.value);
+                                        setOpen(false);
+                                    }}
+                                    className={"flex items-center gap-2 px-2 py-1 hover:bg-muted cursor-pointer rounded-lg"}
+                                >
+
+                                    {status.label}
+                                    <Check
+                                        className={cn(
+                                            "mr-2 h-4 w-4",
+                                            value === status.value ? "opacity-100" : "opacity-0"
+                                        )}
+                                    />
+                                </CommandItem>
+                            ))}
+                        </CommandGroup>
+                    </CommandList>
+                </Command>
+            </DropdownMenuContent>
+        </DropdownMenu>
+    );
+}

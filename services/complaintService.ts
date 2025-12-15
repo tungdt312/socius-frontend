@@ -1,10 +1,14 @@
-
+import {
+    ComplaintRequest,
+    ComplaintResponse,
+    ReportRequest,
+    ReportResponse,
+} from "@/types/dtos/report";
+import {apiFetch, processResponse} from "@/services/baseService";
 import {Page, PageRequest, toQueryString} from "@/types/dtos/base";
-import {apiFetch, processResponse} from "./baseService";
-import { ReportRequest, ReportResponse} from "@/types/dtos/report";
 
-export async function report(req: ReportRequest): Promise<ReportResponse> {
-    const res = await apiFetch("/reports", true, {
+export async function complaint(req: ComplaintRequest): Promise<ComplaintResponse> {
+    const res = await apiFetch("/complaints", true, {
         method: "POST",
         headers: {
             "accept": "application/json",
@@ -16,9 +20,8 @@ export async function report(req: ReportRequest): Promise<ReportResponse> {
     return processResponse(res);
 }
 
-
-export async function getReport( page?: PageRequest): Promise<Page<ReportResponse>>{
-    const res = await apiFetch(`/reports?${toQueryString(page)} `, true, {
+export async function getComplaints( page?: PageRequest): Promise<Page<ComplaintResponse>>{
+    const res = await apiFetch(`/complaints?${toQueryString(page)} `, true, {
         method: "GET",
         headers: {
             "accept": "application/json",
@@ -28,8 +31,8 @@ export async function getReport( page?: PageRequest): Promise<Page<ReportRespons
     return processResponse(res);
 }
 
-export async function getReportById( id: string): Promise<ReportResponse>{
-    const res = await apiFetch(`/reports/${id} `, true, {
+export async function getComplaintById( id: string): Promise<ComplaintResponse>{
+    const res = await apiFetch(`/complaints/${id} `, true, {
         method: "GET",
         headers: {
             "accept": "application/json",

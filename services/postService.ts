@@ -2,7 +2,7 @@ import {EditPostRequest, PostRequest, PostResponse, SharePostRequest} from "@/ty
 import {Base, BaseResponse, Page, PageRequest, toQueryString} from "@/types/dtos/base";
 import {apiFetch, processResponse} from "@/services/baseService";
 
-export async function getPostsByUserId(userId: string, page?: PageRequest): Page<PostResponse>{
+export async function getPostsByUserId(userId: string, page?: PageRequest): Promise<Page<PostResponse>>{
     const res = await apiFetch(`/posts/user/${userId}?${toQueryString(page)}`, true, {
         method: "GET",
     })
@@ -10,7 +10,7 @@ export async function getPostsByUserId(userId: string, page?: PageRequest): Page
     return processResponse(res)
 }
 
-export async function getNewFeed(page?: PageRequest): Page<PostResponse> {
+export async function getNewFeed(page?: PageRequest): Promise<Page<PostResponse>> {
     const res = await apiFetch(`/posts/feed?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
@@ -21,7 +21,7 @@ export async function getNewFeed(page?: PageRequest): Page<PostResponse> {
     return processResponse(res)
 }
 
-export async function getExplore(page?: PageRequest): Page<PostResponse> {
+export async function getExplore(page?: PageRequest): Promise<Page<PostResponse>> {
     const res = await apiFetch(`/posts/explore?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {

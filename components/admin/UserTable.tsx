@@ -71,6 +71,7 @@ import {CreateUserDrawer} from "@/components/admin/CreateUserDrawer";
 import {useEffect, useMemo, useState} from "react";
 import {useDebounce} from "@/hooks/use-rebounce";
 import {ConfirmDialog} from "@/components/ui/confirm-dialog";
+import {blockUser, unblockUser} from "@/services/moderatorService";
 
 const AVAILABLE_ROLES = [
     {value: "ADMIN", label: "Quản trị viên"},
@@ -212,11 +213,26 @@ function UserDrawer({user, onSuccess}: {
 
             setIsLoading(true);
             // Giả lập gọi API xóa
-            const res = await deleteUser(user.id)
+            const res = await blockUser(user.id, "Tài khoản đáng ngờ")
             console.log("Deleting user:", user.id);
             onSuccess?.();
         } catch (error) {
             toast.error((error as Error).message ?? "Không thể khoá người dùng");
+        } finally {
+            setIsLoading(false);
+        }
+        // Cần thêm logic đóng drawer và reload bảng ở đây
+    };
+    const handleUnblock = async () => {
+        try {
+
+            setIsLoading(true);
+            // Giả lập gọi API xóa
+            const res = await unblockUser(user.id, "Tài khoản bình thường")
+            console.log("Unblock user:", user.id);
+            onSuccess?.();
+        } catch (error) {
+            toast.error((error as Error).message ?? "Không thể mở khoá người dùng");
         } finally {
             setIsLoading(false);
         }
@@ -318,37 +334,17 @@ function UserDrawer({user, onSuccess}: {
                             </DrawerClose>
 
                             {/* Alert Dialog cho nút Xóa */}
-                            <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                    <Button variant="destructive"
-                                            className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 border border-red-200 shadow-none">
-                                        <Trash className="mr-2 h-4 w-4"/>
-                                        Khóa tài khoản
-                                    </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                    <AlertDialogHeader>
-                                        <div className="flex items-center gap-2 text-destructive">
-                                            <AlertTriangle className="h-5 w-5"/>
-                                            <AlertDialogTitle>Bạn có chắc chắn muốn xóa?</AlertDialogTitle>
-                                        </div>
-                                        <AlertDialogDescription>
-                                            Hành động này không thể hoàn tác. Tài
-                                            khoản <strong>{user.username}</strong> sẽ bị xóa vĩnh viễn khỏi hệ thống và
-                                            dữ liệu liên quan có thể bị mất.
-                                        </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                        <AlertDialogCancel>Hủy bỏ</AlertDialogCancel>
-                                        <AlertDialogAction
-                                            onClick={handleDelete}
-                                            className="bg-destructive hover:bg-destructive/90"
-                                        >
-                                            Xóa vĩnh viễn
-                                        </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                </AlertDialogContent>
-                            </AlertDialog>
+                            {user.status != "BLOCKED" ? <Button onClick={handleDelete} variant="destructive"
+                                                                className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 border border-red-200 shadow-none">
+                                    <Trash className="mr-2 h-4 w-4"/>
+                                    Khóa tài khoản
+                                </Button> :
+                                <Button onClick={handleUnblock} variant="destructive"
+                                        className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 border border-red-200 shadow-none">
+                                    <Trash className="mr-2 h-4 w-4"/>
+                                    Mở khóa tài khoản
+                                </Button>
+                            }
                         </div>
                     </div>
                 </DrawerFooter>

@@ -19,6 +19,7 @@ export interface MessageResponse {
     media: PostMedia[];
 
     createdAt: string;
+    deletedAt?: string;
     isRead: boolean;
     reactions: ReactItem[];
 }

@@ -15,29 +15,36 @@ interface RoleGuardProps {
 const RoleGuard = ({ children, allowedRoles }: RoleGuardProps) => {
     const { activeRole, isLoading, switchRole, availableRoles } = useRole();
     const router = useRouter();
+    // Thêm pathname để debug hoặc re-run effect khi đổi trang (tùy chọn)
+    //const pathname = usePathname();
 
     useEffect(() => {
-        // Chỉ kiểm tra khi đã load xong dữ liệu (isLoading = false)
+        // Chỉ chạy logic khi đã load xong dữ liệu
         if (!isLoading) {
-            availableRoles.forEach(r =>{
-                console.log(r)
-                if (allowedRoles.includes(r)) {
-                    switchRole(r);
-                    return;
-                }
-            })
-            // Nếu role hiện tại KHÔNG nằm trong danh sách cho phép
-            if (!availableRoles.includes(allowedRoles[0])) {
-                console.warn(`Access Denied: Role '${activeRole}' is not authorized.`);
-                toast.error("Bạn không có quyền truy cập trang này")
-                // Logic Redirect tùy chỉnh:
-                // Cách 1: Đẩy về trang đăng nhập
+
+            // 1. Nếu Role hiện tại (activeRole) đã hợp lệ -> KHÔNG LÀM GÌ CẢ
+            // (Giữ nguyên trải nghiệm người dùng, không switch qua lại)
+            if (allowedRoles.includes(activeRole)) {
+                return;
+            }
+
+            // 2. Nếu Role hiện tại KHÔNG hợp lệ -> Tìm một role khác trong availableRoles mà hợp lệ
+            const validRole = availableRoles.find(r => allowedRoles.includes(r));
+
+            if (validRole) {
+                // Tìm thấy role hợp lệ -> Switch sang role đó (chỉ đổi state, không redirect URL vì switchRole của bạn đã bỏ router.push)
+                console.log(`Auto switching from ${activeRole} to ${validRole} for access.`);
+                switchRole(validRole);
+            } else {
+                // 3. Không tìm thấy bất kỳ role nào hợp lệ
+                console.warn(`Access Denied: User roles [${availableRoles}] do not match allowed [${allowedRoles}]`);
+                toast.error("Bạn không có quyền truy cập trang này");
                 router.push("/sign-in");
             }
         }
-    }, [isLoading,  allowedRoles, router]);
+    }, [isLoading, activeRole, availableRoles, allowedRoles, router, switchRole]);
 
-    // 1. Trạng thái đang tải: Có thể render Spinner hoặc Skeleton
+    // 1. Loading UI
     if (isLoading) {
         return (
             <div className="flex h-screen w-full items-center justify-center">
@@ -46,12 +53,12 @@ const RoleGuard = ({ children, allowedRoles }: RoleGuardProps) => {
         );
     }
 
-    // 2. Trạng thái không có quyền (Trong lúc chờ useEffect redirect, return null để không flash nội dung)
+    // 2. Chặn render tạm thời nếu role chưa khớp (để tránh nháy nội dung trước khi switchRole hoặc redirect kịp chạy)
     if (!allowedRoles.includes(activeRole)) {
         return null;
     }
 
-    // 3. Trạng thái hợp lệ: Render nội dung
+    // 3. Render nội dung
     return <>{children}</>;
 };
 

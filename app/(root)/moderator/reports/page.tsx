@@ -1,6 +1,8 @@
 import React from 'react'
-import UserTable from "@/components/admin/UserTable";
-import ReportTable from "@/components/moderator/ReportTable";
+import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
+import FlaggedPostTable from "@/components/moderator/FlaggedPostTable";
+import FlaggedCommentTable from "@/components/moderator/FlaggedCommentTable";
+import ModeratorUserTable from "@/components/moderator/ModeratorUserTable";
 
 const Page = () => {
     return (
@@ -8,7 +10,22 @@ const Page = () => {
             <div className={"flex items-center justify-start w-full h-fit bg-background px-4 py-2 ring-1 ring-border rounded-lg"}>
                 <span className={"heading5"}>Báo cáo vi phạm</span>
             </div>
-            <ReportTable/>
+            <Tabs defaultValue="user" className={"w-full"}>
+                <TabsList className={"w-full"}>
+                    <TabsTrigger value="user">Người dùng</TabsTrigger>
+                    <TabsTrigger value="post">Bài viết</TabsTrigger>
+                    <TabsTrigger value="comment">Bình luận</TabsTrigger>
+                </TabsList>
+                <TabsContent className={"gap-2"} value="post">
+                    <FlaggedPostTable/>
+                </TabsContent>
+                <TabsContent className={"gap-2"} value="user">
+                    <ModeratorUserTable/>
+                </TabsContent>
+                <TabsContent className={"gap-2"} value="comment">
+                    <FlaggedCommentTable/>
+                </TabsContent>
+            </Tabs>
         </div>
     )
 }

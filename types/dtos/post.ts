@@ -25,6 +25,7 @@ export interface PostResponse {
 
     createdAt: string;
     updatedAt: string;
+    deletedAt?: string;
     reactSummary: ReactSummary;
 }
 
@@ -74,6 +75,7 @@ export interface CommentResponse {
     childrenCount: number;
     createdAt: string;
     updatedAt: string;
+    deletedAt?: string;
     depth: number;
     reactSummary: ReactSummary;
 }

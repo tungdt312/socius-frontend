@@ -21,23 +21,6 @@ export enum ReportStatus {
     APPROVED = "APPROVED",   // Đã duyệt (Mod xác nhận vi phạm)
     REJECTED = "REJECTED"   // Đã từ chối (Mod thấy không vi phạm)
 }
-export interface ReportDTO{
-    id: string,
-    reporterTd: string,
-    reporterName: string,
-
-    targetType: ReportableType,
-    targetId: string,
-
-    reason: ReportReason,
-    customReason?: string,
-    createdAt: string,
-
-    status: ReportStatus,
-    reviewerId: string,
-    moderatorNotes: string,
-    reviewedAt: string
-}
 
 export interface ReportRequest {
     targetType: ReportableType,
@@ -46,7 +29,40 @@ export interface ReportRequest {
     customReason?: string,
 }
 
-export interface ReportReview {
+export interface ReportResponse{
+    id: string,
+    targetType: ReportableType,
+    targetId: string,
+
+    reporterId: string,
+    reporterName: string,
+    reporterAvatar: string,
+
+    reason: ReportReason,
+    customReason?: string,
+    createdAt: string,
     status: ReportStatus,
-    moderatorNotes?: string,
+}
+
+export enum ComplaintStatus {
+    PENDING = "PENDING",
+    APPROVED_RESTORE = "APPROVED_RESTORE",
+    REJECTED_KEEP = "REJECTED_KEEP",
+}
+export interface ComplaintRequest {
+    targetId: string,
+    targetType: ReportableType,
+    reason: string,
+}
+
+export interface ComplaintResponse {
+    id: string,
+    reportId: string,
+    userId: string,
+    userDisplayName: string,
+    content: string,
+    adminResponse: string,
+    status: ComplaintStatus,
+    createdAt: string,
+    updatedAt: string,
 }

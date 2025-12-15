@@ -32,7 +32,7 @@ export async function getUserAndStatusById(id:string):Promise<UserRelationRespon
     if (!res.ok) throw new Error(res.statusText);
     return processResponse(res);
 }
-export async function getFollowList(id: string, type: string, page?: PageRequest):Page<UserRelationResponse>{
+export async function getFollowList(id: string, type: string, page?: PageRequest): Promise<Page<UserRelationResponse>>{
     const res = await apiFetch(`/users/${id}/${type}?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
@@ -42,7 +42,7 @@ export async function getFollowList(id: string, type: string, page?: PageRequest
     if (!res.ok) throw new Error(res.statusText);
     return processResponse(res);
 }
-export async function getUsersList(page?: PageRequest):Page<UserRelationResponse>{
+export async function getUsersList(page?: PageRequest): Promise<Page<UserRelationResponse>>{
     console.log(page)
     console.log(toQueryString(page))
     const res = await apiFetch(`/users/search?${toQueryString(page)}`, true, {

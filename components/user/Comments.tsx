@@ -5,7 +5,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import {CommentResponse, EditCommentRequest} from '@/types/dtos/post'; // Sửa đường dẫn nếu cần
 import {Button} from "@/components/ui/button";
-import {Ellipsis, FileImage, Film, Heart, LoaderCircle, UserRound, X} from 'lucide-react';
+import {AlertTriangle, Ellipsis, FileImage, Film, Heart, LoaderCircle, Lock, UserRound, X} from 'lucide-react';
 import {formatISODate} from "@/lib/utils";
 import {deleteComment, editComment, getCommentReplies} from "@/services/commentService";
 import {toast} from "sonner";
@@ -17,11 +17,12 @@ import {MediaPreview} from "@/components/user/PostForm";
 import {Input} from "@/components/ui/input";
 import {Popover, PopoverContent, PopoverTrigger} from "@/components/ui/popover";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {useCurrentUserId} from "@/components/userContext";
+import {useCurrentUser, useCurrentUserId} from "@/components/userContext";
 import ReportForm from "@/components/moderator/ReportForm";
 import {ReportableType} from "@/types/dtos/report";
 import { PageRequest } from '@/types/dtos/base';
 import {index} from "d3-array";
+import ComplaintForm from "@/components/moderator/ComplaintForm";
 
 interface CommentItemProps {
     comment: CommentResponse;
@@ -45,6 +46,10 @@ export const CommentItem = ({comment, onReplyClick, newReply}: CommentItemProps)
     const [isEditing, setIsEditing] = useState(false);
     const [isDeleted, setIsDeleted] = useState(false);
     const [isMoreOpen, setIsMoreOpen] = useState(false);
+
+    const isDisabled = !!comment.deletedAt;
+    const {id} = useCurrentUser();
+
     const handleEditSuccess = (updatedComment: CommentResponse) => {
         setCurrentComment(updatedComment); // Cập nhật comment
         setIsEditing(false); // Tắt chế độ sửa
@@ -131,7 +136,18 @@ export const CommentItem = ({comment, onReplyClick, newReply}: CommentItemProps)
             setIsMoreOpen(false);
         }
     };
-
+    if (isDisabled) {
+        return (
+            <div className={`flex items-start gap-3 p-2 w-full ${isDeleted? "hidden":""}`}>
+                <p className="text-sm whitespace-pre-line">Bình luận đã bị vô hiệu hóa do vi phạm tiêu chuẩn cộng đồng.</p>
+                <ComplaintForm targetId={comment.id} targetType={ReportableType.POST}>
+                    <Button variant="destructive" size={"icon-sm"} className="gap-2 pointer-events-auto">
+                        <AlertTriangle className="size-4"/>
+                    </Button>
+                </ComplaintForm>
+            </div>
+        )
+    }
     return (
         <div className={`flex items-start gap-3 p-2 w-full ${isDeleted? "hidden":""}`}>
             <Link href={`/user/${currentComment.authorId}`}>

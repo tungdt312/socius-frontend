@@ -102,20 +102,13 @@ export const RoleProvider = ({ children }: { children: React.ReactNode }) => {
             console.error("Bạn không có quyền chuyển sang role này!");
 
             // Chỉ redirect về sign-in nếu thực sự không có quyền và không đang ở trang sign-in
-            // router.push("/sign-in");
+            router.push("/sign-in");
             return;
         }
 
         console.log(`Switching to ${role}`);
         setActiveRole(role);
         localStorage.setItem(ACTIVE_ROLE_KEY, role);
-
-        if (role !== activeRole) {
-            if (role === 'ADMIN') router.push('/admin'); // Sửa đường dẫn cho đúng thực tế
-            else if (role === 'USER') router.push('/');
-            else if (role === 'MODERATOR') router.push('/moderator');
-            else router.push('/sign-in')
-        }
     };
 
     return (

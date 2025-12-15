@@ -55,15 +55,7 @@ export const moderatorNavItems: NavItem[] = [
         name: "Báo cáo vi phạm",
         url: "/moderator/reports",
         icon: Flag
-    }, {
-        name: "Nội dung vi phạm",
-        url: "/moderator/contents",
-        icon: MessageSquareWarning
-    }, {
-        name: "Danh sách người dùng",
-        url: "/moderator/users",
-        icon: UsersRound
-    }
+    },
 ]
 export const adminNavItems: NavItem[] = [
     {

@@ -1,6 +1,7 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react'
 import {postAccess, reactTargetType, reactType} from "@/constants/enum";
 import {
+    AlertTriangle,
     ChevronLeft,
     ChevronRight,
     EllipsisVertical,
@@ -27,9 +28,12 @@ import PostForm, {PostEditForm} from "@/components/user/PostForm";
 import {react} from "@/services/reactService";
 import PostEllipsis from "@/components/user/PostEllipsis";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {useCurrentUserId} from "@/components/userContext";
+import {useCurrentUser, useCurrentUserId} from "@/components/userContext";
 import {PageRequest} from "@/types/dtos/base";
 import {getPostsByUserId} from "@/services/postService";
+import {complaint} from "@/services/complaintService";
+import ComplaintForm from "@/components/moderator/ComplaintForm";
+import {ReportableType} from "@/types/dtos/report";
 
 export function getAccessIcon(access: postAccess) {
     switch (access) {
@@ -135,6 +139,8 @@ export const PostCard = ({post}: { post: PostResponse }) => {
 
     const [parent, setParent] = useState<CommentResponse | undefined>(undefined);
     const [isDelete, setIsDelete] = useState(false);
+    const isDisabled = !!currentPost.deletedAt;
+    const {id} = useCurrentUser();
     if (!post) {
         return <DisablePost/>;
     }
@@ -199,129 +205,160 @@ export const PostCard = ({post}: { post: PostResponse }) => {
     };
     const handleCommentPosted = (newComment: CommentResponse) => {
         if (newComment.parentId) {
-        // TRƯỜNG HỢP TRẢ LỜI: Lưu vào state newReply để truyền xuống con
-        setNewReply(newComment);
-    } else {
-        // TRƯỜNG HỢP GỐC: Thêm vào danh sách hiện tại
-        setComments(prevComments => [newComment, ...prevComments]);
-    }
+            // TRƯỜNG HỢP TRẢ LỜI: Lưu vào state newReply để truyền xuống con
+            setNewReply(newComment);
+        } else {
+            // TRƯỜNG HỢP GỐC: Thêm vào danh sách hiện tại
+            setComments(prevComments => [newComment, ...prevComments]);
+        }
         setCommentCount(commentCount + 1);
         setParent(undefined);
     };
     const handleDeletePost = async () => {
         setIsDelete(true);
     }
-    const handlePostEdited = (updatedPost: PostResponse) => {
-        setCurrentPost(updatedPost); // Cập nhật post
-        toast.success("Đã cập nhật bài viết");
+    const handleComplaint = async () => {
+        try {
+            // const res = await complaint();
+        } catch (e) {
+            toast.error("Đã có lỗi xảy ra")
+        }
     };
 
     if (!currentPost) {
         return <PostCardSkeleton/>;
     }
     return (
-        <Card className={`w-full max-w-xl mx-auto  h-fit overflow-hidden ${(isDelete ? "hidden" : "")}`}>
-            <CardHeader className="flex flex-row items-center justify-between px-4">
-                <div className="flex items-center gap-3">
-                    <Link href={`/user/${currentPost.authorId}`}>
-                        <Avatar className={"size-10"}>
-                            <AvatarImage src={currentPost.authorAvatar} className={"object-cover"}/>
-                            <AvatarFallback><UserRound size={"80%"}/></AvatarFallback>
-                        </Avatar>
-                    </Link>
-                    <div className="flex flex-col">
-                        <Link href={`/user/${currentPost.authorId}`} className="subtitle1 hover:underline">
-                            {currentPost.authorName}
-                        </Link>
-                        <Link href={`/post/${currentPost.id}`}
-                              className="flex items-center gap-1.5 caption text-muted-foreground hover:underline">
-                            <span>{formatISODate(currentPost.createdAt)}</span>
-                            <span>·</span>
-                            {getAccessIcon(currentPost.accessModifier)}
-                        </Link>
+        <Card className={`w-full max-w-xl mx-auto relative  h-fit overflow-hidden ${(isDelete ? "hidden" : "")}`}>
+            {isDisabled && (
+                <div
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-[2px] p-4 text-center space-y-3">
+                    <div className="bg-destructive/10 p-3 rounded-full">
+                        <Lock className="size-8 text-destructive"/>
                     </div>
-                </div>
-                <PostEllipsis post={currentPost} onDelete={handleDeletePost} onEditClick={(p) => {
-                    setCurrentPost(p)
-                }}>
-                    <Button variant="ghost" size="icon" className="rounded-full">
-                        <EllipsisVertical className="size-5"/>
-                    </Button>
-                </PostEllipsis>
-            </CardHeader>
-            <PostBody post={currentPost}/>
-            {(currentPost.sharedPost?.id && currentPost.sharedPostId) && (
-                <div className="mx-2 pt-2 sm:mx-4 mb-2 border border-border rounded-lg overflow-hidden">
-                    <PostHeader post={currentPost.sharedPost}/>
-                    <PostBody post={currentPost.sharedPost}/>
-                </div>
-            )}
-            {(!currentPost.sharedPost?.id && currentPost.sharedPostId) && (
-                <div className="mx-2 sm:mx-4">
-                    <DisablePost/>
-                </div>
-            )}
-            <CardFooter className="flex items-center justify-start px-3">
-                <Button onClick={() => handleLikePost()} variant="ghost" size="sm"
-                        className="flex items-center gap-1.5 text-muted-foreground" title={"Thích"}>
-                    <Heart
-                        className={`size-5 ${isLiked ? 'text-destructive fill-destructive' : 'text-muted-foreground'}`}/>
-                    {/*<span className={"text-[20px]"}>❤️</span>*/}
-                    <span>{formatNumber(likeCount)}</span>
-                </Button>
-                <Button onClick={() => {
-                    setShowReplies(!showReplies)
-                }} variant="ghost" size="sm" className={"flex items-center gap-1.5 text-muted-foreground"}
-                        title={"Bình luận"}>
-                    <MessageCircle
-                        className={`size-5 ${showReplies ? 'text-foreground fill-foreground' : 'text-muted-foreground'}`}/>
-                    <span>{formatNumber(commentCount)}</span>
-                </Button>
-                {(currentPost.accessModifier == postAccess.PUBLIC) &&
-                    <PostForm onPostCreated={() => setShareCount(shareCount + 1)} shareId={currentPost.id}>
-                        <Button variant="ghost" size="sm"
-                                className="flex items-center gap-1.5 text-muted-foreground"
-                                title={"Chia sẻ"}>
-                            <Share2 className="size-5"/>
-                            <span>{formatNumber(shareCount)}</span>
-                        </Button>
-                    </PostForm>}
-            </CardFooter>
-            {showReplies && (
-                <div className="border-t border-border px-4 py-3 h-fit space-y-4">
-                    <div className="gap-1 h-auto max-h-[400px] overflow-auto">
-                        {isLoadingComments && (
-                            <>
-                                <CommentSkeleton/>
-                                <CommentSkeleton/>
-                            </>
-                        )}
+                    <div className="space-y-1">
+                        <h3 className="font-semibold text-lg text-foreground">Bài viết bị hạn chế</h3>
+                        <p className="text-sm text-muted-foreground max-w-xs">
+                            Bài viết này đã bị vô hiệu hóa do vi phạm tiêu chuẩn cộng đồng.
+                        </p>
+                    </div>
 
-                        {!isLoadingComments && comments.length === 0 && (
-                            <p className="text-sm text-muted-foreground text-center py-4">
-                                Chưa có bình luận nào
-                            </p>
-                        )}
-                        {!isLoadingComments && comments.map((comment, index) => {
-                            if (comments.length == index+1) {
-                                return (
-                                    <div ref={lastUserElementRef} key={comment.id} className="w-full">
-                                        <CommentItem comment={comment}
-                                                     onReplyClick={(cmt) => setParent(cmt)}
-                                                     newReply={newReply} />
-                                    </div>
-                                )
-                            }
+                    {/* Nút mở ComplaintForm */}{
+                        currentPost.authorId == id &&
+                    <ComplaintForm targetId={currentPost.id} targetType={ReportableType.POST}>
+                        <Button variant="destructive" size={"sm"} className="gap-2 pointer-events-auto">
+                            <AlertTriangle className="size-4"/>
+                            Phản hồi / Khiếu nại
+                        </Button>
+                    </ComplaintForm>}
+                </div>
+            )}
+
+            {/* --- NỘI DUNG CHÍNH (Được bọc trong thẻ div để xử lý hiệu ứng mờ) --- */}
+            <div className={`${isDisabled ? "opacity-40 grayscale pointer-events-none select-none filter" : ""}`}>
+                <CardHeader className="flex flex-row items-center justify-between px-4">
+                    <div className="flex items-center gap-3">
+                        <Link href={`/user/${currentPost.authorId}`}>
+                            <Avatar className={"size-10"}>
+                                <AvatarImage src={currentPost.authorAvatar} className={"object-cover"}/>
+                                <AvatarFallback><UserRound size={"80%"}/></AvatarFallback>
+                            </Avatar>
+                        </Link>
+                        <div className="flex flex-col">
+                            <Link href={`/user/${currentPost.authorId}`} className="subtitle1 hover:underline">
+                                {currentPost.authorName}
+                            </Link>
+                            <Link href={`/post/${currentPost.id}`}
+                                  className="flex items-center gap-1.5 caption text-muted-foreground hover:underline">
+                                <span>{formatISODate(currentPost.createdAt)}</span>
+                                <span>·</span>
+                                {getAccessIcon(currentPost.accessModifier)}
+                            </Link>
+                        </div>
+                    </div>
+                    {!isDisabled && <PostEllipsis post={currentPost} onDelete={handleDeletePost} onEditClick={(p) => {
+                        setCurrentPost(p)
+                    }}>
+                        <Button variant="ghost" size="icon" className="rounded-full">
+                            <EllipsisVertical className="size-5"/>
+                        </Button>
+                    </PostEllipsis>}
+                </CardHeader>
+                <PostBody post={currentPost}/>
+                {(currentPost.sharedPost?.id && currentPost.sharedPostId) && (
+                    <div className="mx-2 pt-2 sm:mx-4 mb-2 border border-border rounded-lg overflow-hidden">
+                        <PostHeader post={currentPost.sharedPost}/>
+                        <PostBody post={currentPost.sharedPost}/>
+                    </div>
+                )}
+                {(!currentPost.sharedPost?.id && currentPost.sharedPostId) && (
+                    <div className="mx-2 sm:mx-4">
+                        <DisablePost/>
+                    </div>
+                )}
+                    <CardFooter className="flex items-center justify-start px-3">
+                        <Button onClick={() => handleLikePost()} variant="ghost" size="sm"
+                                className="flex items-center gap-1.5 text-muted-foreground" title={"Thích"}>
+                            <Heart
+                                className={`size-5 ${isLiked ? 'text-destructive fill-destructive' : 'text-muted-foreground'}`}/>
+                            {/*<span className={"text-[20px]"}>❤️</span>*/}
+                            <span>{formatNumber(likeCount)}</span>
+                        </Button>
+                        <Button onClick={() => {
+                            setShowReplies(!showReplies)
+                        }} variant="ghost" size="sm" className={"flex items-center gap-1.5 text-muted-foreground"}
+                                title={"Bình luận"}>
+                            <MessageCircle
+                                className={`size-5 ${showReplies ? 'text-foreground fill-foreground' : 'text-muted-foreground'}`}/>
+                            <span>{formatNumber(commentCount)}</span>
+                        </Button>
+                        {(currentPost.accessModifier == postAccess.PUBLIC) &&
+                            <PostForm onPostCreated={() => setShareCount(shareCount + 1)} shareId={currentPost.id}>
+                                <Button variant="ghost" size="sm"
+                                        className="flex items-center gap-1.5 text-muted-foreground"
+                                        title={"Chia sẻ"}>
+                                    <Share2 className="size-5"/>
+                                    <span>{formatNumber(shareCount)}</span>
+                                </Button>
+                            </PostForm>}
+                    </CardFooter>
+
+                {showReplies && (
+                    <div className="border-t border-border px-4 py-3 h-fit space-y-4">
+                        <div className="gap-1 h-auto max-h-[400px] overflow-auto">
+                            {isLoadingComments && (
+                                <>
+                                    <CommentSkeleton/>
+                                    <CommentSkeleton/>
+                                </>
+                            )}
+
+                            {!isLoadingComments && comments.length === 0 && (
+                                <p className="text-sm text-muted-foreground text-center py-4">
+                                    Chưa có bình luận nào
+                                </p>
+                            )}
+                            {!isLoadingComments && comments.map((comment, index) => {
+                                if (comments.length == index + 1) {
+                                    return (
+                                        <div ref={lastUserElementRef} key={comment.id} className="w-full">
+                                            <CommentItem comment={comment}
+                                                         onReplyClick={(cmt) => setParent(cmt)}
+                                                         newReply={newReply}/>
+                                        </div>
+                                    )
+                                }
                                 return <CommentItem key={comment.id} comment={comment}
                                                     onReplyClick={(cmt) => setParent(cmt)}
                                                     newReply={newReply}/>
-                        })}
+                            })}
 
+                        </div>
+                        <CommentInputForm postId={post.id} parent={parent} onCommentPosted={handleCommentPosted}
+                                          onCancelReply={() => setParent(undefined)}/>
                     </div>
-                    <CommentInputForm postId={post.id} parent={parent} onCommentPosted={handleCommentPosted}
-                                      onCancelReply={() => setParent(undefined)}/>
-                </div>
-            )}
+                )}
+            </div>
         </Card>
     );
 };
