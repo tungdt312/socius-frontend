@@ -3,6 +3,7 @@ import {Tabs, TabsContent, TabsList, TabsTrigger} from "@/components/ui/tabs";
 import FlaggedPostTable from "@/components/moderator/FlaggedPostTable";
 import FlaggedCommentTable from "@/components/moderator/FlaggedCommentTable";
 import ModeratorUserTable from "@/components/moderator/ModeratorUserTable";
+import FlaggedMessageTable from "@/components/moderator/FlaggedMessageTable";
 
 const Page = () => {
     return (
@@ -15,6 +16,7 @@ const Page = () => {
                     <TabsTrigger value="user">Người dùng</TabsTrigger>
                     <TabsTrigger value="post">Bài viết</TabsTrigger>
                     <TabsTrigger value="comment">Bình luận</TabsTrigger>
+                    <TabsTrigger value="message">Tin nhắn</TabsTrigger>
                 </TabsList>
                 <TabsContent className={"gap-2"} value="post">
                     <FlaggedPostTable/>
@@ -24,6 +26,9 @@ const Page = () => {
                 </TabsContent>
                 <TabsContent className={"gap-2"} value="comment">
                     <FlaggedCommentTable/>
+                </TabsContent>
+                <TabsContent className={"gap-2"} value="message">
+                    <FlaggedMessageTable/>
                 </TabsContent>
             </Tabs>
         </div>

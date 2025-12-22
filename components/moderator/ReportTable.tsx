@@ -1,152 +1,145 @@
+// ReportTable.tsx
 "use client";
-// ... Imports ...
 
 import React, {useEffect, useMemo, useState} from "react";
 import {ColumnDef, flexRender, getCoreRowModel, SortingState, useReactTable,} from "@tanstack/react-table";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Badge} from "@/components/ui/badge";
+import {ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, User} from "lucide-react";
 import {Button} from "@/components/ui/button";
-import {Checkbox} from "@/components/ui/checkbox";
-import {Input} from "@/components/ui/input";
+import {Badge} from "@/components/ui/badge";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
-import {
-    ArrowUpDown,
-    ChevronLeft,
-    ChevronRight,
-    ChevronsLeft,
-    ChevronsRight, ExternalLink,
-    LockKeyhole,
-    ShieldAlert,
-    Unlock
-} from "lucide-react"; // Icons cho AccessModifier
 import {toast} from "sonner";
-import {useDebounce} from "@/hooks/use-rebounce";
-import {TablePagination} from "@/components/moderator/FlaggedCommentTable";
-import {ModeratorUser} from "@/types/dtos/moderator";
-import {getUsers} from "@/services/moderatorService";
+import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
+import {formatISODate} from "@/lib/utils";
+import {ReportableType, ReportReason, ReportResponse, ReportStatus} from "@/types/dtos/report";
+import {getReportsByContent} from "@/services/moderatorService";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import Link from "next/link";
 
-export default function ModeratorUserTable() {
-    // States
-    const [data, setData] = useState<ModeratorUser[]>([]);
+interface ReportTableProps {
+    targetId: string;
+    targetType: ReportableType;
+}
+
+// Map để hiển thị trạng thái báo cáo bằng tiếng Việt
+const REPORT_STATUS_CONFIG: Record<ReportStatus, { label: string, variant: 'default' | 'destructive' | 'secondary' }> = {
+    PENDING: {label: "Đang chờ xử lý", variant: "secondary"},
+    APPROVED: {label: "Đã xử lý", variant: "default"},
+    REJECTED: {label: "Đã từ chối", variant: "destructive"},
+};
+
+// Map để hiển thị lý do báo cáo bằng tiếng Việt
+// (Sử dụng lại REASON_LABELS từ ví dụ trước)
+const REASON_LABELS: Record<ReportReason, string> = {
+    [ReportReason.SPAM]: 'Tin rác (Spam)',
+    [ReportReason.HATE_SPEECH]: 'Ngôn từ thù địch',
+    [ReportReason.HARASSMENT]: 'Quấy rối',
+    [ReportReason.NUDITY]: 'Ảnh khỏa thân / Khiêu dâm',
+    [ReportReason.VIOLENCE]: 'Bạo lực',
+    [ReportReason.TERRORISM]: 'Khủng bố',
+    [ReportReason.COPYRIGHT_VIOLATION]: 'Vi phạm bản quyền',
+    [ReportReason.OTHER]: 'Vấn đề khác',
+};
+
+
+export const ReportTable = ({targetId, targetType}: ReportTableProps) => {
+    const [data, setData] = useState<ReportResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [rowCount, setRowCount] = useState(0);
-    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [searchTerm, setSearchTerm] = useState("");
-    const debouncedSearch = useDebounce(searchTerm, 500);
-    const [rowSelection, setRowSelection] = useState({});
+    const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 10});
+    const [sorting, setSorting] = useState<SortingState>([{id: 'createdAt', desc: true}]);
 
-    const columns: ColumnDef<ModeratorUser>[] = useMemo(() => [
+
+    const columns: ColumnDef<ReportResponse>[] = useMemo(() => [
         {
-            accessorKey: "id",
+            accessorKey: "reporterName",
+            header: "Người báo cáo",
+            cell: ({row}) => (
+                <div className="flex items-center gap-2">
+                    <Avatar className="size-8">
+                        <AvatarImage src={row.original.reporterAvatar} className={"object-cover"}/>
+                        <AvatarFallback>{row.original.reporterName?.charAt(0)}</AvatarFallback>
+                    </Avatar>
+                    <span className="text-sm font-medium">{row.original.reporterName}</span>
+                </div>
+            ),
+        },
+        {
+            accessorKey: "reason",
+            header: "Lý do",
+            cell: ({row}) => {
+                const reason = row.original.reason;
+                const customReason = row.original.customReason;
+                const label = REASON_LABELS[reason] || reason;
+                return (
+                    <div className="flex flex-col max-w-xs">
+                        <span className="font-semibold">{label}</span>
+                        {customReason && <span className="text-xs text-muted-foreground italic">({customReason})</span>}
+                    </div>
+                );
+            },
+        },
+        {
+            accessorKey: "createdAt",
             header: ({column}) => (
                 <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                         className="px-0 hover:bg-transparent">
-                    ID <ArrowUpDown className="ml-2 h-4 w-4"/>
+                    Thời gian <ArrowUpDown className="ml-2 h-4 w-4"/>
                 </Button>
             ),
-            cell: ({row}) => <div className="text-muted-foreground">{row.original.userId}</div>,
-        },
-        {
-            accessorKey: "displayName",
-            header: "Người dùng",
-            cell: ({ row }) => (
-                <div className="flex items-center gap-3">
-                    <Avatar className="size-9 border">
-                        <AvatarImage src={row.original.avatar} />
-                        <AvatarFallback>{row.original.displayName?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                        <span className="font-medium text-sm">{row.original.displayName}</span>
-                        <span className="text-xs text-muted-foreground">@{row.original.username}</span>
-                    </div>
-                </div>
-            ),
-        },
-        {
-            accessorKey: "email",
-            header: "Email",
-            cell: ({ row }) => <div className="text-muted-foreground">{row.original.email}</div>,
-        },
-        {
-            accessorKey: "violationCount",
-            header: ({ column }) => (
-                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-                    Số lượng báo cáo <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            ),
-            cell: ({ row }) => (
-                <div className="flex items-center gap-2">
-                    <p className="font-bold"> {row.original.violationCount}</p>
-                </div>
-            ),
+            cell: ({row}) => <div className="text-muted-foreground text-sm">{formatISODate(row.original.createdAt)}</div>,
         },
         {
             accessorKey: "status",
             header: "Trạng thái",
             cell: ({row}) => {
-                const status = row.original.status;
-                const statusConfig: Record<string, any> = {
-                    ACTIVE: {label: "Hoạt động", variant: "default", className: "bg-green-600"},
-                    BLOCKED: {label: "Đã khóa", variant: "destructive"},
-                    PENDING: {label: "Chờ xác nhận", variant: "secondary", className: "bg-yellow-100 text-yellow-800"},
-                    NOT_AUTHORIZED: {label: "Chờ cấp quyền", variant: "secondary"},
-                    NOT_SOLVED: {label: "Chờ xử lý", variant: "secondary", className: "bg-yellow-100 text-yellow-800"},
-                };
-                const config = statusConfig[status] || statusConfig["NOT_SOLVED"];
-                return <Badge variant={config.variant}
-                              className={`capitalize ${config.className}`}>{config.label}</Badge>;
+                const config = REPORT_STATUS_CONFIG[row.original.status] || REPORT_STATUS_CONFIG.PENDING;
+                return <Badge variant={config.variant} className="capitalize">{config.label}</Badge>;
             },
-        },{
-            accessorKey: "action",
-            header: ({ column }) => (
-                <div></div>
-            ),
-            cell: ({ row }) =>
-                <Link href={`/moderator/reports/user/${row.original.userId}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
         },
-        // Thêm cột Action để xử lý Mở khóa/Khóa nhanh
+        // Thêm cột Action để Moderation có thể xử lý (tùy chọn)
     ], []);
+
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
             const sortStrings = sorting.map(s => `${s.id},${s.desc ? 'desc' : 'asc'}`);
-            // Mặc định sort theo số lượng report giảm dần để Mod dễ xử lý
-            if (sortStrings.length === 0) sortStrings.push("reportCount,desc");
 
-            const res = await getUsers({
+            const res = await getReportsByContent(targetId, targetType, {
                 page: pagination.pageIndex,
                 size: pagination.pageSize,
                 sort: sortStrings,
-                filter: debouncedSearch ? `displayName=ilike='${debouncedSearch}'` : undefined
+                // Không thêm filter vì bảng này chỉ lọc theo targetId/targetType
             });
 
             setData(res.content || []);
             setRowCount(res.totalElements || 0);
-            console.log(res);
         } catch (e) {
             console.error(e);
-            toast.error("Lỗi tải danh sách người dùng");
+            toast.error("Lỗi tải danh sách báo cáo");
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => { fetchData(); }, [pagination.pageIndex, pagination.pageSize, sorting, debouncedSearch]);
+    useEffect(() => {
+        if (targetId && targetType) {
+            fetchData();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pagination.pageIndex, pagination.pageSize, sorting, targetId, targetType]);
+
 
     const table = useReactTable({
-        data, columns, state: { sorting, pagination, rowSelection },
+        data, columns, state: {sorting, pagination},
         manualPagination: true, manualSorting: true, rowCount,
-        onPaginationChange: setPagination, onSortingChange: setSorting, onRowSelectionChange: setRowSelection,
-        getCoreRowModel: getCoreRowModel(), getRowId: (row) => row.userId, // Lưu ý ID là userId
+        onPaginationChange: setPagination, onSortingChange: setSorting,
+        getCoreRowModel: getCoreRowModel(), getRowId: (row) => row.id,
     });
+
 
     return (
         <div className="w-full space-y-4 pt-6">
-            <Input placeholder="Tìm theo tên hiển thị..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="max-w-sm" />
+            <h3 className="text-lg font-semibold">Danh sách Báo cáo ({rowCount})</h3>
             <div className="rounded-md border bg-card">
                 <Table>
                     <TableHeader>
@@ -155,21 +148,24 @@ export default function ModeratorUserTable() {
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {isLoading ? <TableRow><TableCell colSpan={columns.length} className="text-center h-24">Đang tải...</TableCell></TableRow>
+                        {isLoading ? <TableRow><TableCell colSpan={columns.length} className="text-center h-24">
+                                <Loader2 className="animate-spin inline-block mr-2"/> Đang tải...
+                            </TableCell></TableRow>
                             : table.getRowModel().rows.length ? table.getRowModel().rows.map(row => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                                <TableRow key={row.id}>
                                     {row.getVisibleCells().map(cell => <TableCell key={cell.id} className="py-3">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}
                                 </TableRow>
                             )) : (
-                            <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">Không có dữ liệu.</TableCell></TableRow>
-                )}
+                                <TableRow><TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">Không có báo cáo nào.</TableCell></TableRow>
+                            )}
                     </TableBody>
                 </Table>
             </div>
+            {/* Giả định component TablePagination hoạt động với tanstack table */}
             <div className="flex items-center justify-between px-2">
                 <div className="text-sm text-muted-foreground hidden sm:block">
                     {/* Logic hiển thị row selected chỉ đúng trên trang hiện tại với server-side */}
-                    Đã chọn {Object.keys(rowSelection).length} hàng.
+                    {/*Đã chọn {Object.keys(rowSelection).length} hàng.*/}
                 </div>
                 <div className="flex items-center space-x-6 lg:space-x-8 ml-auto">
                     <div className="flex items-center space-x-2">

@@ -94,7 +94,7 @@ const PostEllipsis = ({post, children, onDelete, onEditClick}: {
                                 Chặn người dùng
                             </Button>
                         </ConfirmDialog>
-                        <ReportForm targetId={post.id} targetType={ReportableType.COMMENT} >
+                        <ReportForm targetId={post.id} targetType={ReportableType.POST} >
                             <Button className={"w-full !text-destructive"} variant={"ghost"}>
                                 Báo cáo bài viết
                             </Button>

@@ -13,7 +13,7 @@ import RoleGuard from "@/components/auth/RoleGuard";
 
 const Layout = ({children}: { children: React.ReactNode }) => {
     return (
-        <RoleGuard allowedRoles={["MODERATOR"]}>
+        <RoleGuard allowedRoles={["ADMIN","MODERATOR"]}>
         <div className={"flex flex-col md:flex-row justify-start w-full h-screen bg-background"}>
 
                 <ModeratorSideNav/>

@@ -7,13 +7,25 @@ import {Button} from "@/components/ui/button";
 import {Checkbox} from "@/components/ui/checkbox";
 import {Input} from "@/components/ui/input";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
-import {ArrowUpDown, Globe, Lock, User, Users} from "lucide-react"; // Icons cho AccessModifier
+import {
+    ArrowUpDown,
+    ChevronLeft,
+    ChevronRight,
+    ChevronsLeft,
+    ChevronsRight, ExternalLink,
+    Globe,
+    Lock,
+    User,
+    Users
+} from "lucide-react"; // Icons cho AccessModifier
 import {toast} from "sonner";
 import {formatISODate} from "@/lib/utils";
 import {useDebounce} from "@/hooks/use-rebounce";
 import { PostResponse } from "@/types/dtos/post";
 import {getPosts} from "@/services/moderatorService";
 import {TablePagination} from "@/components/moderator/FlaggedCommentTable";
+import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import Link from "next/link";
 
 export default function FlaggedPostTable() {
     // States (Giống bảng trên)
@@ -37,13 +49,14 @@ export default function FlaggedPostTable() {
 
     const columns: ColumnDef<PostResponse>[] = useMemo(() => [
         {
-            id: "select",
-            header: ({ table }) => (
-                <Checkbox checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")} onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)} />
+            accessorKey: "id",
+            header: ({column}) => (
+                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
+                        className="px-0 hover:bg-transparent">
+                    ID <ArrowUpDown className="ml-2 h-4 w-4"/>
+                </Button>
             ),
-            cell: ({ row }) => <Checkbox checked={row.getIsSelected()} onCheckedChange={(value) => row.toggleSelected(!!value)} />,
-            size: 40,
-            enableSorting: false,
+            cell: ({row}) => <div className="text-muted-foreground">{row.original.id}</div>,
         },
         {
             accessorKey: "content",
@@ -89,7 +102,7 @@ export default function FlaggedPostTable() {
             header: "Thống kê",
             cell: ({ row }) => (
                 <div className="flex gap-2 text-xs">
-                    <Badge variant="outline" className="font-normal">👍 {row.original.reactCount}</Badge>
+                    <Badge variant="outline" className="font-normal">❤️ {row.original.reactCount}</Badge>
                     <Badge variant="outline" className="font-normal">💬 {row.original.commentCount}</Badge>
                     <Badge variant="outline" className="font-normal">🔗 {row.original.shareCount}</Badge>
                 </div>
@@ -104,6 +117,14 @@ export default function FlaggedPostTable() {
             ),
             cell: ({ row }) => <span className="text-muted-foreground">{formatISODate(row.original.createdAt)}</span>,
         },
+        {
+            accessorKey: "action",
+            header: ({ column }) => (
+                <div></div>
+            ),
+            cell: ({ row }) =>
+                <Link href={`/moderator/reports/post/${row.original.id}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
+        },
     ], []);
 
     const fetchData = async () => {
@@ -116,7 +137,7 @@ export default function FlaggedPostTable() {
                 page: pagination.pageIndex,
                 size: pagination.pageSize,
                 sort: sortStrings,
-                filter: debouncedSearch ? `content~'${debouncedSearch}'` : undefined
+                filter: debouncedSearch ? `content=ilike='${debouncedSearch}'` : undefined
             });
 
             setData(res.content || []);
@@ -150,15 +171,85 @@ export default function FlaggedPostTable() {
                     </TableHeader>
                     <TableBody>
                         {isLoading ? <TableRow><TableCell colSpan={columns.length} className="text-center h-24">Đang tải...</TableCell></TableRow>
-                            : table.getRowModel().rows.map(row => (
+                            : table.getRowModel().rows.length ?table.getRowModel().rows.map(row => (
                                 <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                                     {row.getVisibleCells().map(cell => <TableCell key={cell.id} className="py-3">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}
                                 </TableRow>
-                            ))}
+                            )) : (
+                        <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">Không có dữ liệu.</TableCell></TableRow>
+                        )}
                     </TableBody>
                 </Table>
             </div>
-            <TablePagination table={table} />
+            <div className="flex items-center justify-between px-2">
+                <div className="text-sm text-muted-foreground hidden sm:block">
+                    {/* Logic hiển thị row selected chỉ đúng trên trang hiện tại với server-side */}
+                    Đã chọn {Object.keys(rowSelection).length} hàng.
+                </div>
+                <div className="flex items-center space-x-6 lg:space-x-8 ml-auto">
+                    <div className="flex items-center space-x-2">
+                        <p className="text-sm font-medium hidden sm:block">Hàng/ trang</p>
+                        <Select
+                            value={`${pagination.pageSize}`}
+                            onValueChange={(value) => {
+                                table.setPageSize(Number(value));
+                            }}
+                        >
+                            <SelectTrigger className="h-8 w-[70px]">
+                                <SelectValue placeholder={pagination.pageSize}/>
+                            </SelectTrigger>
+                            <SelectContent side="top">
+                                {[10, 20, 30, 40, 50].map((pageSize) => (
+                                    <SelectItem key={pageSize} value={`${pageSize}`}>
+                                        {pageSize}
+                                    </SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="flex w-[100px] items-center justify-center text-sm font-medium">
+                        Trang {table.getState().pagination.pageIndex + 1} / {table.getPageCount()}
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <Button
+                            variant="outline"
+                            className="hidden h-8 w-8 p-0 lg:flex"
+                            onClick={() => table.setPageIndex(0)}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            <span className="sr-only">Trang đầu</span>
+                            <ChevronsLeft className="size-4"/>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="h-8 w-8 p-0"
+                            onClick={() => table.previousPage()}
+                            disabled={!table.getCanPreviousPage()}
+                        >
+                            <span className="sr-only">Trang trước</span>
+                            <ChevronLeft className="size-4"/>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="h-8 w-8 p-0"
+                            onClick={() => table.nextPage()}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            <span className="sr-only">Trang sau</span>
+                            <ChevronRight className="size-4"/>
+                        </Button>
+                        <Button
+                            variant="outline"
+                            className="hidden h-8 w-8 p-0 lg:flex"
+                            onClick={() => table.setPageIndex(table.getPageCount() - 1)}
+                            disabled={!table.getCanNextPage()}
+                        >
+                            <span className="sr-only">Trang cuối</span>
+                            <ChevronsRight className="size-4"/>
+                        </Button>
+                    </div>
+                </div>
+            </div>
         </div>
     );
 }

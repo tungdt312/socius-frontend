@@ -1,152 +1,136 @@
+// ComplaintTable.tsx
 "use client";
-// ... Imports ...
 
 import React, {useEffect, useMemo, useState} from "react";
 import {ColumnDef, flexRender, getCoreRowModel, SortingState, useReactTable,} from "@tanstack/react-table";
-import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
-import {Badge} from "@/components/ui/badge";
-import {Button} from "@/components/ui/button";
-import {Checkbox} from "@/components/ui/checkbox";
-import {Input} from "@/components/ui/input";
-import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {
     ArrowUpDown,
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
-    ChevronsRight, ExternalLink,
-    LockKeyhole,
-    ShieldAlert,
-    Unlock
-} from "lucide-react"; // Icons cho AccessModifier
-import {toast} from "sonner";
-import {useDebounce} from "@/hooks/use-rebounce";
-import {TablePagination} from "@/components/moderator/FlaggedCommentTable";
-import {ModeratorUser} from "@/types/dtos/moderator";
-import {getUsers} from "@/services/moderatorService";
+    ChevronsRight,
+    Loader2,
+    MessageCircle, User
+} from "lucide-react";
+import {Button} from "@/components/ui/button";
+import {Badge} from "@/components/ui/badge";
+import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
+import {toast} from "sonner"; // Giả định service
+import {formatISODate} from "@/lib/utils";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import Link from "next/link";
+import {ComplaintResponse, ComplaintStatus, ReportableType } from "@/types/dtos/report";
+import {getComplaintsByContent} from "@/services/moderatorService";
 
-export default function ModeratorUserTable() {
-    // States
-    const [data, setData] = useState<ModeratorUser[]>([]);
+interface ComplaintTableProps {
+    targetId: string;
+    targetType: ReportableType;
+}
+
+// Map để hiển thị trạng thái khiếu nại bằng tiếng Việt
+const COMPLAINT_STATUS_CONFIG: Record<ComplaintStatus, { label: string, variant: 'default' | 'destructive' | 'secondary' }> = {
+    PENDING: {label: "Đang chờ phản hồi", variant: "secondary"},
+    APPROVED_RESTORE: {label: "Đã phản hồi", variant: "default"},
+    REJECTED_KEEP: {label: "Không hợp lệ", variant: "destructive"},
+};
+
+
+export const ComplaintTable = ({targetId, targetType}: ComplaintTableProps) => {
+    const [data, setData] = useState<ComplaintResponse[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [rowCount, setRowCount] = useState(0);
-    const [pagination, setPagination] = useState({ pageIndex: 0, pageSize: 10 });
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [searchTerm, setSearchTerm] = useState("");
-    const debouncedSearch = useDebounce(searchTerm, 500);
-    const [rowSelection, setRowSelection] = useState({});
+    const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 10});
+    const [sorting, setSorting] = useState<SortingState>([{id: 'createdAt', desc: true}]);
 
-    const columns: ColumnDef<ModeratorUser>[] = useMemo(() => [
+
+    const columns: ColumnDef<ComplaintResponse>[] = useMemo(() => [
         {
-            accessorKey: "id",
+            accessorKey: "userDisplayName",
+            header: "Người khiếu nại",
+            cell: ({row}) => (
+                <div className="flex items-center gap-1">
+                    <User className="size-4 text-muted-foreground"/>
+                    <span className="text-sm font-medium">{row.original.userDisplayName}</span>
+                </div>
+            ),
+        },
+        {
+            accessorKey: "content",
+            header: "Nội dung khiếu nại",
+            cell: ({row}) => (
+                <div className="flex flex-col max-w-md">
+                    <span className="text-sm line-clamp-2" title={row.original.content}>{row.original.content}</span>
+                    {row.original.adminResponse && (
+                        <div className="mt-1 flex items-start gap-1 text-xs text-blue-600 dark:text-blue-400 italic bg-blue-50 dark:bg-gray-800 p-1 rounded">
+                            <MessageCircle className="size-3 flex-shrink-0 mt-0.5"/>
+                            <span className="line-clamp-1" title={row.original.adminResponse}>{row.original.adminResponse}</span>
+                        </div>
+                    )}
+                </div>
+            ),
+        },
+        {
+            accessorKey: "createdAt",
             header: ({column}) => (
                 <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}
                         className="px-0 hover:bg-transparent">
-                    ID <ArrowUpDown className="ml-2 h-4 w-4"/>
+                    Thời gian <ArrowUpDown className="ml-2 h-4 w-4"/>
                 </Button>
             ),
-            cell: ({row}) => <div className="text-muted-foreground">{row.original.userId}</div>,
-        },
-        {
-            accessorKey: "displayName",
-            header: "Người dùng",
-            cell: ({ row }) => (
-                <div className="flex items-center gap-3">
-                    <Avatar className="size-9 border">
-                        <AvatarImage src={row.original.avatar} />
-                        <AvatarFallback>{row.original.displayName?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <div className="flex flex-col">
-                        <span className="font-medium text-sm">{row.original.displayName}</span>
-                        <span className="text-xs text-muted-foreground">@{row.original.username}</span>
-                    </div>
-                </div>
-            ),
-        },
-        {
-            accessorKey: "email",
-            header: "Email",
-            cell: ({ row }) => <div className="text-muted-foreground">{row.original.email}</div>,
-        },
-        {
-            accessorKey: "violationCount",
-            header: ({ column }) => (
-                <Button variant="ghost" onClick={() => column.toggleSorting(column.getIsSorted() === "asc")}>
-                    Số lượng báo cáo <ArrowUpDown className="ml-2 h-4 w-4" />
-                </Button>
-            ),
-            cell: ({ row }) => (
-                <div className="flex items-center gap-2">
-                    <p className="font-bold"> {row.original.violationCount}</p>
-                </div>
-            ),
+            cell: ({row}) => <div className="text-muted-foreground text-sm">{formatISODate(row.original.createdAt)}</div>,
         },
         {
             accessorKey: "status",
             header: "Trạng thái",
             cell: ({row}) => {
-                const status = row.original.status;
-                const statusConfig: Record<string, any> = {
-                    ACTIVE: {label: "Hoạt động", variant: "default", className: "bg-green-600"},
-                    BLOCKED: {label: "Đã khóa", variant: "destructive"},
-                    PENDING: {label: "Chờ xác nhận", variant: "secondary", className: "bg-yellow-100 text-yellow-800"},
-                    NOT_AUTHORIZED: {label: "Chờ cấp quyền", variant: "secondary"},
-                    NOT_SOLVED: {label: "Chờ xử lý", variant: "secondary", className: "bg-yellow-100 text-yellow-800"},
-                };
-                const config = statusConfig[status] || statusConfig["NOT_SOLVED"];
-                return <Badge variant={config.variant}
-                              className={`capitalize ${config.className}`}>{config.label}</Badge>;
+                const config = COMPLAINT_STATUS_CONFIG[row.original.status] || COMPLAINT_STATUS_CONFIG.PENDING;
+                return <Badge variant={config.variant} className="capitalize">{config.label}</Badge>;
             },
-        },{
-            accessorKey: "action",
-            header: ({ column }) => (
-                <div></div>
-            ),
-            cell: ({ row }) =>
-                <Link href={`/moderator/reports/user/${row.original.userId}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
         },
-        // Thêm cột Action để xử lý Mở khóa/Khóa nhanh
+        // Thêm cột Action để Admin/Mod có thể phản hồi
     ], []);
+
 
     const fetchData = async () => {
         setIsLoading(true);
         try {
             const sortStrings = sorting.map(s => `${s.id},${s.desc ? 'desc' : 'asc'}`);
-            // Mặc định sort theo số lượng report giảm dần để Mod dễ xử lý
-            if (sortStrings.length === 0) sortStrings.push("reportCount,desc");
 
-            const res = await getUsers({
+            // Dùng hàm fetch Complaint đã sửa đường dẫn
+            const res = await getComplaintsByContent(targetId, targetType, {
                 page: pagination.pageIndex,
                 size: pagination.pageSize,
                 sort: sortStrings,
-                filter: debouncedSearch ? `displayName=ilike='${debouncedSearch}'` : undefined
             });
 
             setData(res.content || []);
             setRowCount(res.totalElements || 0);
-            console.log(res);
         } catch (e) {
             console.error(e);
-            toast.error("Lỗi tải danh sách người dùng");
+            toast.error("Lỗi tải danh sách khiếu nại");
         } finally {
             setIsLoading(false);
         }
     };
 
-    useEffect(() => { fetchData(); }, [pagination.pageIndex, pagination.pageSize, sorting, debouncedSearch]);
+    useEffect(() => {
+        if (targetId && targetType) {
+            fetchData();
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [pagination.pageIndex, pagination.pageSize, sorting, targetId, targetType]);
+
 
     const table = useReactTable({
-        data, columns, state: { sorting, pagination, rowSelection },
+        data, columns, state: {sorting, pagination},
         manualPagination: true, manualSorting: true, rowCount,
-        onPaginationChange: setPagination, onSortingChange: setSorting, onRowSelectionChange: setRowSelection,
-        getCoreRowModel: getCoreRowModel(), getRowId: (row) => row.userId, // Lưu ý ID là userId
+        onPaginationChange: setPagination, onSortingChange: setSorting,
+        getCoreRowModel: getCoreRowModel(), getRowId: (row) => row.id,
     });
+
 
     return (
         <div className="w-full space-y-4 pt-6">
-            <Input placeholder="Tìm theo tên hiển thị..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} className="max-w-sm" />
+            <h3 className="text-lg font-semibold">Danh sách Khiếu nại ({rowCount})</h3>
             <div className="rounded-md border bg-card">
                 <Table>
                     <TableHeader>
@@ -155,21 +139,24 @@ export default function ModeratorUserTable() {
                         ))}
                     </TableHeader>
                     <TableBody>
-                        {isLoading ? <TableRow><TableCell colSpan={columns.length} className="text-center h-24">Đang tải...</TableCell></TableRow>
+                        {isLoading ? <TableRow><TableCell colSpan={columns.length} className="text-center h-24">
+                                <Loader2 className="animate-spin inline-block mr-2"/> Đang tải...
+                            </TableCell></TableRow>
                             : table.getRowModel().rows.length ? table.getRowModel().rows.map(row => (
-                                <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                                <TableRow key={row.id}>
                                     {row.getVisibleCells().map(cell => <TableCell key={cell.id} className="py-3">{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>)}
                                 </TableRow>
                             )) : (
-                            <TableRow><TableCell colSpan={columns.length} className="h-24 text-center">Không có dữ liệu.</TableCell></TableRow>
-                )}
+                                <TableRow><TableCell colSpan={columns.length} className="h-24 text-center text-muted-foreground">Không có khiếu nại nào.</TableCell></TableRow>
+                            )}
                     </TableBody>
                 </Table>
             </div>
+            {/* Giả định component TablePagination hoạt động với tanstack table */}
             <div className="flex items-center justify-between px-2">
                 <div className="text-sm text-muted-foreground hidden sm:block">
                     {/* Logic hiển thị row selected chỉ đúng trên trang hiện tại với server-side */}
-                    Đã chọn {Object.keys(rowSelection).length} hàng.
+                    {/*Đã chọn {Object.keys(rowSelection).length} hàng.*/}
                 </div>
                 <div className="flex items-center space-x-6 lg:space-x-8 ml-auto">
                     <div className="flex items-center space-x-2">

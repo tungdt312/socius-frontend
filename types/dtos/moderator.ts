@@ -1,4 +1,6 @@
 import {ReportableType} from "@/types/dtos/report";
+import {PostMedia} from "@/types/dtos/post";
+import {AccountStatus} from "@/constants/enum";
 
 export interface ModerationResult {
     isToxic: boolean,
@@ -25,18 +27,8 @@ export interface ModeratorUser {
     displayName: string,
     avatar: string,
     email: string,
-    reportCount: number,
-    locked: boolean,
-}
-
-export interface ModeratorUser {
-    userId: string,
-    username: string,
-    displayName: string,
-    avatar: string,
-    email: string,
-    reportCount: number,
-    locked: boolean,
+    violationCount: number,
+    status: AccountStatus,
 }
 
 export interface ModeratorMessage {
@@ -47,5 +39,5 @@ export interface ModeratorMessage {
     senderAvatar: string,
     content: string,
     sentAt: string,
-    mediaUrls: string[],
+    media: PostMedia[],
 }

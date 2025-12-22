@@ -17,7 +17,7 @@ import {Separator} from "@/components/ui/separator";
 import {LoaderCircle, X} from "lucide-react";
 import {BASE, formatNumber} from "@/lib/utils";
 import {FollowListItem, FriendListItem, UserListItemSkeleton} from "@/components/user/ListItem";
-import {Page} from "@/types/dtos/base";
+import {Page, PageRequest} from "@/types/dtos/base";
 import {ScrollArea} from "@/components/ui/scroll-area";
 import {listMapper, UserListType} from "@/constants/enum";
 import {getFriendsList} from "@/services/friendService";
@@ -142,11 +142,11 @@ export const UserList = ({ userId, type }: { userId?: string, type: UserListType
                 return getFriendsList(undefined, userId, page);
             case "following":
             case "followers":
-                return getFollowList(effectiveUserId, type, page);
+                return getFollowList(effectiveUserId!, type, page);
             case "search":
                 return getUsersList(page);
             default:
-                return getFriendsList(page); // Default case
+                return getFriendsList(type, userId, page); // Default case
         }
     };
 

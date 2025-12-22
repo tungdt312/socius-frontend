@@ -30,7 +30,7 @@ export async function blockUser(id: string, reason: string): Promise<BaseRespons
 }
 
 export async function getUsers(page: PageRequest): Promise<Page<ModeratorUser>> {
-    const res = await apiFetch(`/moderation/users`, true, {
+    const res = await apiFetch(`/moderation/users?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",
@@ -92,7 +92,7 @@ export async function getReportsByContent(id: string, type: ReportableType, page
     return processResponse(res);
 }
 export async function getComplaintsByContent(id: string, type: ReportableType, page:PageRequest): Promise<Page<ComplaintResponse>> {
-    const res = await apiFetch(`/moderation/${type}/${id}/reports?${toQueryString(page)}`, true, {
+    const res = await apiFetch(`/moderation/${type}/${id}/complaints?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",
@@ -103,7 +103,7 @@ export async function getComplaintsByContent(id: string, type: ReportableType, p
 }
 
 export async function getPosts(page: PageRequest): Promise<Page<PostResponse>> {
-    const res = await apiFetch(`/moderation/posts/flagged`, true, {
+    const res = await apiFetch(`/moderation/posts/flagged?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",
@@ -124,7 +124,7 @@ export async function getPostById(id: string): Promise<PostResponse> {
 }
 
 export async function getComments(page: PageRequest): Promise<Page<CommentResponse>> {
-    const res = await apiFetch(`/moderation/comments/flagged`, true, {
+    const res = await apiFetch(`/moderation/comments/flagged?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",
@@ -144,8 +144,8 @@ export async function getCommentById(id: string): Promise<CommentResponse> {
     return processResponse(res);
 }
 
-export async function getMessages(page: PageRequest): Promise<Page<CommentResponse>> {
-    const res = await apiFetch(`/moderation/comments/flagged`, true, {
+export async function getMessages(page: PageRequest): Promise<Page<ModeratorMessage>> {
+    const res = await apiFetch(`/moderation/messages/flagged?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",
@@ -155,7 +155,7 @@ export async function getMessages(page: PageRequest): Promise<Page<CommentRespon
     return processResponse(res);
 }
 export async function getMessageById(id: string): Promise<ModeratorMessage> {
-    const res = await apiFetch(`/moderation/comment/${id}`, true, {
+    const res = await apiFetch(`/moderation/message/${id}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",

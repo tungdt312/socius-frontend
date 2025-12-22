@@ -1,8 +1,7 @@
 import {UserRelationResponse, UserResponse} from "@/types/dtos/user";
 import Link from "next/link";
 import {Item, ItemActions, ItemContent, ItemMedia, ItemTitle} from "@/components/ui/item";
-import Image from "next/image";
-import {Dot, UserRound} from "lucide-react";
+import {UserRound} from "lucide-react";
 import {Skeleton} from "@/components/ui/skeleton";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
@@ -73,8 +72,7 @@ export const FollowListItem = ({ user }: { user: UserRelationResponse }) => {
                         <p className={"truncate max-w-60"}>{user.displayName}</p>
                     </ItemTitle>
                     <ItemActions>
-                        {isSelf ? <Dot className={user.isActive ? "text-success size-10" : "text-muted-foreground  size-10"} />
-                        : <Button size={"sm"} onClick={FollowHandle} disabled={isLoading}>
+                        {!isSelf && <Button size={"sm"} onClick={FollowHandle} disabled={isLoading}>
                             {isFollowing ? "Hủy theo dõi" : "Theo dõi"}
                         </Button>}
                     </ItemActions>
@@ -85,7 +83,7 @@ export const FollowListItem = ({ user }: { user: UserRelationResponse }) => {
 }
 
 export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
-
+    console.log(user);
     const [type, setType] = useState("");
     const [isLoading, setIsLoading] = useState(false);
 
@@ -100,7 +98,7 @@ export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
             if (status === FriendshipStatus.PENDING) {
                 return user.friendship.senderId === ownerData?.id ? FriendActionTypes.unsend : FriendActionTypes.accept;
             }
-            if (status === FriendshipStatus.FRIEND) return "";
+            if (status === FriendshipStatus.FRIEND) return "FRIEND";
             if (status === FriendshipStatus.BLOCKED) return FriendActionTypes.unblock;
             return FriendActionTypes.send;
         })();
@@ -166,7 +164,8 @@ export const FriendListItem = ({ user }: { user: UserRelationResponse }) => {
                 <ItemContent className="flex-row items-center justify-between flex-1">
                     <ItemTitle className={"flex-1 overflow-ellipsis line-clamp-1"}>{user.displayName}
                     </ItemTitle>
-                    {type.length !== 0 &&
+
+                    {type.length !== 0 && user.friendship?.status !== FriendshipStatus.FRIEND &&
                         <ItemActions>
                             <Button
                                 size={"sm"}

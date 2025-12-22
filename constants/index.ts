@@ -67,7 +67,12 @@ export const adminNavItems: NavItem[] = [
         name: "Người dùng",
         url: "/admin/users",
         icon: UsersRound
-    }, {
+    },
+    {
+        name: "Báo cáo vi phạm",
+        url: "/moderator/reports",
+        icon: Flag
+    },{
         name: "Cài đặt hệ thống",
         url: "/admin/setting",
         icon: FileCog
