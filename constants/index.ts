@@ -1,9 +1,9 @@
 import {
-    Bell,
+    Bell, Cog,
     Compass, FileCog, Flag,
     House, Info, LayoutDashboard, LucideProps,
-    MessageCircle, MessageSquareWarning, Palette,
-    PlusSquare,
+    MessageCircle, MessageSquare, MessageSquareWarning, Palette,
+    PlusSquare, ScrollText,
     Search,
     Settings,
     User,
@@ -52,9 +52,27 @@ export const moderatorNavItems: NavItem[] = [
         icon: LayoutDashboard
     },
     {
-        name: "Báo cáo vi phạm",
-        url: "/moderator/reports",
-        icon: Flag
+        name: "Người dùng vi phạm",
+        url: "/moderator/user",
+        icon: UsersRound
+    },
+    {
+        name: "Bài viết vi phạm",
+        url: "/moderator/post",
+        icon: ScrollText
+    },{
+        name: "Bình luận vi phạm",
+        url: "/moderator/comment",
+        icon: MessageSquare
+    },{
+        name: "Tin nhắn vi phạm",
+        url: "/moderator/message",
+        icon: MessageCircle
+    },
+    {
+        name: "Cài đặt",
+        url: "/moderator/setting",
+        icon: Cog
     },
 ]
 export const adminNavItems: NavItem[] = [
@@ -69,10 +87,6 @@ export const adminNavItems: NavItem[] = [
         icon: UsersRound
     },
     {
-        name: "Báo cáo vi phạm",
-        url: "/moderator/reports",
-        icon: Flag
-    },{
         name: "Cài đặt hệ thống",
         url: "/admin/setting",
         icon: FileCog

@@ -110,7 +110,7 @@ export default function FlaggedCommentTable() {
                 <div></div>
             ),
             cell: ({ row }) =>
-                <Link href={`/moderator/reports/comment/${row.original.id}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
+                <Link href={`/moderator/comment/${row.original.id}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
         },
     ], []);
 
@@ -122,7 +122,7 @@ export default function FlaggedCommentTable() {
             const sortStrings = sorting.map(s => `${s.id},${s.desc ? 'desc' : 'asc'}`);
 
             // Nếu không sort thì mặc định mới nhất trước
-            if (sortStrings.length === 0) sortStrings.push("createdAt,desc");
+            if (sortStrings.length === 0) sortStrings.push("created_at,desc");
 
             const res = await getComments({
                 page: pagination.pageIndex,

@@ -21,7 +21,7 @@ import {
     ArrowUpDown,
     ChevronLeft,
     ChevronRight,
-    ChevronsLeft, ChevronsRight,
+    ChevronsLeft, ChevronsRight, ExternalLink,
     FileImage,
     Loader,
     MessageSquareWarning,
@@ -35,6 +35,7 @@ import {ModeratorMessage} from "@/types/dtos/moderator";
 import {useDebounce} from "@/hooks/use-rebounce";
 import {getMessageById, getMessages} from "@/services/moderatorService";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import Link from "next/link";
 
 // --- 1. Sub-component: Xem chi tiết tin nhắn (Drawer) ---
 const MessageDetailSheet = ({ messageId, onClose }: { messageId: string, onClose: () => void }) => {
@@ -162,6 +163,20 @@ export default function FlaggedMessageTable() {
             cell: ({row}) => <div className="text-muted-foreground">{row.original.id}</div>,
         },
         {
+            accessorKey: "content",
+            header: "Nội dung",
+            cell: ({ row }) => (
+                <div className="flex flex-col gap-1 max-w-[350px]">
+                    <div className="truncate text-sm font-medium">
+                        {row.original.content ? row.original.content : <span className="italic text-muted-foreground">Đã gửi tệp đính kèm</span>}
+                    </div>
+                    {row.original.media && row.original.media.length > 0 && (
+                        <Badge variant="outline" className="text-[10px]">Có đính kèm file</Badge>
+                    )}
+                </div>
+            ),
+        },
+        {
             accessorKey: "senderName",
             header: "Người gửi",
             cell: ({ row }) => (
@@ -176,22 +191,7 @@ export default function FlaggedMessageTable() {
                 </div>
             ),
         },
-        {
-            accessorKey: "content",
-            header: "Nội dung",
-            cell: ({ row }) => (
-                <div className="flex flex-col gap-1 max-w-[350px]">
-                    <div className="truncate text-sm font-medium">
-                        {row.original.content ? row.original.content : <span className="italic text-muted-foreground">Đã gửi tệp đính kèm</span>}
-                    </div>
-                    {row.original.media && row.original.media.length > 0 && (
-                        <Badge variant="secondary" className="w-fit text-[10px] h-5 px-1 gap-1">
-                            <FileImage size={10} /> {row.original.media.length} media
-                        </Badge>
-                    )}
-                </div>
-            ),
-        },
+
         {
             accessorKey: "sentAt",
             header: ({ column }) => (
@@ -202,16 +202,12 @@ export default function FlaggedMessageTable() {
             cell: ({ row }) => <div className="text-sm text-muted-foreground">{formatISODate(row.original.sentAt)}</div>,
         },
         {
-            id: "actions",
-            cell: ({ row }) => (
-                <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => setSelectedMessageId(row.original.id)}
-                >
-                    Chi tiết
-                </Button>
+            accessorKey: "action",
+            header: ({ column }) => (
+                <div></div>
             ),
+            cell: ({ row }) =>
+                <Link href={`/moderator/message/${row.original.id}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
         },
     ], []);
 
@@ -227,10 +223,11 @@ export default function FlaggedMessageTable() {
                 size: pagination.pageSize,
                 sort: sortStrings,
                 // Filter search theo nội dung hoặc tên người gửi
-                filter: debouncedSearch ? `(content=ilike='${debouncedSearch}' or senderName=ilike='${debouncedSearch}')` : undefined
+                filter: debouncedSearch ? `senderName=ilike='${debouncedSearch}'` : undefined
             });
 
             setData(res.content || []);
+            console.log(res)
             setRowCount(res.totalElements || 0);
         } catch (e) {
             console.error(e);

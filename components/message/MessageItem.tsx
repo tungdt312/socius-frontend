@@ -80,23 +80,23 @@ export const MessageItem = ({message, isMe}: MessageItemProps) => {
                 </div>}
 
             </div>
-            {/*{!isMe && <DropdownMenu>*/}
-            {/*    <DropdownMenuTrigger asChild>*/}
-            {/*        <Button variant="ghost" size="icon">*/}
-            {/*            <MoreVertical className="size-4"/>*/}
-            {/*        </Button>*/}
-            {/*    </DropdownMenuTrigger>*/}
-            {/*    <DropdownMenuContent align={isMe ? "end" : "start"} className="w-40">*/}
-            {/*        {!isMe && (*/}
-            {/*            <ReportForm targetType={ReportableType.MESSAGE} targetId={message.id}>*/}
-            {/*                <DropdownMenuItem onSelect={(e) => e.preventDefault()}>*/}
-            {/*                    <Flag className="mr-2 h-4 w-4 text-red-500"/>*/}
-            {/*                    Báo cáo*/}
-            {/*                </DropdownMenuItem>*/}
-            {/*            </ReportForm>*/}
-            {/*        )}*/}
-            {/*    </DropdownMenuContent>*/}
-            {/*</DropdownMenu>}*/}
+            {!isMe && <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon">
+                        <MoreVertical className="size-4"/>
+                    </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align={isMe ? "end" : "start"} className="w-40">
+                    {!isMe && (
+                        <ReportForm targetType={ReportableType.MESSAGE} targetId={message.id}>
+                            <DropdownMenuItem onSelect={(e) => e.preventDefault()}>
+                                <Flag className="mr-2 h-4 w-4 text-red-500"/>
+                                Báo cáo
+                            </DropdownMenuItem>
+                        </ReportForm>
+                    )}
+                </DropdownMenuContent>
+            </DropdownMenu>}
         </div>
     );
 };

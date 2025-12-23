@@ -1,7 +1,7 @@
 import {ComplaintResponse, ReportableType, ReportRequest, ReportResponse} from "@/types/dtos/report";
 import {apiFetch, processResponse} from "@/services/baseService";
 import {BaseResponse, Page, PageRequest, toQueryString} from "@/types/dtos/base";
-import {ModeratorMessage, ModeratorUser} from "@/types/dtos/moderator";
+import {ModeratorLog, ModeratorMessage, ModeratorUser} from "@/types/dtos/moderator";
 import {CommentResponse, PostResponse} from "@/types/dtos/post";
 
 export async function unblockUser(id: string, reason: string): Promise<BaseResponse> {
@@ -155,7 +155,28 @@ export async function getMessages(page: PageRequest): Promise<Page<ModeratorMess
     return processResponse(res);
 }
 export async function getMessageById(id: string): Promise<ModeratorMessage> {
-    const res = await apiFetch(`/moderation/message/${id}`, true, {
+    const res = await apiFetch(`/moderation/messages/${id}`, true, {
+        method: "GET",
+        headers: {
+            "accept": "application/json",
+        },
+    });
+    if (!res.ok) throw new Error(res.statusText);
+    return processResponse(res);
+}
+export async function getModerratorLog(page: PageRequest,id?: string, type?: ReportableType): Promise<Page<ModeratorLog>> {
+    console.log(`/moderation` + `/history?${toQueryString(page)}`)
+    if (id != undefined && type != undefined) {
+        const res = await apiFetch(`/moderation/${type}/${id}/history?${toQueryString(page)}`, true, {
+            method: "GET",
+            headers: {
+                "accept": "application/json",
+            },
+        });
+        if (!res.ok) throw new Error(res.statusText);
+        return processResponse(res);
+    }
+    const res = await apiFetch(`/moderation` + `/history?${toQueryString(page)}`, true, {
         method: "GET",
         headers: {
             "accept": "application/json",

@@ -123,7 +123,7 @@ export default function FlaggedPostTable() {
                 <div></div>
             ),
             cell: ({ row }) =>
-                <Link href={`/moderator/reports/post/${row.original.id}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
+                <Link href={`/moderator/post/${row.original.id}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
         },
     ], []);
 

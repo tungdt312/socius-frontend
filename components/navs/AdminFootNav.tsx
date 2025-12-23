@@ -13,7 +13,7 @@ export const AdminFootNav = () => {
     const pathName = usePathname();
     const rootPath = getSecondPath(pathName);
     return (
-        <ToggleGroup className={`sticky bottom-0 h-auto w-full items-center justify-between bg-background rounded-none border-t-1 border-border px-4 py-1 md:hidden`} type="single" spacing={4} value={rootPath}>
+        <ToggleGroup className={`sticky bottom-0 h-fit w-full items-center justify-between bg-background rounded-none border-t-1 border-border px-4 py-1 md:hidden`} type="single" spacing={4} value={rootPath}>
             {adminNavItems.map((navItem) => {
                 const Icon = navItem.icon
                 return <ToggleGroupItem asChild value={navItem.url} aria-label={navItem.name} key={navItem.url} size={"lg"}

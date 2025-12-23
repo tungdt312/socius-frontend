@@ -105,7 +105,7 @@ export default function ModeratorUserTable() {
                 <div></div>
             ),
             cell: ({ row }) =>
-                <Link href={`/moderator/reports/user/${row.original.userId}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
+                <Link href={`/moderator/user/${row.original.userId}`} target={"_blank"} > <ExternalLink className={"text-muted-foreground size-4"}/> </Link>,
         },
         // Thêm cột Action để xử lý Mở khóa/Khóa nhanh
     ], []);

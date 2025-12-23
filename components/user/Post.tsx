@@ -232,7 +232,7 @@ export const PostCard = ({post}: { post: PostResponse }) => {
         <Card className={`w-full max-w-xl mx-auto relative  h-fit overflow-hidden ${(isDelete ? "hidden" : "")}`}>
             {isDisabled && (
                 <div
-                    className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-[2px] p-4 text-center space-y-3">
+                    className="absolute inset-0 z-50 flex items-center justify-center bg-background/60 backdrop-blur-[5px] p-4 text-center space-y-3">
                     <div className="bg-destructive/10 p-3 rounded-full">
                         <Lock className="size-8 text-destructive"/>
                     </div>

@@ -51,13 +51,13 @@ const MediaRenderer = ({media}: { media: PostMedia[] }) => (
                 {m.type.startsWith('image') ? (
                     <Image
                         src={m.url}
-                        alt={`Media ${index}`}
-                        layout="fill"
-                        objectFit="cover"
-                        className="rounded-md"
+                        alt="Media"
+                        width={150}
+                        height={150}
+                        className="mt-2 rounded-lg h-[150px] w-[150px] object-contain"
                     />
                 ) : (
-                    <video src={m.url} controls className="w-full h-full rounded-md object-cover"/>
+                    <video src={m.url} controls className="h-[150px] w-[150px] rounded-md object-cover"/>
                 )}
             </div>
         ))}
@@ -130,7 +130,7 @@ export const PostViewer = ({postId}: PostViewerProps) => {
     const AccessIcon = ACCESS_CONFIG[post.accessModifier]?.icon || Globe;
 
     return (
-        <Card className={cn("w-full", isDeleted && "border-dashed border-red-500 bg-red-50/20")}>
+        <Card className={cn("w-full", isDeleted && "border-dashed border-red-500 bg-red-50/20 w-full")}>
             <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
                 <div className="flex items-center space-x-3">
                     <Avatar className="h-10 w-10">
@@ -274,7 +274,7 @@ export const CommentViewer = ({commentId}: CommentViewerProps) => {
     const isDeleted = !!comment.deletedAt;
 
     return (
-        <Card className={cn("w-full", isDeleted && "border-dashed border-red-500 bg-red-50/20")}>
+        <Card className={cn("w-full", isDeleted && "border-dashed border-red-500 bg-red-50/20 w-full")}>
             <CardHeader className="flex flex-row items-start justify-between space-y-0 p-4 pb-2">
                 <div className="flex items-center space-x-3">
                     <Avatar className="h-9 w-9">

@@ -111,13 +111,26 @@ export const ChatWindow = ({conversationId}: { conversationId: string }) => {
     // 2. Lắng nghe tin nhắn mới (STOMP)
     useEffect(() => {
         if (client && isConnected && conversationId) {
-
             const destination = `/queue/conversation/${conversationId}`;
 
             const subscription = client.subscribe(destination, (message) => {
                 try {
                     const newMsg = JSON.parse(message.body) as MessageResponse;
-                    setMessages(prev => [newMsg,...prev]);
+
+                    setMessages((prev) => {
+                        // 1. Kiểm tra xem tin nhắn đã tồn tại trong danh sách chưa
+                        const index = prev.findIndex((msg) => msg.id === newMsg.id);
+
+                        if (index !== -1) {
+                            // 2. Nếu đã tồn tại, tạo mảng mới và ghi đè tại vị trí đó
+                            const updatedMessages = [...prev];
+                            updatedMessages[index] = newMsg;
+                            return updatedMessages;
+                        }
+
+                        // 3. Nếu chưa tồn tại, thêm mới vào đầu danh sách (hoặc cuối tùy logic của bạn)
+                        return [newMsg, ...prev];
+                    });
 
                 } catch (e) {
                     console.error("Lỗi parse tin nhắn STOMP:", e);
