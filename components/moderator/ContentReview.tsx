@@ -350,31 +350,59 @@ export const MessageViewer = ({messageId}: MessageViewerProps) => {
     // Giả định: Người kiểm duyệt (Moderator) không phải là người gửi tin nhắn này.
     // Nếu cần xác định isMe, cần truyền thêm moderatorId vào.
     const isMe = false; // Luôn coi là người khác gửi để hiển thị đúng luồng tin nhắn
+    const loadMessage = async () => {
+        setIsLoading(true);
+        setError(null);
+        // LƯU Ý: Hàm getMessageById của bạn gọi đến endpoint của COMMENT.
+        // Tôi giả định endpoint đúng là /moderation/message/{id}
+        // const data = await apiFetch(`/moderation/message/${messageId}`, ...);
 
+        try {
+            const data = await getMessageById(messageId);
+            setMessage(data);
+        } catch (err) {
+            setError("Không thể tải chi tiết tin nhắn.");
+            console.error(err);
+        } finally {
+            setIsLoading(false);
+        }
+    };
     useEffect(() => {
-        const loadMessage = async () => {
-            setIsLoading(true);
-            setError(null);
-            // LƯU Ý: Hàm getMessageById của bạn gọi đến endpoint của COMMENT.
-            // Tôi giả định endpoint đúng là /moderation/message/{id}
-            // const data = await apiFetch(`/moderation/message/${messageId}`, ...);
 
-            try {
-                const data = await getMessageById(messageId);
-                setMessage(data);
-            } catch (err) {
-                setError("Không thể tải chi tiết tin nhắn.");
-                console.error(err);
-            } finally {
-                setIsLoading(false);
-            }
-        };
 
         if (messageId) {
             loadMessage();
         }
     }, [messageId]);
+    const handleBlock = async () => {
+        if (!message) return
+        try {
+            setIsLoading(true);
+            // Giả lập gọi API xóa
+            const res = await block(message.id, ReportableType.MESSAGE);
+            await loadMessage()
 
+        } catch (error) {
+            toast.error((error as Error).message ?? "Không thể khóa tin nhắn");
+        } finally {
+            setIsLoading(false);
+        }
+        // Cần thêm logic đóng drawer và reload bảng ở đây
+    };
+    const handleUnblock = async () => {
+        if (!message) return
+        try {
+
+            setIsLoading(true);
+            // Giả lập gọi API xóa
+            const res = await unblock(message.id,  ReportableType.COMMENT)
+            await loadMessage()
+        } catch (error) {
+            toast.error((error as Error).message ?? "Không thể mở khoá tin nhắn");
+        } finally {
+            setIsLoading(false);
+        }
+    };
     if (isLoading) {
         return <Card className="p-4 flex justify-center"><Loader2 className="animate-spin mr-2 h-5 w-5"/> Đang
             tải...</Card>;
@@ -385,6 +413,7 @@ export const MessageViewer = ({messageId}: MessageViewerProps) => {
             className="p-4 border-red-400 bg-red-50 text-red-700">Lỗi: {error || "Không tìm thấy tin nhắn."}</Card>;
     }
 
+    const isDeleted = message.deletedAt
     return (
         <Card className="w-full">
             <CardHeader className="p-4 pb-2">
@@ -428,8 +457,24 @@ export const MessageViewer = ({messageId}: MessageViewerProps) => {
 
                 {/* Thông tin thêm cho người kiểm duyệt */}
                 <div className="mt-4 pt-3 border-t text-sm text-muted-foreground space-y-1">
+                    {isDeleted && (
+                        <div className="mb-3 text-red-600 dark:text-red-400 italic flex items-center body2">
+                            <AlertTriangle className="mr-2 h-4 w-4"/>
+                            Tin nhắn đã bị xóa vào {formatISODate(message.deletedAt!)}
+                        </div>
+                    )}
                     <p>ID Hội thoại: <span className="font-mono text-xs">{message.conversationId}</span></p>
                     <p>ID Tin nhắn: <span className="font-mono text-xs">{message.id}</span></p>
+                </div>
+                <div className="pt-4 border-t mt-4 flex flex-col justify-end gap-2">
+                    {/* Nút Khóa/Mở khóa */}
+                    {/* Giả định hàm blockUser và unblockUser có sẵn */}
+                    <Button className={"w-full"}
+                            variant={isDeleted ? "default" : "destructive"}
+                            onClick={!isDeleted ? handleBlock : handleUnblock}>
+                        {isDeleted ? 'Mở Khóa' : 'Khóa Bình luận'}
+                    </Button>
+
                 </div>
             </CardContent>
         </Card>

@@ -22,7 +22,7 @@ import {
     ChevronLeft,
     EllipsisVertical,
     Edit,
-    Plus, SquarePen, Camera, Trash2, LogOut, MessageCircle, User, UserRound
+    Plus, SquarePen, Camera, Trash2, LogOut, MessageCircle, User, UserRound, Phone, Video
 } from "lucide-react";
 import {toast} from 'sonner';
 import Image from 'next/image';
@@ -52,6 +52,7 @@ import {load} from "next/dist/compiled/@edge-runtime/primitives/load";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 
 import {useCurrentUser} from "@/components/userContext";
+import Link from "next/link";
 
 // (Giả sử bạn có hook này)
 // import { useCurrentUser } from '@/hooks/useCurrentUser';
@@ -140,7 +141,24 @@ export const ChatWindow = ({conversationId}: { conversationId: string }) => {
             return () => subscription.unsubscribe();
         }
     }, [client, isConnected, conversationId]);
+    const handleJoin = async () => {
+        // Nếu đã gửi rồi thì không gửi nữa
+        // Không gửi nếu không có gì
+        try {
+            // (4) TẠO REQUEST (Theo MessageRequest)
+            const requestData: MessageRequest = {
+                conversationId: conversationId,
+                content: `${user.displayName} đã tham gia vào cuộc gọi`,
+                replyToId: "", // (Tạm thời)
+                mediaFiles: [], // Lấy mảng File
+            };
 
+            // (5) GỌI API HTTP
+            await sendMessage(requestData);
+        } catch (e) {
+            toast.error("Gọi thất bại");
+        }
+    };
     const onEmojiClick = (emojiData: EmojiClickData) => {
         setInput((prev) => prev + emojiData.emoji);
     };
@@ -263,6 +281,8 @@ export const ChatWindow = ({conversationId}: { conversationId: string }) => {
                         <p className={"truncate w-full overflow-ellipsis"}>{conversation?.title || "Cuộc trò chuyện"}</p>
                     </div>
                     <div className={"flex items-center gap-3"}>
+                        <Link title={"Gọi điện"} href={`/room/${conversationId}`} target={"_blank"} onClick={handleJoin}><Phone className={"cursor-pointer"} size={20}/></Link>
+                        <Link title={"Gọi video"} href={`/room/v/${conversationId}`} target={"_blank"} onClick={handleJoin}><Video className={"cursor-pointer"} size={24}/></Link>
                         <EllipsisVertical className={"cursor-pointer"} size={24} onClick={() => setShowDetail(true)}/>
                     </div>
                 </div>

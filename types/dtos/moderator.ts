@@ -40,4 +40,5 @@ export interface ModeratorMessage {
     content: string,
     sentAt: string,
     media: PostMedia[],
+    deletedAt: string,
 }
