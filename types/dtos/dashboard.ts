@@ -1,3 +1,5 @@
+import {ReportableType} from "@/types/dtos/report";
+
 export interface DashboardSummary {
     totalUsers: number;
     totalPosts: number;
@@ -9,10 +11,16 @@ export interface DashboardSummary {
 export interface ModeratorSummary {
     totalAutoBanned: number;
     totalManualBanned: number;
-    violationTypeDistribution: Item[]
+    violationTypeDistribution: DashboardItem[]
 }
 
-export interface Item {
+export interface DashboardItem {
     label: string;
     value: number;
+}
+
+export interface StatsRequest {
+    type: string;
+    targetType: ReportableType;
+    time: string;
 }

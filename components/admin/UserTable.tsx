@@ -249,7 +249,7 @@ function UserDrawer({user, onSuccess}: {
                 className="h-full max-h-[90vh] md:max-h-full md:w-[400px] md:ml-auto rounded-none md:rounded-l-xl">
                 <DrawerHeader className="gap-1 border-b pb-4">
                     <div className="flex items-center gap-3">
-                        <Avatar className="h-12 w-12 border">
+                        <Avatar className="h-12 w-12 border text-foreground">
                             <AvatarImage src={user.avatarUrl} alt={user.displayName} className="object-cover"/>
                             <AvatarFallback>{user.displayName.charAt(0).toUpperCase()}</AvatarFallback>
                         </Avatar>
@@ -266,12 +266,12 @@ function UserDrawer({user, onSuccess}: {
                         <div className="grid grid-cols-2 gap-4">
                             <div className="grid gap-2">
                                 <Label className="text-muted-foreground text-xs uppercase tracking-wider">ID</Label>
-                                <Input value={user.id} readOnly className="bg-muted/50 font-mono text-xs"/>
+                                <Input value={user.id} readOnly className="bg-muted/50 font-mono text-xs text-foreground"/>
                             </div>
                             <div className="grid gap-2">
                                 <Label className="text-muted-foreground text-xs uppercase tracking-wider">Tên tài
                                     khoản</Label>
-                                <Input value={user.username} readOnly className="bg-muted/50"/>
+                                <Input value={user.username} readOnly className="bg-muted/5 text-foreground"/>
                             </div>
                         </div>
 
@@ -289,26 +289,26 @@ function UserDrawer({user, onSuccess}: {
 
                         {/* Status Select */}
                         <div className="grid gap-2">
-                            <Label className="text-xs uppercase tracking-wider font-semibold">Trạng thái</Label>
+                            <Label className="text-xs uppercase tracking-wider font-semibold text-foreground">Trạng thái</Label>
                             <Select value={currentStatus} onValueChange={setCurrentStatus}>
                                 <SelectTrigger>
                                     <SelectValue/>
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="ACTIVE">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2  text-foreground">
                                             <div className="h-2 w-2 rounded-full bg-green-500"/>
                                             Hoạt động (Active)
                                         </div>
                                     </SelectItem>
                                     <SelectItem value="BLOCKED">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2  text-foreground">
                                             <div className="h-2 w-2 rounded-full bg-red-500"/>
                                             Đã khóa (Blocked)
                                         </div>
                                     </SelectItem>
                                     <SelectItem value="PENDING">
-                                        <div className="flex items-center gap-2">
+                                        <div className="flex items-center gap-2 text-foreground">
                                             <div className="h-2 w-2 rounded-full bg-yellow-500"/>
                                             Chờ duyệt (Pending)
                                         </div>
@@ -330,17 +330,16 @@ function UserDrawer({user, onSuccess}: {
 
                         <div className="flex gap-3 mt-2">
                             <DrawerClose asChild>
-                                <Button variant="outline" className="flex-1">Đóng</Button>
+                                <Button variant="outline" className="flex-1  text-foreground">Đóng</Button>
                             </DrawerClose>
 
                             {/* Alert Dialog cho nút Xóa */}
-                            {user.status != "BLOCKED" ? <Button onClick={handleDelete} variant="destructive"
-                                                                className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 border border-red-200 shadow-none">
+                            {user.status != "BLOCKED" ? <Button onClick={handleDelete} className="flex-1 " variant="destructive">
                                     <Trash className="mr-2 h-4 w-4"/>
                                     Khóa tài khoản
                                 </Button> :
                                 <Button onClick={handleUnblock} variant="destructive"
-                                        className="flex-1 bg-red-100 text-red-600 hover:bg-red-200 border border-red-200 shadow-none">
+                                        className="flex-1 ">
                                     <Trash className="mr-2 h-4 w-4"/>
                                     Mở khóa tài khoản
                                 </Button>

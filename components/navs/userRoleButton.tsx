@@ -17,12 +17,12 @@ export const UserRoleButton = () => {
         <Popover>
             <PopoverTrigger asChild>
                 <Button variant="ghost" className="w-fit lg:w-full h-fit flex px-2 py-1 ">
-                    <Avatar className={"size-8"}>
+                    <Avatar className={"size-8 text-foreground"}>
                         <AvatarImage src={user.avatarUrl} className={"object-cover"}/>
                         <AvatarFallback><UserRound size={"80%"}/></AvatarFallback>
                     </Avatar>
-                    <p className={"hidden lg:block line-clamp-1 overflow-ellipsis flex-1"}> {user.displayName} </p>
-                    {availableRoles.length > 1 && <Repeat className={"hidden lg:block"} size={16}/>}
+                    <p className={"hidden lg:block line-clamp-1 overflow-ellipsis flex-1 text-foreground"}> {user.displayName} </p>
+                    {availableRoles.length > 1 && <Repeat className={"hidden lg:block  text-foreground"} size={16}/>}
 
                 </Button>
             </PopoverTrigger>

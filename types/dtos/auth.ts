@@ -14,6 +14,7 @@ export interface LoginRequest {
     password: string;
 }
 export interface LoginResponse {
+    id: string,
     email: string;
     status: string;
     roles: string[];

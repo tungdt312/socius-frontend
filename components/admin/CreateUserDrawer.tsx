@@ -109,7 +109,7 @@ export function CreateUserDrawer({ onSuccess }: CreateUserDrawerProps) {
             </DrawerTrigger>
 
             {/* Chỉnh lại class CSS để Drawer hiển thị bên phải như Sidebar */}
-            <DrawerContent className="h-full max-h-[90vh] md:max-h-full md:w-[450px] md:ml-auto rounded-none md:rounded-l-xl flex flex-col">
+            <DrawerContent className=" text-foreground h-full max-h-[90vh] md:max-h-full md:w-[450px] md:ml-auto rounded-none md:rounded-l-xl flex flex-col">
                 <DrawerHeader className="border-b pb-4">
                     <DrawerTitle>Thêm người dùng mới</DrawerTitle>
                     <DrawerDescription>
