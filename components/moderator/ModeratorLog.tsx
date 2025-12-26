@@ -61,14 +61,16 @@ export default function ModeratorLogTable({ targetId, targetType }: ModeratorLog
             header: "Loại",
             cell: ({ row }) => (
                 <Badge variant="secondary" className="text-xs">
-                    {row.original.targetType}
+                    {targetType}
                 </Badge>
             ),
         },
         {
             accessorKey: "targetId",
             header: "ID Mục tiêu",
-            cell: ({ row }) => <div className="text-muted-foreground text-sm">{row.original.targetId}</div>,
+            cell: ({ row }) =>(
+                <div className="text-muted-foreground text-sm">{targetId}</div>
+            ),
         },
         {
             accessorKey: "reason",

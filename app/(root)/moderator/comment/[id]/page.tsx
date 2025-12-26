@@ -17,11 +17,11 @@ const Page = async ({params}: PageProps) => {
                 <span className={"heading5"}>Bình luận vi phạm (ID: {id})</span>
             </div>
             <div className={"flex flex-col lg:flex-row items-start justify-start w-full h-fit gap-4"}>
-                <div className={"flex flex-col items-center justify-start w-full lg:w-1/2 h-fit"}>
+                <div className={"flex flex-col items-center justify-start w-full h-fit"}>
                     <CommentViewer commentId={id} />
                     <ModeratorLogTable targetId={id} targetType={ReportableType.COMMENT}/>
-                </div>
-                <div className={"flex flex-col items-center justify-start w-full lg:w-1/2 h-fit"}>
+                {/*</div>*/}
+                {/*<div className={"flex flex-col items-center justify-start w-full lg:w-1/2 h-fit"}>*/}
                     <ReportTable targetId={id} targetType={ReportableType.COMMENT}/>
                     <ComplaintTable targetId={id} targetType={ReportableType.COMMENT}/>
                 </div>

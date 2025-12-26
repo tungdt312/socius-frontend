@@ -5,12 +5,15 @@ import React, {useEffect, useMemo, useState} from "react";
 import {ColumnDef, flexRender, getCoreRowModel, SortingState, useReactTable,} from "@tanstack/react-table";
 import {
     ArrowUpDown,
+    Check,
     ChevronLeft,
     ChevronRight,
     ChevronsLeft,
     ChevronsRight,
     Loader2,
-    MessageCircle, User
+    MessageCircle,
+    User,
+    X
 } from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
@@ -18,8 +21,9 @@ import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/c
 import {toast} from "sonner"; // Giả định service
 import {formatISODate} from "@/lib/utils";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
-import {ComplaintResponse, ComplaintStatus, ReportableType } from "@/types/dtos/report";
+import {ComplaintResponse, ComplaintStatus, ReportableType, ReportStatus} from "@/types/dtos/report";
 import {getComplaintsByContent} from "@/services/moderatorService";
+import {Checkbox} from "../ui/checkbox";
 
 interface ComplaintTableProps {
     targetId: string;
@@ -40,10 +44,42 @@ export const ComplaintTable = ({targetId, targetType}: ComplaintTableProps) => {
     const [rowCount, setRowCount] = useState(0);
     const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 10});
     const [sorting, setSorting] = useState<SortingState>([{id: 'createdAt', desc: true}]);
-
+    const [rowSelection, setRowSelection] = useState({});
 
     const columns: ColumnDef<ComplaintResponse>[] = useMemo(() => [
         {
+            id: "select",
+            header: ({ table }) => {
+                const rows = table.getRowModel().rows;
+                // Lọc các hàng có thể chọn (PENDING)
+                const pendableRows = rows.filter(row => row.original.status === "PENDING");
+
+                const isAllSelected = pendableRows.length > 0 && pendableRows.every(row => row.getIsSelected());
+
+                return (
+                    <Checkbox
+                        checked={isAllSelected}
+                        onCheckedChange={(value) => {
+                            // Khi nhấn, chỉ thực hiện trên các hàng PENDING
+                            pendableRows.forEach(row => row.toggleSelected(!!value));
+                        }}
+                        // Xóa dòng disabled để nút luôn sáng
+                        aria-label="Chọn tất cả hàng khả dụng"
+                    />
+                );
+            },
+            cell: ({ row }) => (
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    // Chỉ cho phép chọn thủ công hàng nếu ở trạng thái PENDING
+                    disabled={row.original.status !== ComplaintStatus.PENDING}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Chọn hàng"
+                />
+            ),
+            enableSorting: false,
+            enableHiding: false,
+        },{
             accessorKey: "userDisplayName",
             header: "Người khiếu nại",
             cell: ({row}) => (
@@ -86,10 +122,46 @@ export const ComplaintTable = ({targetId, targetType}: ComplaintTableProps) => {
                 return <Badge variant={config.variant} className="capitalize">{config.label}</Badge>;
             },
         },
+        {
+            id: "actions",
+            header: "Xử lý khiếu nại",
+            cell: ({ row }) => {
+                if (row.original.status !== "PENDING") return null;
+
+                return (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost" size="icon" className="h-8 w-8 bg-green-600 text-white"
+                            onClick={() => handleUpdateStatus([row.original.id], ComplaintStatus.APPROVED_RESTORE)}
+                        >
+                            <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost" size="icon" className="h-8 w-8 bg-red-600 text-white"
+                            onClick={() => handleUpdateStatus([row.original.id], ComplaintStatus.REJECTED_KEEP)}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                );
+            }
+        }
         // Thêm cột Action để Admin/Mod có thể phản hồi
     ], []);
 
-
+    const handleUpdateStatus = async (ids: string[], status: ComplaintStatus) => {
+        try {
+            setIsLoading(true);
+            // Gọi service update ở đây (Ví dụ: updateReportStatus(ids, status))
+            toast.success(`Đã ${status === ComplaintStatus.APPROVED_RESTORE? "chấp nhận" : "từ chối"} ${ids.length} phản hồi`);
+            setRowSelection({}); // Reset chọn hàng
+            await fetchData();
+        } catch (error) {
+            toast.error("Thao tác thất bại");
+        } finally {
+            setIsLoading(false);
+        }
+    };
     const fetchData = async () => {
         setIsLoading(true);
         try {
@@ -101,7 +173,7 @@ export const ComplaintTable = ({targetId, targetType}: ComplaintTableProps) => {
                 size: pagination.pageSize,
                 sort: sortStrings,
             });
-
+            console.log(res)
             setData(res.content || []);
             setRowCount(res.totalElements || 0);
         } catch (e) {
@@ -121,17 +193,31 @@ export const ComplaintTable = ({targetId, targetType}: ComplaintTableProps) => {
 
 
     const table = useReactTable({
-        data, columns, state: {sorting, pagination},
+        data, columns,
         manualPagination: true, manualSorting: true, rowCount,
         onPaginationChange: setPagination, onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(), getRowId: (row) => row.id,
+        state: { sorting, pagination, rowSelection },
+        onRowSelectionChange: setRowSelection,
     });
 
 
     return (
-        <div className="w-full space-y-4 pt-6">
-            <h3 className="text-lg font-semibold">Danh sách Khiếu nại ({rowCount})</h3>
-            <div className="rounded-md border bg-card">
+        <div className="w-full space-y-4 pt-6 ">
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Danh sách Khiếu nại ({rowCount})</h3>
+                {Object.keys(rowSelection).length > 0 && (
+                    <div className="flex items-center gap-2">
+                        <Button size="sm" onClick={() => handleUpdateStatus(table.getSelectedRowModel().rows.map(r => r.original.id), ComplaintStatus.APPROVED_RESTORE)}>
+                            Chấp nhận
+                        </Button>
+                        <Button size="sm" variant="destructive" onClick={() => handleUpdateStatus(table.getSelectedRowModel().rows.map(r => r.original.id), ComplaintStatus.REJECTED_KEEP)}>
+                            Từ chối
+                        </Button>
+                    </div>
+                )}
+            </div>
+            <div className="rounded-md border bg-card overflow-x-auto">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map(hg => (

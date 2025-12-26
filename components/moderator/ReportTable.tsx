@@ -3,16 +3,17 @@
 
 import React, {useEffect, useMemo, useState} from "react";
 import {ColumnDef, flexRender, getCoreRowModel, SortingState, useReactTable,} from "@tanstack/react-table";
-import {ArrowUpDown, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, User} from "lucide-react";
+import {ArrowUpDown, Check, ChevronLeft, ChevronRight, ChevronsLeft, ChevronsRight, Loader2, X} from "lucide-react";
 import {Button} from "@/components/ui/button";
 import {Badge} from "@/components/ui/badge";
 import {Table, TableBody, TableCell, TableHead, TableHeader, TableRow} from "@/components/ui/table";
 import {toast} from "sonner";
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {formatISODate} from "@/lib/utils";
-import {ReportableType, ReportReason, ReportResponse, ReportStatus} from "@/types/dtos/report";
+import {ComplaintStatus, ReportableType, ReportReason, ReportResponse, ReportStatus} from "@/types/dtos/report";
 import {getReportsByContent} from "@/services/moderatorService";
 import {Select, SelectContent, SelectItem, SelectTrigger, SelectValue} from "@/components/ui/select";
+import {Checkbox} from "@/components/ui/checkbox";
 
 interface ReportTableProps {
     targetId: string;
@@ -42,6 +43,7 @@ const REASON_LABELS: Record<ReportReason, string> = {
 
 export const ReportTable = ({targetId, targetType}: ReportTableProps) => {
     const [data, setData] = useState<ReportResponse[]>([]);
+    const [rowSelection, setRowSelection] = useState({});
     const [isLoading, setIsLoading] = useState(true);
     const [rowCount, setRowCount] = useState(0);
     const [pagination, setPagination] = useState({pageIndex: 0, pageSize: 10});
@@ -49,6 +51,46 @@ export const ReportTable = ({targetId, targetType}: ReportTableProps) => {
 
 
     const columns: ColumnDef<ReportResponse>[] = useMemo(() => [
+        {
+            id: "select",
+            header: ({ table }) => {
+                // 1. Lấy danh sách các hàng ở trang hiện tại có trạng thái PENDING
+                const rows = table.getRowModel().rows;
+                const pendableRows = rows.filter(row => row.original.status === ReportStatus.PENDING);
+
+                // 2. Kiểm tra xem tất cả các hàng PENDING đã được chọn chưa
+                const isAllPendableSelected =
+                    pendableRows.length > 0 &&
+                    pendableRows.every(row => row.getIsSelected());
+
+                // 3. Kiểm tra trạng thái "chọn một phần" (indeterminate)
+                const isSomePendableSelected =
+                    pendableRows.some(row => row.getIsSelected()) && !isAllPendableSelected;
+
+                return (
+                    <Checkbox
+                        checked={isAllPendableSelected}
+                        // Sử dụng thuộc tính này để hiện dấu "-" khi chọn một phần (nếu thư viện UI hỗ trợ)
+                        // indeterminate={isSomePendableSelected}
+                        onCheckedChange={(value) => {
+                            // 4. Chỉ thực hiện toggle trên những hàng thỏa mãn điều kiện PENDING
+                            pendableRows.forEach(row => row.toggleSelected(!!value));
+                        }}
+                        // Disable nút chọn tất cả nếu không có hàng nào là PENDING
+                        disabled={pendableRows.length === 0}
+                        aria-label="Chọn tất cả hàng đang chờ"
+                    />
+                );
+            },
+            cell: ({ row }) => (
+                <Checkbox
+                    checked={row.getIsSelected()}
+                    // Chỉ cho phép chọn thủ công hàng nếu ở trạng thái PENDING
+                    disabled={row.original.status !== ReportStatus.PENDING}
+                    onCheckedChange={(value) => row.toggleSelected(!!value)}
+                    aria-label="Chọn hàng"
+                />)
+        },
         {
             accessorKey: "reporterName",
             header: "Người báo cáo",
@@ -95,10 +137,47 @@ export const ReportTable = ({targetId, targetType}: ReportTableProps) => {
                 return <Badge variant={config.variant} className="capitalize">{config.label}</Badge>;
             },
         },
+        {
+            id: "actions",
+            header: "Thao tác",
+            cell: ({ row }) => {
+                const isPending = row.original.status === "PENDING";
+                if (!isPending) return null;
+
+                return (
+                    <div className="flex items-center gap-2">
+                        <Button
+                            variant="ghost" size="icon" className="h-8 w-8 bg-green-600 text-white"
+                            onClick={() => handleUpdateStatus([row.original.id], ReportStatus.APPROVED)}
+                        >
+                            <Check className="h-4 w-4" />
+                        </Button>
+                        <Button
+                            variant="ghost" size="icon" className="h-8 w-8 bg-red-600 text-white"
+                            onClick={() => handleUpdateStatus([row.original.id], ReportStatus.REJECTED)}
+                        >
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                );
+            }
+        }
         // Thêm cột Action để Moderation có thể xử lý (tùy chọn)
     ], []);
 
-
+    const handleUpdateStatus = async (ids: string[], status: ReportStatus) => {
+        try {
+            setIsLoading(true);
+            // Gọi service update ở đây (Ví dụ: updateReportStatus(ids, status))
+            toast.success(`Đã ${status === ReportStatus.APPROVED ? "chấp nhận" : "từ chối"} ${ids.length} báo cáo`);
+            setRowSelection({}); // Reset chọn hàng
+            await fetchData();
+        } catch (error) {
+            toast.error("Thao tác thất bại");
+        } finally {
+            setIsLoading(false);
+        }
+    };
     const fetchData = async () => {
         setIsLoading(true);
         try {
@@ -131,17 +210,37 @@ export const ReportTable = ({targetId, targetType}: ReportTableProps) => {
 
 
     const table = useReactTable({
-        data, columns, state: {sorting, pagination},
+        data, columns,
         manualPagination: true, manualSorting: true, rowCount,
         onPaginationChange: setPagination, onSortingChange: setSorting,
         getCoreRowModel: getCoreRowModel(), getRowId: (row) => row.id,
+        state: { sorting, pagination, rowSelection },
+        onRowSelectionChange: setRowSelection,
     });
 
 
     return (
-        <div className="w-full space-y-4 pt-6">
-            <h3 className="text-lg font-semibold">Danh sách Báo cáo ({rowCount})</h3>
-            <div className="rounded-md border bg-card">
+        <div className="w-full space-y-4 pt-6 ov">
+            <div className="flex items-center justify-between">
+                <h3 className="text-lg font-semibold">Danh sách Báo cáo ({rowCount})</h3>
+                {/* Nút thao tác hàng loạt */}
+                {Object.keys(rowSelection).length > 0 && (
+                    <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-2">
+                        <span className="text-sm text-muted-foreground mr-2">
+                            Đã chọn {Object.keys(rowSelection).length} mục:
+                        </span>
+                        <Button size="sm" variant="default"
+                                onClick={() => handleUpdateStatus(table.getSelectedRowModel().rows.map(r => r.original.id), ReportStatus.APPROVED)}>
+                            Chấp nhận
+                        </Button>
+                        <Button size="sm" variant="destructive"
+                                onClick={() => handleUpdateStatus(table.getSelectedRowModel().rows.map(r => r.original.id), ReportStatus.REJECTED)}>
+                            Từ chối
+                        </Button>
+                    </div>
+                )}
+            </div>
+            <div className="rounded-md border bg-card overflow-x-auto">
                 <Table>
                     <TableHeader>
                         {table.getHeaderGroups().map(hg => (

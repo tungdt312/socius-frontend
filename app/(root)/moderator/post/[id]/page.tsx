@@ -17,11 +17,11 @@ const Page = async ({params}: PageProps) => {
                 <span className={"heading5"}>Bài viết vi phạm (ID: {id})</span>
             </div>
             <div className={"flex flex-col lg:flex-row items-start justify-start w-full h-fit gap-4"}>
-                <div className={"flex flex-col items-center justify-start w-full lg:w-1/2 h-fit"}>
+                <div className={"flex flex-col items-center justify-start w-full  h-fit"}>
                     <PostViewer postId={id} />
                     <ModeratorLogTable targetId={id} targetType={ReportableType.POST}/>
-                </div>
-                <div className={"flex flex-col items-center justify-start w-full lg:w-1/2 h-fit"}>
+                {/*</div>*/}
+                {/*<div className={"flex flex-col items-center justify-start w-full lg:w-1/2 h-fit"}>*/}
                     <ReportTable targetId={id} targetType={ReportableType.POST}/>
                     <ComplaintTable targetId={id} targetType={ReportableType.POST}/>
                 </div>

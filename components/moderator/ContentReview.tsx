@@ -6,10 +6,11 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {cn, formatISODate} from "@/lib/utils";
 import {
-    Eye, EyeOff,
     AlertTriangle,
     Clock,
     CornerDownRight,
+    Eye,
+    EyeOff,
     Globe,
     Heart,
     Loader2,
@@ -25,7 +26,15 @@ import Image from 'next/image';
 import {CommentResponse, PostMedia, PostResponse} from "@/types/dtos/post";
 import {AccountStatus, postAccess} from "@/constants/enum";
 import {getPostById} from "@/services/postService";
-import {blockUser, getCommentById, getMessageById, getUserById, unblockUser, block, unblock} from "@/services/moderatorService";
+import {
+    block,
+    blockUser,
+    getCommentById,
+    getMessageById,
+    getUserById,
+    unblock,
+    unblockUser
+} from "@/services/moderatorService";
 import {ModeratorMessage, ModeratorUser} from "@/types/dtos/moderator";
 import {Button} from "@/components/ui/button";
 import {toast} from "sonner";
@@ -670,9 +679,9 @@ export const UserReviewer = ({userId}: UserReviewerProps) => {
                         className="h-8 w-full"
                     />
                     <Button disabled={note.trim().length <= 0} className={"w-full"}
-                            variant={user.status != "BLOCKED" ? "default" : "destructive"}
-                            onClick={user.status != "BLOCKED" ? handleBlock : handleUnblock}>
-                        {user.status == "BLOCKED" ? 'Mở Khóa' : 'Khóa Tài Khoản'}
+                            variant={user.status != AccountStatus.ACTIVE ? "default" : "destructive"}
+                            onClick={user.status != AccountStatus.BLOCKED ? handleBlock : handleUnblock}>
+                        {user.status == AccountStatus.BLOCKED ? 'Mở Khóa' : 'Khóa Tài Khoản'}
                     </Button>
 
                 </div>
