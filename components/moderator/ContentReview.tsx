@@ -6,6 +6,7 @@ import {Card, CardContent, CardDescription, CardHeader, CardTitle} from "@/compo
 import {Avatar, AvatarFallback, AvatarImage} from "@/components/ui/avatar";
 import {cn, formatISODate} from "@/lib/utils";
 import {
+    Eye, EyeOff,
     AlertTriangle,
     Clock,
     CornerDownRight,
@@ -44,25 +45,77 @@ const ACCESS_CONFIG: Record<postAccess, { label: string, icon: React.FC<any> }> 
 };
 
 // Component con để render media
-const MediaRenderer = ({media}: { media: PostMedia[] }) => (
-    <div className="grid grid-cols-2 gap-2 mt-4">
-        {media.map((m, index) => (
-            <div key={index} className="relative w-full aspect-video">
-                {m.type.startsWith('image') ? (
-                    <Image
-                        src={m.url}
-                        alt="Media"
-                        width={150}
-                        height={150}
-                        className="mt-2 rounded-lg h-[150px] w-[150px] object-contain"
-                    />
-                ) : (
-                    <video src={m.url} controls className="h-[150px] w-[150px] rounded-md object-cover"/>
-                )}
+const MediaRenderer = ({media}: { media: PostMedia[] }) => {
+    const [isBlurred, setIsBlurred] = useState(true);
+
+    if (!media || media.length === 0) return null;
+
+    return (
+        <div className="mt-4 space-y-2">
+            {/* Header của phần Media - Nút điều khiển */}
+            <div className="flex items-center justify-between bg-muted/50 p-2 rounded-t-lg border-x border-t">
+                <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <ShieldAlert className="h-3.5 w-3.5" />
+                    <span>Phương tiện ({media.length})</span>
+                </div>
+                <Button
+                    variant="ghost"
+                    size="sm"
+                    className="h-7 px-2 text-xs gap-1.5 hover:bg-background"
+                    onClick={() => setIsBlurred(!isBlurred)}
+                >
+                    {isBlurred ? (
+                        <><Eye className="h-3.5 w-3.5" /> Hiện nội dung</>
+                    ) : (
+                        <><EyeOff className="h-3.5 w-3.5" /> Làm mờ</>
+                    )}
+                </Button>
             </div>
-        ))}
-    </div>
-);
+
+            {/* Grid hiển thị Media */}
+            <div className="grid grid-cols-2 gap-2">
+                {media.map((m, index) => (
+                    <div
+                        key={index}
+                        className="relative overflow-hidden rounded-lg border bg-black group"
+                    >
+                        {/* Lớp phủ nội dung */}
+                        <div className={cn(
+                            "relative w-full aspect-video transition-all duration-500 ease-in-out",
+                            isBlurred ? "blur-2xl scale-110 opacity-50 grayscale" : "blur-0 scale-100 opacity-100"
+                        )}>
+                            {m.type.startsWith('image') ? (
+                                <Image
+                                    src={m.url}
+                                    alt="Media content"
+                                    fill
+                                    className="object-contain"
+                                    unoptimized // Tránh lỗi optimization nếu url từ bên ngoài
+                                />
+                            ) : (
+                                <video
+                                    src={m.url}
+                                    className="w-full h-full object-contain"
+                                    controls={!isBlurred} // Chỉ cho phép điều khiển khi đã bỏ làm mờ
+                                />
+                            )}
+                        </div>
+
+                        {/* Overlay khi đang làm mờ */}
+                        {isBlurred && (
+                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-black/20 pointer-events-none">
+                                <Lock className="h-6 w-6 text-white/80" />
+                                <span className="text-[10px] text-white/80 font-medium uppercase tracking-wider">
+                                    Nội dung nhạy cảm
+                                </span>
+                            </div>
+                        )}
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+};
 export const PostViewer = ({postId}: PostViewerProps) => {
     const [post, setPost] = useState<PostResponse | null>(null);
     const [isLoading, setIsLoading] = useState(true);
