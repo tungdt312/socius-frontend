@@ -53,12 +53,12 @@ export const ReportTable = ({targetId, targetType}: ReportTableProps) => {
             accessorKey: "reporterName",
             header: "Người báo cáo",
             cell: ({row}) => (
-                <div className="flex items-center gap-2">
-                    <Avatar className="size-8">
+                <div className="flex items-center gap-2 text-foreground">
+                    {row.original.reporterName && <Avatar className="size-8">
                         <AvatarImage src={row.original.reporterAvatar} className={"object-cover"}/>
                         <AvatarFallback>{row.original.reporterName?.charAt(0)}</AvatarFallback>
-                    </Avatar>
-                    <span className="text-sm font-medium">{row.original.reporterName}</span>
+                    </Avatar> }
+                    <span className="text-sm font-medium">{row.original.reporterName || "AI hệ thống"} </span>
                 </div>
             ),
         },
@@ -111,6 +111,7 @@ export const ReportTable = ({targetId, targetType}: ReportTableProps) => {
                 // Không thêm filter vì bảng này chỉ lọc theo targetId/targetType
             });
 
+            console.log(res);
             setData(res.content || []);
             setRowCount(res.totalElements || 0);
         } catch (e) {
