@@ -1,5 +1,5 @@
 "use client"
-import React, {useEffect, useRef} from 'react'
+import React, {useCallback, useEffect, useRef} from 'react'
 import {useParams} from "next/navigation";
 import {ZegoUIKitPrebuilt} from "@zegocloud/zego-uikit-prebuilt";
 import {useCurrentUser, useCurrentUserId} from "@/components/userContext";
@@ -12,7 +12,7 @@ const Page = () => {
     const container = useRef<HTMLDivElement | null>(null);
     const user = useCurrentUser();
 
-    const handleLeave = async () => {
+    const handleLeave = useCallback(async () => {
         // Không gửi nếu không có gì
         try {
             // (4) TẠO REQUEST (Theo MessageRequest)
@@ -28,7 +28,7 @@ const Page = () => {
         } catch (e) {
             toast.error("Gọi thất bại");
         }
-    };
+    }, [roomId, user?.displayName])
 
     useEffect(() => {
         if (!user?.id || user.id === "0" || !container.current) {
@@ -72,7 +72,7 @@ const Page = () => {
             zp.destroy();
         };
 
-    }, [roomId, user?.id]);
+    }, [roomId, user?.id, user?.displayName, handleLeave]);
     return (
         <div className="h-screen w-full flex justify-center items-center">
             {!user?.id || user.id === "0" ? (
